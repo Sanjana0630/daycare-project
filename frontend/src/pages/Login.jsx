@@ -5,7 +5,6 @@ import GoogleAuthButton from '../components/GoogleAuthButton';
 import { Mail, Lock } from 'lucide-react';
 
 
-
 // Modifying Login to fit the AuthLayout structure correctly
 // AuthLayout expects children to be the form content
 const LoginPage = () => {
