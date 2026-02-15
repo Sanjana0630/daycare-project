@@ -10,12 +10,12 @@ const app = express();
 
 
 
+const cors = require("cors");
+
 app.use(cors({
-  origin: [
-    "https://daycare-project-weld.vercel.app"
-  ],
+  origin: true,
   methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 app.use(express.json());
 
