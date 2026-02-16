@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../components/AuthLayout';
 import GoogleAuthButton from '../components/GoogleAuthButton';
-import { Mail, Lock, User, Briefcase, Baby } from 'lucide-react';
+import { Mail, Lock, User, Baby, CheckCircle2, Circle } from 'lucide-react';
 
 const Register = () => {
     const navigate = useNavigate();
@@ -10,11 +10,25 @@ const Register = () => {
         fullName: '',
         email: '',
         password: '',
+        confirmPassword: '',
         role: 'parent' // Default role
     });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
+
+    // Password validation state
+    const passwordRequirements = {
+        minLength: formData.password.length >= 8,
+        hasUpper: /[A-Z]/.test(formData.password),
+        hasLower: /[a-z]/.test(formData.password),
+        hasNumber: /[0-9]/.test(formData.password),
+        hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(formData.password),
+    };
+
+    const isPasswordValid = Object.values(passwordRequirements).every(Boolean);
+    const passwordsMatch = formData.password && formData.password === formData.confirmPassword;
+    const canSubmit = isPasswordValid && passwordsMatch && formData.fullName && formData.email;
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -28,23 +42,36 @@ const Register = () => {
         e.preventDefault();
         setError('');
         setSuccess('');
+
+        if (!isPasswordValid) {
+            setError('Please satisfy all password requirements.');
+            return;
+        }
+
+        if (!passwordsMatch) {
+            setError('Passwords do not match.');
+            return;
+        }
+
         setLoading(true);
 
         try {
             const apiUrl = import.meta.env.VITE_API_URL;
+            // Destructure to exclude confirmPassword from API request
+            const { confirmPassword, ...registerData } = formData;
+
             const response = await fetch(`${apiUrl}/api/auth/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(formData),
+                body: JSON.stringify(registerData),
             });
 
             const data = await response.json();
 
             if (response.ok) {
                 setSuccess('Account created successfully!');
-                // Wait for 2 seconds then navigate to login
                 setTimeout(() => {
                     navigate('/login');
                 }, 2000);
@@ -58,6 +85,17 @@ const Register = () => {
             setLoading(false);
         }
     };
+
+    const RequirementItem = ({ satisfied, text }) => (
+        <div className={`flex items-center space-x-2 text-xs transition-colors duration-200 ${satisfied ? 'text-green-600' : 'text-red-500'}`}>
+            {satisfied ? (
+                <CheckCircle2 size={14} className="text-green-500" />
+            ) : (
+                <Circle size={14} className="text-red-300" />
+            )}
+            <span>{text}</span>
+        </div>
+    );
 
     return (
         <AuthLayout
@@ -158,12 +196,51 @@ const Register = () => {
                             onChange={handleChange}
                         />
                     </div>
+                    {/* Password Requirements UI */}
+                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <RequirementItem satisfied={passwordRequirements.minLength} text="Min 8 characters" />
+                        <RequirementItem satisfied={passwordRequirements.hasUpper} text="One uppercase letter" />
+                        <RequirementItem satisfied={passwordRequirements.hasLower} text="One lowercase letter" />
+                        <RequirementItem satisfied={passwordRequirements.hasNumber} text="One number" />
+                        <RequirementItem satisfied={passwordRequirements.hasSpecial} text="One special character" />
+                    </div>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                    <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Lock className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                            type="password"
+                            name="confirmPassword"
+                            required
+                            className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 transition-all outline-none ${formData.confirmPassword === ''
+                                ? 'border-gray-200 focus:ring-purple-100 focus:border-purple-400'
+                                : passwordsMatch
+                                    ? 'border-green-200 bg-green-50 focus:ring-green-100 focus:border-green-400'
+                                    : 'border-red-200 bg-red-50 focus:ring-red-100 focus:border-red-400'
+                                }`}
+                            placeholder="Confirm your password"
+                            value={formData.confirmPassword}
+                            onChange={handleChange}
+                        />
+                    </div>
+                    {formData.confirmPassword && (
+                        <p className={`mt-1.5 text-xs font-medium ${passwordsMatch ? 'text-green-600' : 'text-red-600'}`}>
+                            {passwordsMatch ? '✓ Passwords match' : '✗ Passwords do not match'}
+                        </p>
+                    )}
                 </div>
 
                 <button
                     type="submit"
-                    disabled={loading}
-                    className={`w-full py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 mt-2 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    disabled={loading || !canSubmit}
+                    className={`w-full py-3 px-4 text-white font-semibold rounded-xl shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 mt-2 ${loading || !canSubmit
+                        ? 'bg-gray-300 cursor-not-allowed'
+                        : 'bg-purple-600 hover:bg-purple-700 focus:ring-purple-500'
+                        }`}
                 >
                     {loading ? 'Creating Account...' : 'Create Account'}
                 </button>
