@@ -15,9 +15,9 @@ const ActionButton = ({ icon: Icon, label, color, onClick }) => (
 
 const QuickActions = () => {
     return (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h3 className="text-lg font-bold text-gray-800 mb-6">Quick Actions</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-4 sm:mb-6">Quick Actions</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                 <ActionButton
                     icon={UserPlus}
                     label="Add Child"
