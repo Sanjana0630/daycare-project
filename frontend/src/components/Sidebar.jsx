@@ -1,98 +1,99 @@
 import React from 'react';
-import { useNavigate, NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard,
     Users,
-    UserCheck,
-    Baby,
+    UserSquare2,
+    UserCircle2,
     CalendarCheck,
-    Banknote,
-    FileText,
+    CreditCard,
+    BarChart3,
     Settings,
-    LogOut
+    LogOut,
+    X,
+    Baby
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
     const navigate = useNavigate();
-    const role = localStorage.getItem('role') || 'guest';
-
-    const getDashboardPath = () => {
-        if (role === 'admin') return '/admin/dashboard';
-        if (role === 'staff') return '/staff/dashboard';
-        if (role === 'parent') return '/parent/dashboard';
-        return '/';
-    };
+    const role = localStorage.getItem('role') || 'admin';
 
     const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('role');
+        localStorage.clear();
         navigate('/login');
     };
 
     const navItems = [
-        { icon: LayoutDashboard, label: 'Dashboard', path: getDashboardPath() },
-        { icon: Baby, label: 'Children', path: '/children' },
-        { icon: UserCheck, label: 'Staff', path: '/staff' },
-        { icon: Users, label: 'Parents', path: '/parents' },
-        { icon: CalendarCheck, label: 'Attendance', path: '/attendance' },
-        { icon: Banknote, label: 'Fees', path: '/fees' },
-        { icon: FileText, label: 'Reports', path: '/reports' },
-        { icon: Settings, label: 'Settings', path: '/settings' },
+        { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+        { name: 'Children', icon: Users, path: '/children' },
+        { name: 'Staff', icon: UserSquare2, path: '/staff' },
+        { name: 'Parents', icon: UserCircle2, path: '/parents' },
+        { name: 'Attendance', icon: CalendarCheck, path: '/attendance' },
+        { name: 'Fees', icon: CreditCard, path: '/fees' },
+        { name: 'Reports', icon: BarChart3, path: '/reports' },
+        { name: 'Settings', icon: Settings, path: '/settings' },
     ];
 
     return (
-        <aside className={`fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-100 h-screen flex flex-col shadow-xl lg:shadow-sm z-40 transition-transform duration-300 ease-in-out lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'
-            }`}>
-            <div className="p-6 flex items-center justify-between gap-3 border-b border-gray-50">
+        <aside
+            className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-100 transition-transform duration-300 lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'
+                }`}
+        >
+            {/* Sidebar Header */}
+            <div className="h-16 flex items-center justify-between px-6 border-b border-gray-100">
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 font-bold">
-                        D
+                    <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-lg flex items-center justify-center text-white shadow-md">
+                        <Baby size={18} />
                     </div>
-                    <h1 className="font-bold text-xl text-gray-800 tracking-tight">Daycare<span className="text-purple-600 capitalize">{role === 'guest' ? '' : role}</span></h1>
+                    <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-indigo-700">
+                        Daycare
+                    </span>
                 </div>
-                {/* Close button - only on mobile */}
                 <button
                     onClick={() => setIsOpen(false)}
-                    className="lg:hidden p-2 text-gray-400 hover:text-gray-600"
+                    className="p-2 -mr-2 text-gray-400 hover:text-gray-600 lg:hidden"
                 >
-                    <LayoutDashboard size={20} /> {/* Using an icon as a close placeholder, but normally X. Lucide has X, I should check if it's imported */}
+                    <X size={20} />
                 </button>
             </div>
 
-            <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
+            {/* Navigation Links */}
+            <nav className="flex-1 px-4 py-6 space-y-1">
                 {navItems.map((item) => (
                     <NavLink
-                        key={item.path}
+                        key={item.name}
                         to={item.path}
-                        onClick={() => setIsOpen(false)} // Close sidebar on click on mobile
+                        onClick={() => setIsOpen(false)}
                         className={({ isActive }) =>
-                            `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${isActive
-                                ? 'bg-purple-50 text-purple-700 font-medium'
-                                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                            `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${isActive
+                                ? 'bg-purple-50 text-purple-700 shadow-sm border border-purple-100'
+                                : 'text-gray-500 hover:bg-gray-50 hover:text-purple-600 border border-transparent'
                             }`
                         }
                     >
-                        {({ isActive }) => (
-                            <>
-                                <item.icon
-                                    size={20}
-                                    className={isActive ? 'text-purple-600' : 'text-gray-400 group-hover:text-gray-600'}
-                                />
-                                {item.label}
-                            </>
-                        )}
+                        <item.icon size={18} />
+                        {item.name}
                     </NavLink>
                 ))}
             </nav>
 
-            <div className="p-4 border-t border-gray-50">
+            {/* Logout Button */}
+            <div className="p-4 border-t border-gray-100">
                 <button
                     onClick={handleLogout}
-                    className="flex items-center gap-3 px-4 py-3 w-full text-left text-red-500 hover:bg-red-50 rounded-xl transition-colors duration-200"
+                    className="flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50 rounded-xl transition-all duration-200"
                 >
-                    <LogOut size={20} />
-                    <span className="font-medium">Logout</span>
+                    <LogOut size={18} />
+                    Logout
                 </button>
+            </div>
+
+            {/* Role Badge */}
+            <div className="p-6">
+                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                    <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-1">Current Role</p>
+                    <p className="text-sm font-bold text-gray-700 capitalize">{role}</p>
+                </div>
             </div>
         </aside>
     );

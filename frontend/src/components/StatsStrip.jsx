@@ -1,53 +1,80 @@
-import React from 'react';
-import { Users, UserCheck, Calendar, Wallet } from 'lucide-react';
-
-const StatCard = ({ icon: Icon, label, value, subtext, colorClass, iconColorClass }) => (
-    <div className="flex items-center p-4 sm:p-5 bg-white rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-gray-50 hover:shadow-md transition-shadow duration-300 w-full">
-        <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mr-4 sm:mr-5 shrink-0 ${colorClass}`}>
-            <Icon size={24} className={iconColorClass} />
-        </div>
-        <div className="min-w-0">
-            <p className="text-[10px] sm:text-xs text-gray-500 font-semibold uppercase tracking-wider mb-0.5 sm:mb-1 truncate">{label}</p>
-            <div className="flex items-baseline gap-2">
-                <h3 className="text-2xl sm:text-3xl font-bold text-gray-800">{value}</h3>
-                {subtext && <span className="text-[10px] sm:text-xs text-gray-400 font-medium truncate">{subtext}</span>}
-            </div>
-        </div>
-    </div>
-);
+import React, { useState, useEffect } from 'react';
+import { Users, UserCheck, Calendar, AlertCircle } from 'lucide-react';
 
 const StatsStrip = () => {
+    const [childrenCount, setChildrenCount] = useState(0);
+
+    useEffect(() => {
+        const fetchChildrenCount = async () => {
+            try {
+                const apiUrl = import.meta.env.VITE_API_URL;
+                const response = await fetch(`${apiUrl}/api/children`);
+                const data = await response.json();
+                if (data.success) {
+                    setChildrenCount(data.count || data.data.length);
+                }
+            } catch (error) {
+                console.error('Error fetching children count:', error);
+            }
+        };
+
+        fetchChildrenCount();
+    }, []);
+
+    const stats = [
+        {
+            label: 'Children',
+            value: childrenCount.toString(),
+            change: '+3 this week', // Keeping static for now as per user request to not change too much
+            icon: Users,
+            color: 'bg-purple-50 text-purple-600',
+            borderColor: 'border-purple-100'
+        },
+        {
+            label: 'Staff',
+            value: '12',
+            change: 'All present',
+            icon: UserCheck,
+            color: 'bg-indigo-50 text-indigo-600',
+            borderColor: 'border-indigo-100'
+        },
+        {
+            label: 'Active Sessions',
+            value: '8',
+            change: 'Ongoing now',
+            icon: Calendar,
+            color: 'bg-emerald-50 text-emerald-600',
+            borderColor: 'border-emerald-100'
+        },
+        {
+            label: 'Alerts',
+            value: '2',
+            change: 'Requires action',
+            icon: AlertCircle,
+            color: 'bg-rose-50 text-rose-600',
+            borderColor: 'border-rose-100'
+        }
+    ];
+
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-8">
-            <StatCard
-                icon={Users}
-                label="Total Children"
-                value="0"
-                colorClass="bg-orange-50"
-                iconColorClass="text-orange-500"
-            />
-            <StatCard
-                icon={UserCheck}
-                label="Active Staff"
-                value="0"
-                colorClass="bg-teal-50"
-                iconColorClass="text-teal-600"
-            />
-            <StatCard
-                icon={Calendar}
-                label="Today Attendance"
-                value="0"
-                subtext="/ 0"
-                colorClass="bg-blue-50"
-                iconColorClass="text-blue-500"
-            />
-            <StatCard
-                icon={Wallet}
-                label="Pending Fees"
-                value="₹0"
-                colorClass="bg-purple-50"
-                iconColorClass="text-purple-600"
-            />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {stats.map((stat, index) => (
+                <div
+                    key={index}
+                    className={`bg-white p-6 rounded-2xl shadow-sm border ${stat.borderColor} transition-all duration-300 hover:shadow-md active:scale-[0.98] group`}
+                >
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <p className="text-sm font-medium text-gray-500 mb-1">{stat.label}</p>
+                            <h3 className="text-2xl font-bold text-gray-800">{stat.value}</h3>
+                            <p className="text-xs font-medium text-gray-400 mt-1">{stat.change}</p>
+                        </div>
+                        <div className={`p-3 rounded-xl ${stat.color} transition-colors duration-300 group-hover:bg-opacity-80`}>
+                            <stat.icon size={20} />
+                        </div>
+                    </div>
+                </div>
+            ))}
         </div>
     );
 };

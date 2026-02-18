@@ -7,6 +7,7 @@ import StaffDashboard from './pages/StaffDashboard';
 import ParentDashboard from './pages/ParentDashboard';
 import Home from './pages/Home';
 import AddChild from './pages/AddChild';
+import Children from './pages/Children';
 
 function App() {
   return (
@@ -31,8 +32,9 @@ function App() {
                 <Route path="/admin/children/add" element={<AddChild />} />
                 <Route path="/staff/dashboard" element={<StaffDashboard />} />
                 <Route path="/parent/dashboard" element={<ParentDashboard />} />
-                {/* Placeholder routes for other links */}
-                <Route path="/children" element={<div className="p-8 text-gray-500 font-medium">Children Management (Coming Soon)</div>} />
+                {/* Real routes for links */}
+                <Route path="/children" element={<Children />} />
+                {/* Placeholder routes for remaining links */}
                 <Route path="/staff" element={<div className="p-8 text-gray-500 font-medium">Staff Management (Coming Soon)</div>} />
                 <Route path="/parents" element={<div className="p-8 text-gray-500 font-medium">Parents Module (Coming Soon)</div>} />
                 <Route path="/attendance" element={<div className="p-8 text-gray-500 font-medium">Attendance Module (Coming Soon)</div>} />

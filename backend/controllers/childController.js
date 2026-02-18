@@ -1,44 +1,104 @@
 const Child = require("../models/Child");
-const User = require("../models/User");
 
-// @desc    Add a new child
+// @desc    Register a new child
 // @route   POST /api/children
-// @access  Private/Admin
-const addChild = async (req, res) => {
+// @access  Public (or Private if auth middleware is added later)
+const registerChild = async (req, res) => {
     try {
         const child = await Child.create(req.body);
         res.status(201).json({
             success: true,
             data: child,
-            message: "Child added successfully",
+            message: "Child registered successfully",
         });
     } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: error.message || "Failed to add child",
-        });
+        console.error(error);
+        res.status(400).json({ success: false, message: error.message });
     }
 };
 
-// @desc    Get all staff (caretakers)
-// @route   GET /api/children/staff
-// @access  Private/Admin
-const getStaff = async (req, res) => {
+// @desc    Get all children
+// @route   GET /api/children
+// @access  Public
+const getChildren = async (req, res) => {
     try {
-        const staff = await User.find({ role: "staff" }).select("fullName _email");
+        const children = await Child.find({});
         res.status(200).json({
             success: true,
-            data: staff,
+            count: children.length,
+            data: children,
         });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: "Failed to fetch staff members",
+        console.error(error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
+// @desc    Get child by ID
+// @route   GET /api/children/:id
+// @access  Public
+const getChildById = async (req, res) => {
+    try {
+        const child = await Child.findById(req.params.id);
+
+        if (!child) {
+            return res.status(404).json({ success: false, message: "Child not found" });
+        }
+
+        res.status(200).json({ success: true, data: child });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
+// @desc    Update child
+// @route   PUT /api/children/:id
+// @access  Public
+const updateChild = async (req, res) => {
+    try {
+        let child = await Child.findById(req.params.id);
+
+        if (!child) {
+            return res.status(404).json({ success: false, message: "Child not found" });
+        }
+
+        child = await Child.findByIdAndUpdate(req.params.id, req.body, {
+            new: true,
+            runValidators: true,
         });
+
+        res.status(200).json({ success: true, data: child });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
+// @desc    Delete child
+// @route   DELETE /api/children/:id
+// @access  Public
+const deleteChild = async (req, res) => {
+    try {
+        const child = await Child.findById(req.params.id);
+
+        if (!child) {
+            return res.status(404).json({ success: false, message: "Child not found" });
+        }
+
+        await child.deleteOne();
+
+        res.status(200).json({ success: true, data: {}, message: "Child removed" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Server error" });
     }
 };
 
 module.exports = {
-    addChild,
-    getStaff,
+    registerChild,
+    getChildren,
+    getChildById,
+    updateChild,
+    deleteChild,
 };
