@@ -105,24 +105,7 @@ const AddChild = () => {
         emergencyContactNumber: '',
         allergies: '',
         medicalConditions: '',
-        caretaker: ''
     });
-
-    useEffect(() => {
-        const fetchStaff = async () => {
-            try {
-                const apiUrl = import.meta.env.VITE_API_URL;
-                const response = await fetch(`${apiUrl}/api/children/staff`);
-                const data = await response.json();
-                if (data.success) {
-                    setStaff(data.data);
-                }
-            } catch (err) {
-                console.error('Error fetching staff:', err);
-            }
-        };
-        fetchStaff();
-    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -396,18 +379,6 @@ const AddChild = () => {
                                 icon={Stethoscope}
                                 placeholder="Any chronic conditions (optional)"
                                 value={formData.medicalConditions}
-                                onChange={handleChange}
-                            />
-                        </div>
-                        <div className="pt-4 border-t border-gray-50">
-                            <InputField
-                                label="Assign Caretaker"
-                                name="caretaker"
-                                type="select"
-                                icon={Users}
-                                required
-                                options={staff.map(s => ({ label: s.fullName, value: s._id }))}
-                                value={formData.caretaker}
                                 onChange={handleChange}
                             />
                         </div>
