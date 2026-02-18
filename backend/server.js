@@ -3,6 +3,7 @@ const express = require("express");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
+const childRoutes = require("./routes/childRoutes");
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/children", childRoutes);
 
 // Database Connection
 connectDB();

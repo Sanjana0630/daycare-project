@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { UserPlus, UserCheck, CalendarPlus, CreditCard } from 'lucide-react';
 
 const ActionButton = ({ icon: Icon, label, color, onClick }) => (
@@ -14,6 +15,8 @@ const ActionButton = ({ icon: Icon, label, color, onClick }) => (
 );
 
 const QuickActions = () => {
+    const navigate = useNavigate();
+
     return (
         <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100">
             <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-4 sm:mb-6">Quick Actions</h3>
@@ -22,6 +25,7 @@ const QuickActions = () => {
                     icon={UserPlus}
                     label="Add Child"
                     color="bg-[var(--color-accent-peach)]"
+                    onClick={() => navigate('/admin/children/add')}
                 />
                 <ActionButton
                     icon={UserCheck}

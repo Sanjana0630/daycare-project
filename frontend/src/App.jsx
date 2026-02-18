@@ -5,11 +5,16 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import StaffDashboard from './pages/StaffDashboard';
 import ParentDashboard from './pages/ParentDashboard';
+import Home from './pages/Home';
+import AddChild from './pages/AddChild';
 
 function App() {
   return (
     <Router>
       <Routes>
+        {/* Public Landing Page */}
+        <Route path="/" element={<Home />} />
+
         {/* Public Authentication Routes - No DashboardLayout */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -20,8 +25,10 @@ function App() {
           element={
             <DashboardLayout>
               <Routes>
-                <Route path="/" element={<Dashboard />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+
                 <Route path="/admin/dashboard" element={<Dashboard />} />
+                <Route path="/admin/children/add" element={<AddChild />} />
                 <Route path="/staff/dashboard" element={<StaffDashboard />} />
                 <Route path="/parent/dashboard" element={<ParentDashboard />} />
                 {/* Placeholder routes for other links */}
