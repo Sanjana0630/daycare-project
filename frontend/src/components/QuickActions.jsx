@@ -31,6 +31,7 @@ const QuickActions = () => {
                     icon={UserCheck}
                     label="Add Staff"
                     color="bg-[var(--color-accent-mint)]"
+                    onClick={() => navigate('/admin/staff/add')}
                 />
                 <ActionButton
                     icon={CalendarPlus}

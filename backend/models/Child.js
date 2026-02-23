@@ -48,9 +48,13 @@ const childSchema = new mongoose.Schema({
     medicalConditions: {
         type: String,
     },
-    caretaker: {
+    assignedTeacher: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: "Staff",
+    },
+    assignedCaretaker: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Staff",
     },
 }, { timestamps: true });
 

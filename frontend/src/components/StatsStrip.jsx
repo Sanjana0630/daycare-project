@@ -3,22 +3,32 @@ import { Users, UserCheck, Calendar, AlertCircle } from 'lucide-react';
 
 const StatsStrip = () => {
     const [childrenCount, setChildrenCount] = useState(0);
+    const [staffCount, setStaffCount] = useState(0);
 
     useEffect(() => {
-        const fetchChildrenCount = async () => {
+        const fetchCounts = async () => {
             try {
                 const apiUrl = import.meta.env.VITE_API_URL;
-                const response = await fetch(`${apiUrl}/api/children`);
-                const data = await response.json();
-                if (data.success) {
-                    setChildrenCount(data.count || data.data.length);
+
+                // Fetch Children Count
+                const childrenResponse = await fetch(`${apiUrl}/api/children`);
+                const childrenData = await childrenResponse.json();
+                if (childrenData.success) {
+                    setChildrenCount(childrenData.count || childrenData.data.length);
+                }
+
+                // Fetch Staff Count
+                const staffResponse = await fetch(`${apiUrl}/api/staff`);
+                const staffData = await staffResponse.json();
+                if (staffData.success) {
+                    setStaffCount(staffData.count || staffData.data.length);
                 }
             } catch (error) {
-                console.error('Error fetching children count:', error);
+                console.error('Error fetching counts:', error);
             }
         };
 
-        fetchChildrenCount();
+        fetchCounts();
     }, []);
 
     const stats = [
@@ -32,8 +42,8 @@ const StatsStrip = () => {
         },
         {
             label: 'Staff',
-            value: '12',
-            change: 'All present',
+            value: staffCount.toString(),
+            change: 'Teachers & Admin',
             icon: UserCheck,
             color: 'bg-indigo-50 text-indigo-600',
             borderColor: 'border-indigo-100'

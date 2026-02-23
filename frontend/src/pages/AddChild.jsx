@@ -87,7 +87,8 @@ const TextAreaField = ({ label, name, icon: Icon, placeholder, value, onChange }
 const AddChild = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
-    const [staff, setStaff] = useState([]);
+    const [teachers, setTeachers] = useState([]);
+    const [caretakers, setCaretakers] = useState([]);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [age, setAge] = useState('');
@@ -105,7 +106,29 @@ const AddChild = () => {
         emergencyContactNumber: '',
         allergies: '',
         medicalConditions: '',
+        assignedTeacher: '',
+        assignedCaretaker: '',
     });
+
+    useEffect(() => {
+        const fetchStaff = async () => {
+            try {
+                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005';
+                const response = await fetch(`${apiUrl}/api/staff`);
+                const data = await response.json();
+
+                if (data.success) {
+                    const staffList = data.data;
+                    setTeachers(staffList.filter(s => s.role === 'Teacher'));
+                    setCaretakers(staffList.filter(s => s.role === 'Caretaker'));
+                }
+            } catch (error) {
+                console.error('Error fetching staff:', error);
+            }
+        };
+
+        fetchStaff();
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -188,25 +211,6 @@ const AddChild = () => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => navigate('/children')}
-                        className="px-6 py-2.5 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all flex items-center gap-2"
-                    >
-                        <X size={18} />
-                        Cancel
-                    </button>
-                    <button
-                        onClick={handleSubmit}
-                        disabled={loading}
-                        className="px-6 py-2.5 bg-purple-600 text-white font-semibold rounded-xl shadow-lg shadow-purple-200 hover:bg-purple-700 transition-all flex items-center gap-2 disabled:opacity-50"
-                    >
-                        {loading ? 'Saving...' : (
-                            <>
-                                <Save size={18} />
-                                Save Child
-                            </>
-                        )}
-                    </button>
                 </div>
             </div>
 
@@ -382,24 +386,49 @@ const AddChild = () => {
                                 onChange={handleChange}
                             />
                         </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-50">
+                            <InputField
+                                label="Assign Teacher"
+                                name="assignedTeacher"
+                                type="select"
+                                icon={User}
+                                options={teachers.map(t => ({ label: t.name, value: t._id }))}
+                                value={formData.assignedTeacher}
+                                onChange={handleChange}
+                            />
+                            <InputField
+                                label="Assign Caretaker"
+                                name="assignedCaretaker"
+                                type="select"
+                                icon={Users}
+                                options={caretakers.map(c => ({ label: c.name, value: c._id }))}
+                                value={formData.assignedCaretaker}
+                                onChange={handleChange}
+                            />
+                        </div>
                     </div>
                 </div>
 
-                {/* Form Actions (Mobile Bottom Bar) */}
-                <div className="flex md:hidden items-center gap-3 pt-6">
+                {/* Form Actions */}
+                <div className="flex items-center justify-end gap-3 pt-6">
                     <button
                         type="button"
                         onClick={() => navigate('/children')}
-                        className="flex-1 py-3 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all"
+                        className="px-6 py-2.5 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all"
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
                         disabled={loading}
-                        className="flex-1 py-3 bg-purple-600 text-white font-semibold rounded-xl shadow-lg shadow-purple-200 hover:bg-purple-700 transition-all disabled:opacity-50"
+                        className="px-8 py-2.5 bg-purple-600 text-white font-semibold rounded-xl shadow-lg shadow-purple-200 hover:bg-purple-700 transition-all disabled:opacity-50 flex items-center gap-2"
                     >
-                        {loading ? 'Saving...' : 'Save Child'}
+                        {loading ? 'Saving...' : (
+                            <>
+                                <Save size={18} />
+                                Save Child
+                            </>
+                        )}
                     </button>
                 </div>
             </form>

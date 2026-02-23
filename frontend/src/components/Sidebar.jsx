@@ -23,10 +23,28 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         navigate('/login');
     };
 
+    const [staffCount, setStaffCount] = React.useState(0);
+
+    React.useEffect(() => {
+        const fetchStaffCount = async () => {
+            try {
+                const apiUrl = import.meta.env.VITE_API_URL;
+                const response = await fetch(`${apiUrl}/api/staff`);
+                const data = await response.json();
+                if (data.success) {
+                    setStaffCount(data.count || data.data.length);
+                }
+            } catch (error) {
+                console.error('Error fetching staff count:', error);
+            }
+        };
+        fetchStaffCount();
+    }, []);
+
     const navItems = [
         { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
         { name: 'Children', icon: Users, path: '/children' },
-        { name: 'Staff', icon: UserSquare2, path: '/staff' },
+        { name: 'Staff', icon: UserSquare2, path: '/staff', badge: staffCount },
         { name: 'Parents', icon: UserCircle2, path: '/parents' },
         { name: 'Attendance', icon: CalendarCheck, path: '/attendance' },
         { name: 'Fees', icon: CreditCard, path: '/fees' },
@@ -65,14 +83,21 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                         to={item.path}
                         onClick={() => setIsOpen(false)}
                         className={({ isActive }) =>
-                            `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${isActive
+                            `flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${isActive
                                 ? 'bg-purple-50 text-purple-700 shadow-sm border border-purple-100'
                                 : 'text-gray-500 hover:bg-gray-50 hover:text-purple-600 border border-transparent'
                             }`
                         }
                     >
-                        <item.icon size={18} />
-                        {item.name}
+                        <div className="flex items-center gap-3">
+                            <item.icon size={18} />
+                            {item.name}
+                        </div>
+                        {item.badge > 0 && (
+                            <span className="px-2 py-0.5 text-[10px] font-bold bg-purple-100 text-purple-600 rounded-full">
+                                {item.badge}
+                            </span>
+                        )}
                     </NavLink>
                 ))}
             </nav>
