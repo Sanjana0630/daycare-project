@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import HeroSection from '../components/HeroSection';
 import StatsStrip from '../components/StatsStrip';
 import QuickActions from '../components/QuickActions';

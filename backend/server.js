@@ -4,6 +4,7 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const childRoutes = require("./routes/childRoutes");
 const staffRoutes = require("./routes/staffRoutes");
+const parentRoutes = require("./routes/parentRoutes");
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/children", childRoutes);
 app.use("/api/staff", staffRoutes);
+app.use("/api/parent", parentRoutes);
 
 // Database Connection
 connectDB();

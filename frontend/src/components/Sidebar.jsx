@@ -11,7 +11,11 @@ import {
     Settings,
     LogOut,
     X,
-    Baby
+    Baby,
+    Home,
+    Calendar,
+    Activity,
+    Bell
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
@@ -28,7 +32,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     React.useEffect(() => {
         const fetchStaffCount = async () => {
             try {
-                const apiUrl = import.meta.env.VITE_API_URL;
+                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005';
                 const response = await fetch(`${apiUrl}/api/staff`);
                 const data = await response.json();
                 if (data.success) {
@@ -38,10 +42,12 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 console.error('Error fetching staff count:', error);
             }
         };
-        fetchStaffCount();
-    }, []);
+        if (role !== 'parent') {
+            fetchStaffCount();
+        }
+    }, [role]);
 
-    const navItems = [
+    const adminNavItems = [
         { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
         { name: 'Children', icon: Users, path: '/children' },
         { name: 'Staff', icon: UserSquare2, path: '/staff', badge: staffCount },
@@ -51,6 +57,18 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         { name: 'Reports', icon: BarChart3, path: '/reports' },
         { name: 'Settings', icon: Settings, path: '/settings' },
     ];
+
+    const parentNavItems = [
+        { name: 'Dashboard', icon: Home, path: '/parent/dashboard' },
+        { name: 'My Child', icon: Baby, path: '/parent/child' },
+        { name: 'Attendance', icon: Calendar, path: '/parent/attendance' },
+        { name: 'Activities', icon: Activity, path: '/parent/activities' },
+        { name: 'Fees', icon: CreditCard, path: '/parent/fees' },
+        { name: 'Notifications', icon: Bell, path: '/parent/notifications' },
+        { name: 'Settings', icon: Settings, path: '/parent/settings' },
+    ];
+
+    const navItems = role === 'parent' ? parentNavItems : adminNavItems;
 
     return (
         <aside

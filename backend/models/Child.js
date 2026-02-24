@@ -56,6 +56,10 @@ const childSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Staff",
     },
+    parent: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+    },
 }, { timestamps: true });
 
 const Child = mongoose.model("Child", childSchema);

@@ -86,4 +86,14 @@ const registerUser = async (req, res) => {
     }
 };
 
-module.exports = { loginUser, registerUser };
+const getParents = async (req, res) => {
+    try {
+        const parents = await User.find({ role: "parent" }).select("_id fullName email");
+        res.status(200).json({ success: true, data: parents });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+module.exports = { loginUser, registerUser, getParents };

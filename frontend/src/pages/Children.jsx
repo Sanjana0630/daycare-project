@@ -16,8 +16,10 @@ import {
     Mail,
     ShieldAlert,
     X,
-    Save
+    Save,
+    Link as LinkIcon
 } from 'lucide-react';
+import { BASE_URL } from '../config';
 
 const Children = () => {
     const navigate = useNavigate();
@@ -31,16 +33,29 @@ const Children = () => {
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [parents, setParents] = useState([]);
 
     useEffect(() => {
         fetchChildren();
+        fetchParents();
     }, []);
+
+    const fetchParents = async () => {
+        try {
+            const response = await fetch(`${BASE_URL}/api/auth/parents`);
+            const data = await response.json();
+            if (data.success) {
+                setParents(data.data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch parents');
+        }
+    };
 
     const fetchChildren = async () => {
         setLoading(true);
         try {
-            const apiUrl = import.meta.env.VITE_API_URL;
-            const response = await fetch(`${apiUrl}/api/children`);
+            const response = await fetch(`${BASE_URL}/api/children`);
             const data = await response.json();
             if (data.success) {
                 setChildren(data.data);
@@ -56,8 +71,7 @@ const Children = () => {
 
     const handleDelete = async () => {
         try {
-            const apiUrl = import.meta.env.VITE_API_URL;
-            const response = await fetch(`${apiUrl}/api/children/${selectedChild._id}`, {
+            const response = await fetch(`${BASE_URL}/api/children/${selectedChild._id}`, {
                 method: 'DELETE',
             });
             const data = await response.json();
@@ -76,8 +90,7 @@ const Children = () => {
     const handleUpdate = async (e) => {
         e.preventDefault();
         try {
-            const apiUrl = import.meta.env.VITE_API_URL;
-            const response = await fetch(`${apiUrl}/api/children/${selectedChild._id}`, {
+            const response = await fetch(`${BASE_URL}/api/children/${selectedChild._id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(selectedChild),
@@ -182,7 +195,19 @@ const Children = () => {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="text-gray-700 font-medium">{child.parentName}</div>
-                                        <div className="text-xs text-gray-400">{child.parentPhone}</div>
+                                        <div className="flex items-center gap-1 mt-0.5">
+                                            {child.parent ? (
+                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-50 text-green-600 text-[10px] font-bold rounded-md border border-green-100" title="Linked to parent account">
+                                                    <LinkIcon size={10} />
+                                                    Linked
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-50 text-amber-600 text-[10px] font-bold rounded-md border border-amber-100" title="Not linked to account">
+                                                    Unlinked
+                                                </span>
+                                            )}
+                                            <span className="text-xs text-gray-400">{child.parentPhone}</span>
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className="px-2 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-lg border border-red-100">
@@ -324,6 +349,19 @@ const Children = () => {
                                     onChange={(e) => setSelectedChild({ ...selectedChild, parentPhone: e.target.value })}
                                     required
                                 />
+                            </div>
+                            <div className="space-y-1.5 text-left">
+                                <label className="text-sm font-medium text-gray-700">Link to Parent Account</label>
+                                <select
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-xl"
+                                    value={selectedChild.parent || ''}
+                                    onChange={(e) => setSelectedChild({ ...selectedChild, parent: e.target.value })}
+                                >
+                                    <option value="">Select Parent Account</option>
+                                    {parents.map(p => (
+                                        <option key={p._id} value={p._id}>{p.fullName} ({p.email})</option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
                         <div className="p-6 bg-gray-50 flex items-center justify-end gap-3">

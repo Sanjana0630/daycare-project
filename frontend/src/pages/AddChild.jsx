@@ -13,6 +13,7 @@ import {
     Save,
     X
 } from 'lucide-react';
+import { BASE_URL } from '../config';
 
 const SectionTitle = ({ icon: Icon, title }) => (
     <div className="flex items-center gap-2 mb-6 pb-2 border-b border-gray-100">
@@ -108,26 +109,37 @@ const AddChild = () => {
         medicalConditions: '',
         assignedTeacher: '',
         assignedCaretaker: '',
+        parent: '',
     });
 
-    useEffect(() => {
-        const fetchStaff = async () => {
-            try {
-                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005';
-                const response = await fetch(`${apiUrl}/api/staff`);
-                const data = await response.json();
+    const [parents, setParents] = useState([]);
 
-                if (data.success) {
-                    const staffList = data.data;
+    useEffect(() => {
+        const fetchStaffAndParents = async () => {
+            try {
+                const [staffRes, parentRes] = await Promise.all([
+                    fetch(`${BASE_URL}/api/staff`),
+                    fetch(`${BASE_URL}/api/auth/parents`)
+                ]);
+
+                const staffData = await staffRes.json();
+                const parentData = await parentRes.json();
+
+                if (staffData.success) {
+                    const staffList = staffData.data;
                     setTeachers(staffList.filter(s => s.role === 'Teacher'));
                     setCaretakers(staffList.filter(s => s.role === 'Caretaker'));
                 }
+
+                if (parentData.success) {
+                    setParents(parentData.data);
+                }
             } catch (error) {
-                console.error('Error fetching staff:', error);
+                console.error('Error fetching data:', error);
             }
         };
 
-        fetchStaff();
+        fetchStaffAndParents();
     }, []);
 
     const handleChange = (e) => {
@@ -168,8 +180,7 @@ const AddChild = () => {
         setSuccess('');
 
         try {
-            const apiUrl = import.meta.env.VITE_API_URL;
-            const response = await fetch(`${apiUrl}/api/children`, {
+            const response = await fetch(`${BASE_URL}/api/children`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -339,6 +350,15 @@ const AddChild = () => {
                             placeholder="Enter phone number"
                             required
                             value={formData.parentPhone}
+                            onChange={handleChange}
+                        />
+                        <InputField
+                            label="Link to Parent Account"
+                            name="parent"
+                            type="select"
+                            icon={User}
+                            options={parents.map(p => ({ label: `${p.fullName} (${p.email})`, value: p._id }))}
+                            value={formData.parent}
                             onChange={handleChange}
                         />
                         <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-50">
