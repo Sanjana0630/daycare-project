@@ -26,7 +26,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
     const handleLogout = () => {
         localStorage.clear();
-        navigate('/login');
+        navigate('/login', { replace: true });
     };
 
     const [staffCount, setStaffCount] = React.useState(0);

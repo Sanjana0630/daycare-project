@@ -15,15 +15,25 @@ import StaffAttendance from './pages/StaffAttendance';
 import ChildrenAttendance from './pages/ChildrenAttendance';
 
 // Security Guards
-const AdminGuard = ({ children }) => {
-  const role = localStorage.getItem('role');
-  if (role !== 'admin') return <Navigate to="/dashboard" replace />;
+const ProtectedRoute = ({ children }) => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
   return children;
 };
 
-const ParentGuard = ({ children }) => {
+const RoleBasedRoute = ({ children, allowedRoles }) => {
   const role = localStorage.getItem('role');
-  if (role !== 'parent') return <Navigate to="/dashboard" replace />;
+
+  if (!allowedRoles.includes(role)) {
+    // Redirect to respective dashboard based on role if unauthorized
+    const redirectPath = role === 'admin' ? '/dashboard' :
+      role === 'staff' ? '/staff/dashboard' :
+        role === 'parent' ? '/parent/dashboard' : '/login';
+    return <Navigate to={redirectPath} replace />;
+  }
+
   return children;
 };
 
@@ -52,43 +62,45 @@ function App() {
         <Route
           path="/*"
           element={
-            <DashboardLayout>
-              <Routes>
-                {/* Fallback Dashboard */}
-                <Route path="/dashboard" element={<Dashboard />} />
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Routes>
+                  {/* Fallback Dashboard - Visible to all logged in users */}
+                  <Route path="/dashboard" element={<Dashboard />} />
 
-                {/* Admin/Staff Specific Routes */}
-                <Route path="/admin/dashboard" element={<AdminGuard><Dashboard /></AdminGuard>} />
-                <Route path="/admin/children/add" element={<AdminGuard><AddChild /></AdminGuard>} />
-                <Route path="/children" element={<AdminGuard><Children /></AdminGuard>} />
-                <Route path="/staff" element={<AdminGuard><Staff /></AdminGuard>} />
-                <Route path="/admin/staff" element={<AdminGuard><Staff /></AdminGuard>} />
-                <Route path="/admin/staff/add" element={<AdminGuard><AddStaff /></AdminGuard>} />
-                <Route path="/admin/staff/edit/:id" element={<AdminGuard><EditStaff /></AdminGuard>} />
-                <Route path="/admin/attendance/staff" element={<AdminGuard><StaffAttendance /></AdminGuard>} />
-                <Route path="/admin/attendance/children" element={<AdminGuard><ChildrenAttendance /></AdminGuard>} />
-                <Route path="/parents" element={<AdminGuard><div className="p-8 text-gray-500 font-medium">Parents Management</div></AdminGuard>} />
-                <Route path="/attendance" element={<AdminGuard><div className="p-8 text-gray-500 font-medium">Admin Attendance</div></AdminGuard>} />
-                <Route path="/fees" element={<AdminGuard><div className="p-8 text-gray-500 font-medium">Admin Fees</div></AdminGuard>} />
-                <Route path="/reports" element={<AdminGuard><div className="p-8 text-gray-500 font-medium">Admin Reports</div></AdminGuard>} />
-                <Route path="/settings" element={<AdminGuard><div className="p-8 text-gray-500 font-medium">Admin Settings</div></AdminGuard>} />
+                  {/* Admin Specific Routes */}
+                  <Route path="/admin/dashboard" element={<RoleBasedRoute allowedRoles={["admin"]}><Dashboard /></RoleBasedRoute>} />
+                  <Route path="/admin/children/add" element={<RoleBasedRoute allowedRoles={["admin"]}><AddChild /></RoleBasedRoute>} />
+                  <Route path="/children" element={<RoleBasedRoute allowedRoles={["admin"]}><Children /></RoleBasedRoute>} />
+                  <Route path="/staff" element={<RoleBasedRoute allowedRoles={["admin"]}><Staff /></RoleBasedRoute>} />
+                  <Route path="/admin/staff" element={<RoleBasedRoute allowedRoles={["admin"]}><Staff /></RoleBasedRoute>} />
+                  <Route path="/admin/staff/add" element={<RoleBasedRoute allowedRoles={["admin"]}><AddStaff /></RoleBasedRoute>} />
+                  <Route path="/admin/staff/edit/:id" element={<RoleBasedRoute allowedRoles={["admin"]}><EditStaff /></RoleBasedRoute>} />
+                  <Route path="/admin/attendance/staff" element={<RoleBasedRoute allowedRoles={["admin"]}><StaffAttendance /></RoleBasedRoute>} />
+                  <Route path="/admin/attendance/children" element={<RoleBasedRoute allowedRoles={["admin"]}><ChildrenAttendance /></RoleBasedRoute>} />
+                  <Route path="/parents" element={<RoleBasedRoute allowedRoles={["admin"]}><div className="p-8 text-gray-500 font-medium">Parents Management</div></RoleBasedRoute>} />
+                  <Route path="/attendance" element={<RoleBasedRoute allowedRoles={["admin"]}><div className="p-8 text-gray-500 font-medium">Admin Attendance</div></RoleBasedRoute>} />
+                  <Route path="/fees" element={<RoleBasedRoute allowedRoles={["admin"]}><div className="p-8 text-gray-500 font-medium">Admin Fees</div></RoleBasedRoute>} />
+                  <Route path="/reports" element={<RoleBasedRoute allowedRoles={["admin"]}><div className="p-8 text-gray-500 font-medium">Admin Reports</div></RoleBasedRoute>} />
+                  <Route path="/settings" element={<RoleBasedRoute allowedRoles={["admin"]}><div className="p-8 text-gray-500 font-medium">Admin Settings</div></RoleBasedRoute>} />
 
-                {/* Staff Dashboard */}
-                <Route path="/staff/dashboard" element={<StaffDashboard />} />
+                  {/* Staff Dashboard */}
+                  <Route path="/staff/dashboard" element={<RoleBasedRoute allowedRoles={["staff", "admin"]}><StaffDashboard /></RoleBasedRoute>} />
 
-                {/* Parent Specific Routes */}
-                <Route path="/parent/dashboard" element={<ParentGuard><ParentDashboard /></ParentGuard>} />
-                <Route path="/parent/child" element={<ParentGuard><Placeholder title="My Child Details" /></ParentGuard>} />
-                <Route path="/parent/attendance" element={<ParentGuard><Placeholder title="Attendance History" /></ParentGuard>} />
-                <Route path="/parent/activities" element={<ParentGuard><Placeholder title="Daily Activities" /></ParentGuard>} />
-                <Route path="/parent/fees" element={<ParentGuard><Placeholder title="Fee Records" /></ParentGuard>} />
-                <Route path="/parent/notifications" element={<ParentGuard><Placeholder title="Notifications" /></ParentGuard>} />
-                <Route path="/parent/settings" element={<ParentGuard><Placeholder title="Parent Settings" /></ParentGuard>} />
+                  {/* Parent Specific Routes */}
+                  <Route path="/parent/dashboard" element={<RoleBasedRoute allowedRoles={["parent"]}><ParentDashboard /></RoleBasedRoute>} />
+                  <Route path="/parent/child" element={<RoleBasedRoute allowedRoles={["parent"]}><Placeholder title="My Child Details" /></RoleBasedRoute>} />
+                  <Route path="/parent/attendance" element={<RoleBasedRoute allowedRoles={["parent"]}><Placeholder title="Attendance History" /></RoleBasedRoute>} />
+                  <Route path="/parent/activities" element={<RoleBasedRoute allowedRoles={["parent"]}><Placeholder title="Daily Activities" /></RoleBasedRoute>} />
+                  <Route path="/parent/fees" element={<RoleBasedRoute allowedRoles={["parent"]}><Placeholder title="Fee Records" /></RoleBasedRoute>} />
+                  <Route path="/parent/notifications" element={<RoleBasedRoute allowedRoles={["parent"]}><Placeholder title="Notifications" /></RoleBasedRoute>} />
+                  <Route path="/parent/settings" element={<RoleBasedRoute allowedRoles={["parent"]}><Placeholder title="Parent Settings" /></RoleBasedRoute>} />
 
-                {/* Catch-all or Redirects */}
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
-              </Routes>
-            </DashboardLayout>
+                  {/* Catch-all or Redirects */}
+                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                </Routes>
+              </DashboardLayout>
+            </ProtectedRoute>
           }
         />
       </Routes>
