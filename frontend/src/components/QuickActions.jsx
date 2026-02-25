@@ -35,8 +35,9 @@ const QuickActions = () => {
                 />
                 <ActionButton
                     icon={CalendarPlus}
-                    label="Mark Attendance"
+                    label="Mark Staff Attendance"
                     color="bg-[var(--color-accent-sky)]"
+                    onClick={() => navigate('/admin/attendance/staff')}
                 />
                 <ActionButton
                     icon={CreditCard}

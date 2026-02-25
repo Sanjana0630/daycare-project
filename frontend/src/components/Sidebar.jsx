@@ -15,7 +15,9 @@ import {
     Home,
     Calendar,
     Activity,
-    Bell
+    Bell,
+    ChevronDown,
+    ChevronUp
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
@@ -23,11 +25,15 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     const role = localStorage.getItem('role') || 'admin';
 
     const handleLogout = () => {
-        localStorage.clear();
-        navigate('/login');
+        localStorage.removeItem('token');
+        localStorage.removeItem('role');
+        localStorage.removeItem('user');
+        // Use replace: true to prevent back button from returning to the dashboard
+        navigate('/login', { replace: true });
     };
 
     const [staffCount, setStaffCount] = React.useState(0);
+    const [isAttendanceOpen, setIsAttendanceOpen] = React.useState(false);
 
     React.useEffect(() => {
         const fetchStaffCount = async () => {
@@ -52,7 +58,16 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         { name: 'Children', icon: Users, path: '/children' },
         { name: 'Staff', icon: UserSquare2, path: '/staff', badge: staffCount },
         { name: 'Parents', icon: UserCircle2, path: '/parents' },
-        { name: 'Attendance', icon: CalendarCheck, path: '/attendance' },
+        {
+            name: 'Attendance',
+            icon: CalendarCheck,
+            path: '/attendance',
+            hasSubmenu: true,
+            submenus: [
+                { name: 'Children Attendance', path: '/admin/attendance/children' },
+                { name: 'Staff Attendance', path: '/admin/attendance/staff' }
+            ]
+        },
         { name: 'Fees', icon: CreditCard, path: '/fees' },
         { name: 'Reports', icon: BarChart3, path: '/reports' },
         { name: 'Settings', icon: Settings, path: '/settings' },
@@ -94,30 +109,72 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             </div>
 
             {/* Navigation Links */}
-            <nav className="flex-1 px-4 py-6 space-y-1">
-                {navItems.map((item) => (
-                    <NavLink
-                        key={item.name}
-                        to={item.path}
-                        onClick={() => setIsOpen(false)}
-                        className={({ isActive }) =>
-                            `flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${isActive
-                                ? 'bg-purple-50 text-purple-700 shadow-sm border border-purple-100'
-                                : 'text-gray-500 hover:bg-gray-50 hover:text-purple-600 border border-transparent'
-                            }`
-                        }
-                    >
-                        <div className="flex items-center gap-3">
-                            <item.icon size={18} />
-                            {item.name}
-                        </div>
-                        {item.badge > 0 && (
-                            <span className="px-2 py-0.5 text-[10px] font-bold bg-purple-100 text-purple-600 rounded-full">
-                                {item.badge}
-                            </span>
-                        )}
-                    </NavLink>
-                ))}
+            <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+                {navItems.map((item) => {
+                    // Only show Attendance with submenus for Admin
+                    if (item.name === 'Attendance' && item.hasSubmenu && role !== 'admin') {
+                        return null;
+                    }
+
+                    if (item.hasSubmenu) {
+                        return (
+                            <div key={item.name} className="space-y-1">
+                                <button
+                                    onClick={() => setIsAttendanceOpen(!isAttendanceOpen)}
+                                    className={`flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 text-gray-500 hover:bg-gray-50 hover:text-purple-600 border border-transparent`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <item.icon size={18} />
+                                        {item.name}
+                                    </div>
+                                    {isAttendanceOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                </button>
+                                {isAttendanceOpen && (
+                                    <div className="pl-10 space-y-1 animate-in slide-in-from-top-2 duration-200">
+                                        {item.submenus.map((sub) => (
+                                            <NavLink
+                                                key={sub.name}
+                                                to={sub.path}
+                                                onClick={() => setIsOpen(false)}
+                                                className={({ isActive }) =>
+                                                    `block px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${isActive
+                                                        ? 'text-purple-700 bg-purple-50 font-bold'
+                                                        : 'text-gray-400 hover:text-purple-600 hover:bg-gray-50'
+                                                    }`
+                                                }
+                                            >
+                                                {sub.name}
+                                            </NavLink>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    }
+                    return (
+                        <NavLink
+                            key={item.name}
+                            to={item.path}
+                            onClick={() => setIsOpen(false)}
+                            className={({ isActive }) =>
+                                `flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${isActive
+                                    ? 'bg-purple-50 text-purple-700 shadow-sm border border-purple-100'
+                                    : 'text-gray-500 hover:bg-gray-50 hover:text-purple-600 border border-transparent'
+                                }`
+                            }
+                        >
+                            <div className="flex items-center gap-3">
+                                <item.icon size={18} />
+                                {item.name}
+                            </div>
+                            {item.badge > 0 && (
+                                <span className="px-2 py-0.5 text-[10px] font-bold bg-purple-100 text-purple-600 rounded-full">
+                                    {item.badge}
+                                </span>
+                            )}
+                        </NavLink>
+                    );
+                })}
             </nav>
 
             {/* Logout Button */}
