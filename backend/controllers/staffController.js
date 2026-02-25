@@ -97,10 +97,111 @@ const deleteStaff = async (req, res) => {
     }
 };
 
+const getStaffChildren = async (req, res) => {
+    try {
+        const staffMember = await Staff.findOne({ email: req.user.email });
+        if (!staffMember) {
+            return res.status(404).json({ success: false, message: "Staff record not found" });
+        }
+
+        const Child = require("../models/Child");
+        const children = await Child.find({
+            $or: [
+                { assignedTeacher: staffMember._id },
+                { assignedCaretaker: staffMember._id }
+            ]
+        });
+
+        res.status(200).json({ success: true, count: children.length, data: children });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const markChildAttendance = async (req, res) => {
+    try {
+        const { childId, status, date, remarks, checkIn, checkOut } = req.body;
+        const Attendance = require("../models/Attendance");
+
+        const attendanceDate = new Date(date || new Date());
+        attendanceDate.setHours(0, 0, 0, 0);
+
+        const attendance = await Attendance.findOneAndUpdate(
+            { child: childId, date: attendanceDate },
+            { status, remarks, checkIn, checkOut },
+            { new: true, upsert: true }
+        );
+
+        res.status(200).json({ success: true, data: attendance });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const addStaffActivity = async (req, res) => {
+    try {
+        const Activity = require("../models/Activity");
+        const activity = await Activity.create(req.body);
+        res.status(201).json({ success: true, data: activity });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const getStaffDashboardSummary = async (req, res) => {
+    try {
+        const staffMember = await Staff.findOne({ email: req.user.email });
+        if (!staffMember) {
+            return res.status(404).json({ success: false, message: "Staff record not found" });
+        }
+
+        const Child = require("../models/Child");
+        const Attendance = require("../models/Attendance");
+        const Activity = require("../models/Activity");
+
+        const assignedChildren = await Child.find({
+            $or: [
+                { assignedTeacher: staffMember._id },
+                { assignedCaretaker: staffMember._id }
+            ]
+        });
+
+        const childrenIds = assignedChildren.map(c => c._id);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const attendanceToday = await Attendance.find({
+            child: { $in: childrenIds },
+            date: today
+        });
+
+        const activitiesToday = await Activity.countDocuments({
+            child: { $in: childrenIds },
+            createdAt: { $gt: today }
+        });
+
+        res.status(200).json({
+            success: true,
+            data: {
+                totalChildren: assignedChildren.length,
+                presentToday: attendanceToday.filter(a => a.status === 'Present').length,
+                absentToday: attendanceToday.filter(a => a.status === 'Absent').length,
+                activitiesToday
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 module.exports = {
     registerStaff,
     getStaffMembers,
     getStaffById,
     updateStaff,
     deleteStaff,
+    getStaffChildren,
+    markChildAttendance,
+    addStaffActivity,
+    getStaffDashboardSummary
 };

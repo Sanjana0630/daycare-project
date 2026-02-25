@@ -13,6 +13,18 @@ const activitySchema = new mongoose.Schema({
     description: {
         type: String,
     },
+    meals: {
+        type: String,
+    },
+    napTime: {
+        type: String,
+    },
+    healthNotes: {
+        type: String,
+    },
+    behaviorNotes: {
+        type: String,
+    },
     timestamp: {
         type: Date,
         default: Date.now,

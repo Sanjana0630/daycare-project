@@ -70,6 +70,15 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         { name: 'Settings', icon: Settings, path: '/settings' },
     ];
 
+    const staffNavItems = [
+        { name: 'Dashboard', icon: LayoutDashboard, path: '/staff/dashboard' },
+        { name: 'My Children', icon: Users, path: '/staff/my-children' },
+        { name: 'Attendance', icon: CalendarCheck, path: '/staff/attendance' },
+        { name: 'Activities', icon: Activity, path: '/staff/activities' },
+        { name: 'Notifications', icon: Bell, path: '/staff/notifications' },
+        { name: 'Settings', icon: Settings, path: '/staff/settings' },
+    ];
+
     const parentNavItems = [
         { name: 'Dashboard', icon: Home, path: '/parent/dashboard' },
         { name: 'My Child', icon: Baby, path: '/parent/child' },
@@ -80,7 +89,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         { name: 'Settings', icon: Settings, path: '/parent/settings' },
     ];
 
-    const navItems = role === 'parent' ? parentNavItems : adminNavItems;
+    const navItems = role === 'parent' ? parentNavItems : role === 'staff' ? staffNavItems : adminNavItems;
 
     return (
         <aside
