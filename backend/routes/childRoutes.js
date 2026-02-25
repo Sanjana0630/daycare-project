@@ -8,15 +8,13 @@ const {
     deleteChild,
 } = require("../controllers/childController");
 
-const { protect, authorize } = require("../middleware/authMiddleware");
-
 router.route("/")
-    .post(protect, authorize("admin"), registerChild)
-    .get(protect, authorize("admin"), getChildren);
+    .post(registerChild)
+    .get(getChildren);
 
 router.route("/:id")
-    .get(protect, authorize("admin"), getChildById)
-    .put(protect, authorize("admin"), updateChild)
-    .delete(protect, authorize("admin"), deleteChild);
+    .get(getChildById)
+    .put(updateChild)
+    .delete(deleteChild);
 
 module.exports = router;

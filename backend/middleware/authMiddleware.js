@@ -15,10 +15,6 @@ const protect = async (req, res, next) => {
                 req.user = await User.findById(decoded.id).select("-password");
             }
 
-            if (!req.user) {
-                return res.status(401).json({ message: "Not authorized, user not found" });
-            }
-
             next();
         } catch (error) {
             console.error(error);
@@ -31,22 +27,11 @@ const protect = async (req, res, next) => {
     }
 };
 
-// Generic authorize middleware
-const authorize = (...roles) => {
-    return (req, res, next) => {
-        if (!req.user || !roles.includes(req.user.role)) {
-            return res.status(403).json({ message: `Role (${req.user ? req.user.role : 'none'}) is not authorized to access this route` });
-        }
-        next();
-    };
-};
-
-// Legacy role middlewares (kept for compatibility)
 const parent = (req, res, next) => {
     if (req.user && req.user.role === "parent") {
         next();
     } else {
-        res.status(403).json({ message: "Not authorized as a parent" });
+        res.status(401).json({ message: "Not authorized as a parent" });
     }
 };
 
@@ -54,8 +39,8 @@ const admin = (req, res, next) => {
     if (req.user && req.user.role === "admin") {
         next();
     } else {
-        res.status(403).json({ message: "Not authorized as an admin" });
+        res.status(401).json({ message: "Not authorized as an admin" });
     }
 };
 
-module.exports = { protect, authorize, parent, admin };
+module.exports = { protect, parent, admin };

@@ -6,10 +6,10 @@ const {
     getChildActivities,
     getChildFees,
 } = require("../controllers/parentController");
-const { protect, authorize } = require("../middleware/authMiddleware");
+const { protect, parent } = require("../middleware/authMiddleware");
 
 router.use(protect);
-router.use(authorize("parent"));
+router.use(parent);
 
 router.get("/child", getChildForParent);
 router.get("/attendance/child/:id", getChildAttendance);

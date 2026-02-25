@@ -25,11 +25,8 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     const role = localStorage.getItem('role') || 'admin';
 
     const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('role');
-        localStorage.removeItem('user');
-        // Use replace: true to prevent back button from returning to the dashboard
-        navigate('/login', { replace: true });
+        localStorage.clear();
+        navigate('/login');
     };
 
     const [staffCount, setStaffCount] = React.useState(0);
