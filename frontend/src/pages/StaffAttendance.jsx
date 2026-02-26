@@ -41,8 +41,8 @@ const StaffAttendance = () => {
             const token = localStorage.getItem('token');
             const headers = { 'Authorization': `Bearer ${token}` };
 
-            // Fetch all staff
-            const staffRes = await fetch(`${BASE_URL}/api/admin/staff`, { headers });
+            // Fetch only active staff
+            const staffRes = await fetch(`${BASE_URL}/api/admin/staff/active`, { headers });
             const staffData = await staffRes.json();
 
             // Fetch attendance for selected date

@@ -37,6 +37,7 @@ const LoginPage = () => {
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('role', data.role);
                 localStorage.setItem('fullName', data.fullName);
+                localStorage.setItem('status', data.status); // Store status
 
                 // Role-based navigation
                 if (data.role === 'admin') {

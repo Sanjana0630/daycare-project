@@ -71,10 +71,11 @@ const Register = () => {
             const data = await response.json();
 
             if (response.ok) {
-                setSuccess('Account created successfully!');
+                const isStaff = formData.role === 'staff';
+                setSuccess(isStaff ? 'Account created! Your registration is pending admin approval.' : 'Account created successfully!');
                 setTimeout(() => {
                     navigate('/login');
-                }, 2000);
+                }, isStaff ? 4000 : 2000);
             } else {
                 setError(data.message || 'Registration failed. Please try again.');
             }

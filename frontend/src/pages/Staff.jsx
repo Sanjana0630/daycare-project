@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { BASE_URL } from '../config';
 import {
     Users,
     Search,
@@ -38,8 +39,10 @@ const Staff = () => {
     const fetchStaff = async () => {
         setLoading(true);
         try {
-            const apiUrl = import.meta.env.VITE_API_URL;
-            const response = await fetch(`${apiUrl}/api/staff`);
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${BASE_URL}/api/admin/staff/active`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             const data = await response.json();
             if (data.success) {
                 setStaff(data.data);
@@ -73,7 +76,7 @@ const Staff = () => {
     };
 
     const filteredStaff = staff.filter(member =>
-        member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        member.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         member.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
         member.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -85,16 +88,9 @@ const Staff = () => {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Staff Management</h2>
-                    <p className="text-gray-500">Manage your educators and administrative team.</p>
+                    <h2 className="text-2xl font-bold text-gray-900">Staff Members</h2>
+                    <p className="text-gray-500">View and manage your active educators and administrative team.</p>
                 </div>
-                <button
-                    onClick={() => navigate('/admin/staff/add')}
-                    className="bg-purple-600 text-white px-6 py-2.5 rounded-xl font-semibold shadow-lg shadow-purple-200 hover:bg-purple-700 transition-all flex items-center gap-2 active:scale-95"
-                >
-                    <Plus size={20} />
-                    Add New Staff
-                </button>
             </div>
 
             {/* Filters */}
@@ -134,17 +130,17 @@ const Staff = () => {
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold">
-                                                {member.name[0].toUpperCase()}
+                                                {member.fullName[0].toUpperCase()}
                                             </div>
                                             <div>
-                                                <div className="font-bold text-gray-900">{member.name}</div>
-                                                <div className="text-xs text-gray-400">{member.qualification}</div>
+                                                <div className="font-bold text-gray-900">{member.fullName}</div>
+                                                <div className="text-xs text-gray-400">{member.email}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="text-gray-700 font-medium">{member.role}</div>
-                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${member.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                                        <div className="text-gray-700 font-medium capitalize">{member.role}</div>
+                                        <span className={`inline-flex items-center px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${member.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                                             }`}>
                                             {member.status}
                                         </span>
@@ -154,7 +150,7 @@ const Staff = () => {
                                         <div className="text-xs text-gray-400">{member.phone}</div>
                                     </td>
                                     <td className="px-6 py-4 text-sm text-gray-500">
-                                        {new Date(member.joiningDate).toLocaleDateString()}
+                                        {new Date(member.createdAt).toLocaleDateString()}
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">

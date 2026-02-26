@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { BASE_URL } from '../config';
 import {
     LayoutDashboard,
     Users,
@@ -35,8 +36,10 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     React.useEffect(() => {
         const fetchStaffCount = async () => {
             try {
-                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005';
-                const response = await fetch(`${apiUrl}/api/staff`);
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${BASE_URL}/api/admin/staff/active`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
                 const data = await response.json();
                 if (data.success) {
                     setStaffCount(data.count || data.data.length);

@@ -29,9 +29,9 @@ const QuickActions = () => {
                 />
                 <ActionButton
                     icon={UserCheck}
-                    label="Add Staff"
+                    label="Approve Staff Requests"
                     color="bg-[var(--color-accent-mint)]"
-                    onClick={() => navigate('/admin/staff/add')}
+                    onClick={() => navigate('/admin/staff/approve')}
                 />
                 <ActionButton
                     icon={CalendarPlus}

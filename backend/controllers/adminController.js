@@ -104,9 +104,75 @@ const getStaffAttendance = async (req, res) => {
     }
 };
 
+// @desc    Get all pending staff members
+// @route   GET /api/admin/staff/pending
+// @access  Private/Admin
+const getPendingStaff = async (req, res) => {
+    try {
+        const staff = await User.find({ role: "staff", status: "pending" }).select("-password");
+        res.status(200).json({ success: true, count: staff.length, data: staff });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
+// @desc    Get all active staff members
+// @route   GET /api/admin/staff/active
+// @access  Private/Admin
+const getActiveStaff = async (req, res) => {
+    try {
+        const staff = await User.find({ role: "staff", status: "active" }).select("-password");
+        res.status(200).json({ success: true, count: staff.length, data: staff });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
+// @desc    Approve staff member
+// @route   PATCH /api/admin/staff/approve/:id
+// @access  Private/Admin
+const approveStaff = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "Staff not found" });
+        }
+        user.status = "active";
+        await user.save();
+        res.status(200).json({ success: true, message: "Staff approved successfully", data: user });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
+// @desc    Reject staff member
+// @route   PATCH /api/admin/staff/reject/:id
+// @access  Private/Admin
+const rejectStaff = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "Staff not found" });
+        }
+        user.status = "rejected";
+        await user.save();
+        res.status(200).json({ success: true, message: "Staff rejected successfully", data: user });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
 module.exports = {
     getStaffUsers,
     upsertStaffAttendance,
     getChildrenAttendance,
     getStaffAttendance,
+    getPendingStaff,
+    getActiveStaff,
+    approveStaff,
+    rejectStaff,
 };

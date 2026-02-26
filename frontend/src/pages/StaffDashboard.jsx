@@ -9,8 +9,15 @@ const StaffDashboard = () => {
         activitiesToday: 0
     });
     const [loading, setLoading] = useState(true);
+    const [profileMissing, setProfileMissing] = useState(false);
+    const status = localStorage.getItem('status');
 
     useEffect(() => {
+        if (status === 'pending') {
+            setLoading(false);
+            return;
+        }
+
         const fetchStats = async () => {
             try {
                 const token = localStorage.getItem('token');
@@ -18,6 +25,11 @@ const StaffDashboard = () => {
                 const response = await fetch(`${apiUrl}/api/staff/dashboard-stats`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
+
+                if (response.status === 404) {
+                    setProfileMissing(true);
+                }
+
                 const result = await response.json();
                 if (result.success) {
                     setStats(result.data);
@@ -29,7 +41,65 @@ const StaffDashboard = () => {
             }
         };
         fetchStats();
-    }, []);
+    }, [status]);
+
+    if (loading) return (
+        <div className="flex items-center justify-center min-h-[50vh]">
+            <div className="w-10 h-10 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+        </div>
+    );
+
+    if (status === 'pending') {
+        return (
+            <div className="flex items-center justify-center min-h-[70vh] animate-in fade-in duration-700">
+                <div className="max-w-md w-full bg-white p-12 rounded-[3rem] border border-gray-100 shadow-2xl shadow-purple-100 text-center space-y-8">
+                    <div className="w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center mx-auto ring-8 ring-amber-50/50">
+                        <div className="w-12 h-12 border-4 border-amber-200 border-t-amber-600 rounded-full animate-spin"></div>
+                    </div>
+                    <div className="space-y-3">
+                        <h2 className="text-3xl font-black text-gray-900">Account Pending</h2>
+                        <p className="text-gray-500 font-medium leading-relaxed">
+                            Your registration as <span className="text-purple-600 font-bold">Staff</span> is currently being reviewed by the administration.
+                        </p>
+                    </div>
+                    <div className="p-6 bg-gray-50 rounded-[2rem] border border-gray-100">
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Notice</p>
+                        <p className="text-sm text-gray-600 font-medium">Please check back soon. You will have full access once your account is approved.</p>
+                    </div>
+                    <button
+                        onClick={() => { localStorage.clear(); window.location.href = '/login'; }}
+                        className="text-sm font-black text-purple-600 hover:text-purple-700 transition-colors uppercase tracking-widest"
+                    >
+                        Switch Account / Logout
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (profileMissing) {
+        return (
+            <div className="flex items-center justify-center min-h-[70vh] animate-in fade-in duration-700">
+                <div className="max-w-lg w-full bg-white p-12 rounded-[3.5rem] border border-gray-100 shadow-2xl shadow-indigo-100 text-center space-y-8">
+                    <div className="w-24 h-24 bg-indigo-50 rounded-[2rem] flex items-center justify-center mx-auto rotate-12 transform hover:rotate-0 transition-transform duration-500">
+                        <Users className="text-indigo-600" size={40} />
+                    </div>
+                    <div className="space-y-3">
+                        <h2 className="text-3xl font-black text-gray-900">Welcome to the Team!</h2>
+                        <p className="text-gray-500 font-medium leading-relaxed">
+                            Your account has been <span className="text-green-600 font-bold">Approved</span>. Now, please complete your basic profile to start managing your classes.
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => window.location.href = '/staff/settings'}
+                        className="w-full py-4 bg-indigo-600 text-white font-black rounded-2xl shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-1 transition-all uppercase tracking-widest"
+                    >
+                        Fill Basic Information
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     const cards = [
         { title: 'My Children', value: stats.totalChildren, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },

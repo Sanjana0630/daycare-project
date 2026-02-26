@@ -9,13 +9,14 @@ import Home from './pages/Home';
 import AddChild from './pages/AddChild';
 import Children from './pages/Children';
 import Staff from './pages/Staff';
-import AddStaff from './pages/AddStaff';
+import StaffApproval from './pages/StaffApproval';
 import EditStaff from './pages/EditStaff';
 import StaffAttendance from './pages/StaffAttendance';
 import ChildrenAttendance from './pages/ChildrenAttendance';
 import MyChildren from './pages/MyChildren';
 import StaffMarkAttendance from './pages/StaffMarkAttendance';
 import StaffActivities from './pages/StaffActivities';
+import StaffProfile from './pages/StaffProfile';
 
 // Security Guards
 const ProtectedRoute = ({ children }) => {
@@ -77,7 +78,7 @@ function App() {
                   <Route path="/children" element={<RoleBasedRoute allowedRoles={["admin"]}><Children /></RoleBasedRoute>} />
                   <Route path="/staff" element={<RoleBasedRoute allowedRoles={["admin"]}><Staff /></RoleBasedRoute>} />
                   <Route path="/admin/staff" element={<RoleBasedRoute allowedRoles={["admin"]}><Staff /></RoleBasedRoute>} />
-                  <Route path="/admin/staff/add" element={<RoleBasedRoute allowedRoles={["admin"]}><AddStaff /></RoleBasedRoute>} />
+                  <Route path="/admin/staff/approve" element={<RoleBasedRoute allowedRoles={["admin"]}><StaffApproval /></RoleBasedRoute>} />
                   <Route path="/admin/staff/edit/:id" element={<RoleBasedRoute allowedRoles={["admin"]}><EditStaff /></RoleBasedRoute>} />
                   <Route path="/admin/attendance/staff" element={<RoleBasedRoute allowedRoles={["admin"]}><StaffAttendance /></RoleBasedRoute>} />
                   <Route path="/admin/attendance/children" element={<RoleBasedRoute allowedRoles={["admin"]}><ChildrenAttendance /></RoleBasedRoute>} />
@@ -92,6 +93,7 @@ function App() {
                   <Route path="/staff/my-children" element={<RoleBasedRoute allowedRoles={["staff"]}><MyChildren /></RoleBasedRoute>} />
                   <Route path="/staff/attendance" element={<RoleBasedRoute allowedRoles={["staff"]}><StaffMarkAttendance /></RoleBasedRoute>} />
                   <Route path="/staff/activities" element={<RoleBasedRoute allowedRoles={["staff"]}><StaffActivities /></RoleBasedRoute>} />
+                  <Route path="/staff/settings" element={<RoleBasedRoute allowedRoles={["staff"]}><StaffProfile /></RoleBasedRoute>} />
 
                   {/* Parent Specific Routes */}
                   <Route path="/parent/dashboard" element={<RoleBasedRoute allowedRoles={["parent"]}><ParentDashboard /></RoleBasedRoute>} />

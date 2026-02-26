@@ -38,13 +38,14 @@ const loginUser = async (req, res) => {
                 fullName: user.fullName,
                 email: user.email,
                 role: user.role,
+                status: user.status, // Added status to response
                 token: generateToken(user._id),
             });
         } else {
             res.status(401).json({ message: "Invalid email or password" });
         }
     } catch (error) {
-        console.error(error);
+        console.error('Login error:', error);
         res.status(500).json({ message: "Server error" });
     }
 };
@@ -67,6 +68,7 @@ const registerUser = async (req, res) => {
             email,
             password,
             role,
+            status: role === "staff" ? "pending" : "active",
         });
 
         if (user) {
