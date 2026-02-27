@@ -24,7 +24,7 @@ const registerStaff = async (req, res) => {
 // @access  Public
 const getStaffMembers = async (req, res) => {
     try {
-        const staff = await Staff.find({});
+        const staff = await Staff.find({ status: "Active" });
         res.status(200).json({
             success: true,
             count: staff.length,

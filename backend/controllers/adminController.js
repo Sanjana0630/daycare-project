@@ -141,6 +141,11 @@ const approveStaff = async (req, res) => {
         }
         user.status = "active";
         await user.save();
+
+        // Also update Staff collection status
+        const Staff = require("../models/Staff");
+        await Staff.findOneAndUpdate({ email: user.email }, { status: "Active" });
+
         res.status(200).json({ success: true, message: "Staff approved successfully", data: user });
     } catch (error) {
         console.error(error);
@@ -159,6 +164,11 @@ const rejectStaff = async (req, res) => {
         }
         user.status = "rejected";
         await user.save();
+
+        // Also update Staff collection status
+        const Staff = require("../models/Staff");
+        await Staff.findOneAndUpdate({ email: user.email }, { status: "Rejected" });
+
         res.status(200).json({ success: true, message: "Staff rejected successfully", data: user });
     } catch (error) {
         console.error(error);

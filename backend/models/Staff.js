@@ -46,8 +46,8 @@ const staffSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ["Active", "Inactive"],
-        default: "Active",
+        enum: ["Active", "Inactive", "Pending", "Rejected"],
+        default: "Pending",
     },
 }, { timestamps: true });
 
