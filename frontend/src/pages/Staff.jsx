@@ -58,9 +58,12 @@ const Staff = () => {
 
     const handleDelete = async () => {
         try {
-            const apiUrl = import.meta.env.VITE_API_URL;
-            const response = await fetch(`${apiUrl}/api/staff/${selectedMember._id}`, {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${BASE_URL}/api/admin/staff/${selectedMember._id}`, {
                 method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
             });
             const data = await response.json();
             if (data.success) {

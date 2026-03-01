@@ -176,6 +176,30 @@ const rejectStaff = async (req, res) => {
     }
 };
 
+// @desc    Delete staff member
+// @route   DELETE /api/admin/staff/:id
+// @access  Private/Admin
+const deleteStaff = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "Staff user not found" });
+        }
+
+        // Delete associated Staff record if it exists
+        const Staff = require("../models/Staff");
+        await Staff.findOneAndDelete({ email: user.email });
+
+        // Delete the User record
+        await user.deleteOne();
+
+        res.status(200).json({ success: true, message: "Staff deleted successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
 module.exports = {
     getStaffUsers,
     upsertStaffAttendance,
@@ -185,4 +209,5 @@ module.exports = {
     getActiveStaff,
     approveStaff,
     rejectStaff,
+    deleteStaff,
 };
