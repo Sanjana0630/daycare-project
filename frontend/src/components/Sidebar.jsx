@@ -30,33 +30,16 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         navigate('/login', { replace: true });
     };
 
-    const [staffCount, setStaffCount] = React.useState(0);
     const [isAttendanceOpen, setIsAttendanceOpen] = React.useState(false);
 
     React.useEffect(() => {
-        const fetchStaffCount = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${BASE_URL}/api/admin/staff/active`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await response.json();
-                if (data.success) {
-                    setStaffCount(data.count || data.data.length);
-                }
-            } catch (error) {
-                console.error('Error fetching staff count:', error);
-            }
-        };
-        if (role !== 'parent') {
-            fetchStaffCount();
-        }
+        // Removed fetchStaffCount as per user request to remove sidebar badges
     }, [role]);
 
     const adminNavItems = [
         { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
         { name: 'Children', icon: Users, path: '/children' },
-        { name: 'Staff', icon: UserSquare2, path: '/staff', badge: staffCount },
+        { name: 'Staff', icon: UserSquare2, path: '/staff' },
         { name: 'Parents', icon: UserCircle2, path: '/parents' },
         {
             name: 'Attendance',

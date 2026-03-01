@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, UserCheck, Calendar, AlertCircle } from 'lucide-react';
+import { BASE_URL } from '../config';
 
 const StatsStrip = () => {
     const [childrenCount, setChildrenCount] = useState(0);
@@ -8,17 +9,18 @@ const StatsStrip = () => {
     useEffect(() => {
         const fetchCounts = async () => {
             try {
-                const apiUrl = import.meta.env.VITE_API_URL;
+                const token = localStorage.getItem('token');
+                const headers = { 'Authorization': `Bearer ${token}` };
 
                 // Fetch Children Count
-                const childrenResponse = await fetch(`${apiUrl}/api/children`);
+                const childrenResponse = await fetch(`${BASE_URL}/api/children`, { headers });
                 const childrenData = await childrenResponse.json();
                 if (childrenData.success) {
                     setChildrenCount(childrenData.count || childrenData.data.length);
                 }
 
-                // Fetch Staff Count
-                const staffResponse = await fetch(`${apiUrl}/api/staff`);
+                // Fetch Staff Count from Admin API (Source of truth for approved staff)
+                const staffResponse = await fetch(`${BASE_URL}/api/admin/staff/active`, { headers });
                 const staffData = await staffResponse.json();
                 if (staffData.success) {
                     setStaffCount(staffData.count || staffData.data.length);
