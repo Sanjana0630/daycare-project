@@ -24,7 +24,7 @@ const SectionTitle = ({ icon: Icon, title }) => (
     </div>
 );
 
-const InputField = ({ label, name, type = "text", icon: Icon, placeholder, required = false, options = [], value, onChange }) => (
+const InputField = ({ label, name, type = "text", icon: Icon, placeholder, required = false, options = [], value, onChange, max, readOnly }) => (
     <div className="space-y-1.5 flex-1">
         <label className="text-sm font-medium text-gray-700 block">{label} {required && <span className="text-red-500">*</span>}</label>
         <div className="relative">
@@ -59,7 +59,9 @@ const InputField = ({ label, name, type = "text", icon: Icon, placeholder, requi
                     placeholder={placeholder}
                     value={value}
                     onChange={onChange}
-                    className={`w-full ${Icon ? 'pl-10' : 'pl-4'} pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-100 focus:border-purple-400 transition-all outline-none`}
+                    max={max}
+                    readOnly={readOnly}
+                    className={`w-full ${Icon ? 'pl-10' : 'pl-4'} pr-4 py-2.5 ${readOnly ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'} border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-100 focus:border-purple-400 transition-all outline-none`}
                 />
             )}
         </div>
@@ -262,6 +264,7 @@ const AddChild = () => {
                                 required
                                 value={formData.dob}
                                 onChange={handleChange}
+                                max={new Date().toISOString().split('T')[0]}
                             />
                             <div className="space-y-1.5 flex-1">
                                 <label className="text-sm font-medium text-gray-700 block">Calculated Age</label>
@@ -314,7 +317,8 @@ const AddChild = () => {
                             type="date"
                             icon={Calendar}
                             required
-                            value={formData.admissionDate}
+                            readOnly
+                            value={formData.formData?.admissionDate || new Date().toISOString().split('T')[0]}
                             onChange={handleChange}
                         />
                     </div>
