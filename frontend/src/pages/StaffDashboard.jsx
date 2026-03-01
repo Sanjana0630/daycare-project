@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Users, CalendarCheck, Activity, TrendingUp, Clock } from 'lucide-react';
 
 const StaffDashboard = () => {
+    const navigate = useNavigate();
     const [stats, setStats] = useState({
         totalChildren: 0,
         presentToday: 0,
@@ -91,7 +93,7 @@ const StaffDashboard = () => {
                         </p>
                     </div>
                     <button
-                        onClick={() => window.location.href = '/staff/settings'}
+                        onClick={() => navigate('/staff/settings')}
                         className="w-full py-4 bg-indigo-600 text-white font-black rounded-2xl shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-1 transition-all uppercase tracking-widest"
                     >
                         Fill Basic Information

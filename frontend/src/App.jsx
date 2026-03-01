@@ -79,7 +79,6 @@ function App() {
                   <Route path="/staff" element={<RoleBasedRoute allowedRoles={["admin"]}><Staff /></RoleBasedRoute>} />
                   <Route path="/admin/staff" element={<RoleBasedRoute allowedRoles={["admin"]}><Staff /></RoleBasedRoute>} />
                   <Route path="/admin/staff/approve" element={<RoleBasedRoute allowedRoles={["admin"]}><StaffApproval /></RoleBasedRoute>} />
-                  <Route path="/admin/staff/edit/:id" element={<RoleBasedRoute allowedRoles={["admin"]}><EditStaff /></RoleBasedRoute>} />
                   <Route path="/admin/attendance/staff" element={<RoleBasedRoute allowedRoles={["admin"]}><StaffAttendance /></RoleBasedRoute>} />
                   <Route path="/admin/attendance/children" element={<RoleBasedRoute allowedRoles={["admin"]}><ChildrenAttendance /></RoleBasedRoute>} />
                   <Route path="/parents" element={<RoleBasedRoute allowedRoles={["admin"]}><div className="p-8 text-gray-500 font-medium">Parents Management</div></RoleBasedRoute>} />

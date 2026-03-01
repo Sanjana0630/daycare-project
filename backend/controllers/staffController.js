@@ -148,47 +148,26 @@ const addStaffActivity = async (req, res) => {
     }
 };
 
-const getStaffDashboardSummary = async (req, res) => {
+const getMyProfile = async (req, res) => {
     try {
-        const staffMember = await Staff.findOne({ email: req.user.email });
-        if (!staffMember) {
+        const staff = await Staff.findOne({ email: req.user.email });
+        if (!staff) {
             return res.status(404).json({ success: false, message: "Staff record not found" });
         }
+        res.status(200).json({ success: true, data: staff });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
 
-        const Child = require("../models/Child");
-        const Attendance = require("../models/Attendance");
-        const Activity = require("../models/Activity");
-
-        const assignedChildren = await Child.find({
-            $or: [
-                { assignedTeacher: staffMember._id },
-                { assignedCaretaker: staffMember._id }
-            ]
-        });
-
-        const childrenIds = assignedChildren.map(c => c._id);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        const attendanceToday = await Attendance.find({
-            child: { $in: childrenIds },
-            date: today
-        });
-
-        const activitiesToday = await Activity.countDocuments({
-            child: { $in: childrenIds },
-            createdAt: { $gt: today }
-        });
-
-        res.status(200).json({
-            success: true,
-            data: {
-                totalChildren: assignedChildren.length,
-                presentToday: attendanceToday.filter(a => a.status === 'Present').length,
-                absentToday: attendanceToday.filter(a => a.status === 'Absent').length,
-                activitiesToday
-            }
-        });
+const updateMyProfile = async (req, res) => {
+    try {
+        const staff = await Staff.findOneAndUpdate(
+            { email: req.user.email },
+            req.body,
+            { new: true, runValidators: true, upsert: true }
+        );
+        res.status(200).json({ success: true, data: staff });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -203,5 +182,7 @@ module.exports = {
     getStaffChildren,
     markChildAttendance,
     addStaffActivity,
-    getStaffDashboardSummary
+    getStaffDashboardSummary,
+    getMyProfile,
+    updateMyProfile
 };

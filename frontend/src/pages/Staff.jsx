@@ -162,13 +162,6 @@ const Staff = () => {
                                                 <Eye size={18} />
                                             </button>
                                             <button
-                                                onClick={() => navigate(`/admin/staff/edit/${member._id}`)}
-                                                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-white rounded-lg transition-all"
-                                                title="Edit"
-                                            >
-                                                <Edit2 size={18} />
-                                            </button>
-                                            <button
                                                 onClick={() => { setSelectedMember(member); setIsDeleteModalOpen(true); }}
                                                 className="p-2 text-gray-400 hover:text-red-600 hover:bg-white rounded-lg transition-all"
                                                 title="Delete"
