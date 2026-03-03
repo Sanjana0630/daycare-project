@@ -51,14 +51,17 @@ const childSchema = new mongoose.Schema({
     assignedTeacher: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Staff",
+        default: null, // Optional
     },
     assignedCaretaker: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Staff",
+        default: null, // Optional
     },
     parent: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
+        default: null, // Optional
     },
 }, { timestamps: true });
 

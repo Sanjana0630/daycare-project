@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, MapPin, GraduationCap, Briefcase, Save, Calendar, UserCheck } from 'lucide-react';
 import { BASE_URL } from '../config';
+import AlertModal from '../components/AlertModal';
 
 const StaffProfile = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
+    const [alertModal, setAlertModal] = useState({ isOpen: false, message: '' });
 
     const [formData, setFormData] = useState({
         name: localStorage.getItem('fullName') || '',
@@ -53,6 +55,33 @@ const StaffProfile = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Custom field validation for popup alerts
+        if (!formData.name.trim()) {
+            setAlertModal({ isOpen: true, message: "Full Name is required" });
+            return;
+        }
+        if (!formData.phone.trim()) {
+            setAlertModal({ isOpen: true, message: "Contact Phone is required" });
+            return;
+        }
+        if (!formData.dob) {
+            setAlertModal({ isOpen: true, message: "Date of Birth is required" });
+            return;
+        }
+        if (!formData.qualification.trim()) {
+            setAlertModal({ isOpen: true, message: "Highest Qualification is required" });
+            return;
+        }
+        if (!formData.experience.trim()) {
+            setAlertModal({ isOpen: true, message: "Years of Experience is required" });
+            return;
+        }
+        if (!formData.address.trim()) {
+            setAlertModal({ isOpen: true, message: "Home Address is required" });
+            return;
+        }
+
         setSaving(true);
         setMessage({ type: '', text: '' });
 
@@ -89,6 +118,12 @@ const StaffProfile = () => {
 
     return (
         <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-700 pb-12">
+            <AlertModal
+                isOpen={alertModal.isOpen}
+                onClose={() => setAlertModal({ ...alertModal, isOpen: false })}
+                message={alertModal.message}
+            />
+
             <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-sm relative overflow-hidden">
                 <div className="relative z-10">
                     <h2 className="text-3xl font-black text-gray-900">Professional Profile</h2>

@@ -224,7 +224,7 @@ const Children = () => {
                                                 <Eye size={18} />
                                             </button>
                                             <button
-                                                onClick={() => { setSelectedChild(child); setIsEditModalOpen(true); }}
+                                                onClick={() => navigate(`/admin/children/edit/${child._id}`)}
                                                 className="p-2 text-gray-400 hover:text-blue-600 hover:bg-white rounded-lg transition-all"
                                                 title="Edit"
                                             >

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
     User,
     Calendar,
@@ -41,7 +41,7 @@ const InputField = ({ label, name, type = "text", icon: Icon, placeholder, requi
                         required={required}
                         value={value}
                         onChange={onChange}
-                        className={`w-full ${Icon ? 'pl-10' : 'pl-4'} pr-10 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-100 focus:border-purple-400 transition-all outline-none appearance-none`}
+                        className={`w-full ${Icon ? 'pl-10' : 'pl-4'} pr-10 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-100 focus:border-purple-400 transition-all outline-none appearance-none cursor-pointer`}
                     >
                         <option value="">Select {label}</option>
                         {options.map((opt) => (
@@ -88,11 +88,14 @@ const TextAreaField = ({ label, name, icon: Icon, placeholder, value, onChange }
     </div>
 );
 
-const AddChild = () => {
+const EditChild = () => {
+    const { id } = useParams();
     const navigate = useNavigate();
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [teachers, setTeachers] = useState([]);
     const [caretakers, setCaretakers] = useState([]);
+    const [parents, setParents] = useState([]);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [age, setAge] = useState('');
@@ -103,7 +106,7 @@ const AddChild = () => {
         dob: '',
         gender: '',
         bloodGroup: '',
-        admissionDate: new Date().toISOString().split('T')[0],
+        admissionDate: '',
         parentName: '',
         parentEmail: '',
         parentPhone: '',
@@ -116,18 +119,18 @@ const AddChild = () => {
         parent: '',
     });
 
-    const [parents, setParents] = useState([]);
-
     useEffect(() => {
-        const fetchStaffAndParents = async () => {
+        const fetchInitialData = async () => {
             try {
-                const [staffRes, parentRes] = await Promise.all([
+                const [staffRes, parentRes, childRes] = await Promise.all([
                     fetch(`${BASE_URL}/api/staff`),
-                    fetch(`${BASE_URL}/api/auth/parents`)
+                    fetch(`${BASE_URL}/api/auth/parents`),
+                    fetch(`${BASE_URL}/api/children/${id}`)
                 ]);
 
                 const staffData = await staffRes.json();
                 const parentData = await parentRes.json();
+                const childData = await childRes.json();
 
                 if (staffData.success) {
                     const staffList = staffData.data;
@@ -138,13 +141,29 @@ const AddChild = () => {
                 if (parentData.success) {
                     setParents(parentData.data);
                 }
+
+                if (childData.success) {
+                    const child = childData.data;
+                    setFormData({
+                        ...child,
+                        dob: child.dob ? new Date(child.dob).toISOString().split('T')[0] : '',
+                        admissionDate: child.admissionDate ? new Date(child.admissionDate).toISOString().split('T')[0] : '',
+                        assignedTeacher: child.assignedTeacher?._id || child.assignedTeacher || '',
+                        assignedCaretaker: child.assignedCaretaker?._id || child.assignedCaretaker || '',
+                        parent: child.parent?._id || child.parent || ''
+                    });
+                    if (child.dob) calculateAge(child.dob);
+                }
             } catch (error) {
                 console.error('Error fetching data:', error);
+                setError('Failed to load child data.');
+            } finally {
+                setLoading(false);
             }
         };
 
-        fetchStaffAndParents();
-    }, []);
+        fetchInitialData();
+    }, [id]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -178,9 +197,9 @@ const AddChild = () => {
     };
 
     const handleSubmit = async (e) => {
-        if (e) e.preventDefault();
+        e.preventDefault();
 
-        // Custom field validation for popup alerts
+        // Required fields validation
         const requiredFields = [
             { key: 'childName', label: 'Child Name' },
             { key: 'dob', label: 'Date of Birth' },
@@ -194,7 +213,7 @@ const AddChild = () => {
             }
         }
 
-        setLoading(true);
+        setSaving(true);
         setError('');
         setSuccess('');
 
@@ -207,8 +226,8 @@ const AddChild = () => {
                 parent: formData.parent || null
             };
 
-            const response = await fetch(`${BASE_URL}/api/children`, {
-                method: 'POST',
+            const response = await fetch(`${BASE_URL}/api/children/${id}`, {
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -218,19 +237,25 @@ const AddChild = () => {
             const data = await response.json();
 
             if (response.ok) {
-                setSuccess('Child added successfully!');
+                setSuccess('Child record updated successfully!');
                 setTimeout(() => {
                     navigate('/children');
                 }, 2000);
             } else {
-                setError(data.message || 'Failed to add child.');
+                setError(data.message || 'Failed to update child.');
             }
         } catch (err) {
             setError('Connection failed. Please try again.');
         } finally {
-            setLoading(false);
+            setSaving(false);
         }
     };
+
+    if (loading) return (
+        <div className="flex items-center justify-center min-h-[50vh]">
+            <div className="w-10 h-10 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+        </div>
+    );
 
     return (
         <div className="max-w-4xl mx-auto pb-12 animate-in fade-in duration-500">
@@ -239,6 +264,7 @@ const AddChild = () => {
                 onClose={() => setAlertModal({ ...alertModal, isOpen: false })}
                 message={alertModal.message}
             />
+
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>
@@ -249,11 +275,8 @@ const AddChild = () => {
                         <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
                         Back to Children List
                     </button>
-                    <h2 className="text-2xl font-bold text-gray-900">Add New Child</h2>
-                    <p className="text-gray-500">Register a new child and their parent information.</p>
-                </div>
-
-                <div className="flex items-center gap-3">
+                    <h2 className="text-2xl font-bold text-gray-900">Edit Child Record</h2>
+                    <p className="text-gray-500">Update information for {formData.childName}.</p>
                 </div>
             </div>
 
@@ -327,7 +350,6 @@ const AddChild = () => {
                             name="bloodGroup"
                             type="select"
                             icon={Droplets}
-                            required
                             options={[
                                 { label: 'A+', value: 'A+' },
                                 { label: 'A-', value: 'A-' },
@@ -346,10 +368,8 @@ const AddChild = () => {
                             name="admissionDate"
                             type="date"
                             icon={Calendar}
-                            required
                             readOnly
-                            value={formData.formData?.admissionDate || new Date().toISOString().split('T')[0]}
-                            onChange={handleChange}
+                            value={formData.admissionDate}
                         />
                     </div>
                 </div>
@@ -363,7 +383,6 @@ const AddChild = () => {
                             name="parentName"
                             icon={User}
                             placeholder="Enter parent's full name"
-                            required
                             value={formData.parentName}
                             onChange={handleChange}
                         />
@@ -373,7 +392,6 @@ const AddChild = () => {
                             type="email"
                             icon={Mail}
                             placeholder="parent@example.com"
-                            required
                             value={formData.parentEmail}
                             onChange={handleChange}
                         />
@@ -382,12 +400,11 @@ const AddChild = () => {
                             name="parentPhone"
                             icon={Phone}
                             placeholder="Enter phone number"
-                            required
                             value={formData.parentPhone}
                             onChange={handleChange}
                         />
                         <InputField
-                            label="Link to Parent Account"
+                            label="Link to Parent Account (Optional)"
                             name="parent"
                             type="select"
                             icon={User}
@@ -401,7 +418,6 @@ const AddChild = () => {
                                 name="emergencyContactName"
                                 icon={Users}
                                 placeholder="Emergency contact person"
-                                required
                                 value={formData.emergencyContactName}
                                 onChange={handleChange}
                             />
@@ -410,7 +426,6 @@ const AddChild = () => {
                                 name="emergencyContactNumber"
                                 icon={Phone}
                                 placeholder="Emergency number"
-                                required
                                 value={formData.emergencyContactNumber}
                                 onChange={handleChange}
                             />
@@ -474,13 +489,13 @@ const AddChild = () => {
                     </button>
                     <button
                         type="submit"
-                        disabled={loading}
+                        disabled={saving}
                         className="px-8 py-2.5 bg-purple-600 text-white font-semibold rounded-xl shadow-lg shadow-purple-200 hover:bg-purple-700 transition-all disabled:opacity-50 flex items-center gap-2"
                     >
-                        {loading ? 'Saving...' : (
+                        {saving ? 'Updating...' : (
                             <>
                                 <Save size={18} />
-                                Save Child
+                                Update Child Record
                             </>
                         )}
                     </button>
@@ -490,4 +505,4 @@ const AddChild = () => {
     );
 };
 
-export default AddChild;
+export default EditChild;

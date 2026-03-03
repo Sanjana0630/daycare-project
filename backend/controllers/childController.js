@@ -5,7 +5,13 @@ const Child = require("../models/Child");
 // @access  Public (or Private if auth middleware is added later)
 const registerChild = async (req, res) => {
     try {
-        const child = await Child.create(req.body);
+        const data = { ...req.body };
+        // Sanitize optional relationship fields
+        if (data.assignedTeacher === "") data.assignedTeacher = null;
+        if (data.assignedCaretaker === "") data.assignedCaretaker = null;
+        if (data.parent === "") data.parent = null;
+
+        const child = await Child.create(data);
         res.status(201).json({
             success: true,
             data: child,
@@ -57,6 +63,12 @@ const getChildById = async (req, res) => {
 // @access  Public
 const updateChild = async (req, res) => {
     try {
+        const data = { ...req.body };
+        // Sanitize optional relationship fields
+        if (data.assignedTeacher === "") data.assignedTeacher = null;
+        if (data.assignedCaretaker === "") data.assignedCaretaker = null;
+        if (data.parent === "") data.parent = null;
+
         let child = await Child.findById(req.params.id);
 
         if (!child) {
