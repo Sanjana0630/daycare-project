@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Save, CheckCircle2, XCircle, Search, User } from 'lucide-react';
+import { Calendar, Save, CheckCircle2, XCircle, Search, User, AlertCircle } from 'lucide-react';
 import { BASE_URL } from '../config';
 
 const StaffAttendance = () => {
@@ -7,9 +7,18 @@ const StaffAttendance = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const getTodayString = () => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+
+    const [selectedDate, setSelectedDate] = useState(getTodayString());
     const [savingId, setSavingId] = useState(null);
     const [currentTime, setCurrentTime] = useState(new Date());
+
+    const isToday = selectedDate === getTodayString();
+    const isFuture = selectedDate > getTodayString();
+    const isPast = selectedDate < getTodayString();
 
     // Live Clock Effect
     useEffect(() => {
@@ -171,6 +180,18 @@ const StaffAttendance = () => {
                                     className="bg-transparent border-none outline-none text-sm font-bold text-white cursor-pointer pr-2"
                                 />
                             </div>
+                            {isPast && (
+                                <p className="text-[10px] font-bold text-amber-300 uppercase tracking-widest mt-2 flex items-center justify-end gap-1">
+                                    <AlertCircle size={10} />
+                                    Past Record (Read-only)
+                                </p>
+                            )}
+                            {isFuture && (
+                                <p className="text-[10px] font-bold text-rose-300 uppercase tracking-widest mt-2 flex items-center justify-end gap-1">
+                                    <AlertCircle size={10} />
+                                    Future Locked
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -198,17 +219,61 @@ const StaffAttendance = () => {
                 ))}
             </div>
 
-            {/* Search & Action Bar */}
-            <div className="flex flex-col md:flex-row gap-4">
-                <div className="relative flex-1">
-                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" size={22} />
-                    <input
-                        type="text"
-                        placeholder="Search team by name or email..."
-                        className="w-full pl-14 pr-8 py-5 bg-white border border-gray-100 rounded-[2.5rem] shadow-sm focus:ring-4 focus:ring-purple-100 focus:border-purple-300 outline-none transition-all text-gray-700 font-bold placeholder:text-gray-300 text-lg"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+            {/* Search & Action Bar or Locked/Read-only Banner */}
+            <div className="flex flex-col gap-6">
+                {isPast && (
+                    <div className="bg-amber-50 border-2 border-amber-100 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 animate-in slide-in-from-top-4 duration-500 shadow-sm shadow-amber-50">
+                        <div className="flex items-center gap-5">
+                            <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-amber-500 shadow-sm border border-amber-50">
+                                <AlertCircle size={28} />
+                            </div>
+                            <div>
+                                <h4 className="text-xl font-black text-gray-900 leading-tight">Historical Record</h4>
+                                <p className="text-gray-500 font-medium text-sm">You are viewing past attendance data. Editing is disabled for history integrity.</p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setSelectedDate(getTodayString())}
+                            className="whitespace-nowrap px-8 py-4 bg-white text-amber-600 border border-amber-200 rounded-2xl font-black shadow-sm hover:bg-amber-50 transition-all active:scale-95 uppercase tracking-widest text-xs flex items-center gap-2"
+                        >
+                            <Calendar size={16} />
+                            Back to Today
+                        </button>
+                    </div>
+                )}
+
+                {isFuture && (
+                    <div className="bg-rose-50 border-2 border-rose-100 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 animate-in slide-in-from-top-4 duration-500 shadow-sm shadow-rose-50">
+                        <div className="flex items-center gap-5">
+                            <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-rose-500 shadow-sm border border-rose-50">
+                                <AlertCircle size={28} />
+                            </div>
+                            <div>
+                                <h4 className="text-xl font-black text-gray-900 leading-tight">Future Locked</h4>
+                                <p className="text-gray-500 font-medium text-sm">You can't mark future dates attendance. Please select today's date or a past date to view records.</p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setSelectedDate(getTodayString())}
+                            className="whitespace-nowrap px-8 py-4 bg-white text-rose-600 border border-rose-200 rounded-2xl font-black shadow-sm hover:bg-rose-50 transition-all active:scale-95 uppercase tracking-widest text-xs flex items-center gap-2"
+                        >
+                            <Calendar size={16} />
+                            Jump to Today
+                        </button>
+                    </div>
+                )}
+
+                <div className="flex flex-col md:flex-row gap-4">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" size={22} />
+                        <input
+                            type="text"
+                            placeholder="Search team by name or email..."
+                            className="w-full pl-14 pr-8 py-5 bg-white border border-gray-100 rounded-[2.5rem] shadow-sm focus:ring-4 focus:ring-purple-100 focus:border-purple-300 outline-none transition-all text-gray-700 font-bold placeholder:text-gray-300 text-lg"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -244,21 +309,23 @@ const StaffAttendance = () => {
                                     <td className="px-10 py-6">
                                         <div className="flex items-center justify-center gap-3">
                                             <button
-                                                onClick={() => handleStatusChange(member._id, 'present')}
+                                                onClick={() => isToday && handleStatusChange(member._id, 'present')}
+                                                disabled={!isToday}
                                                 className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-black transition-all duration-300 ${member.status === 'present'
                                                     ? 'bg-green-600 text-white shadow-lg shadow-green-100 scale-105'
                                                     : 'bg-gray-50 text-gray-400 border border-transparent hover:bg-gray-100'
-                                                    }`}
+                                                    } ${!isToday ? 'opacity-50 cursor-not-allowed' : ''}`}
                                             >
                                                 <CheckCircle2 size={16} />
                                                 ON DUTY
                                             </button>
                                             <button
-                                                onClick={() => handleStatusChange(member._id, 'absent')}
+                                                onClick={() => isToday && handleStatusChange(member._id, 'absent')}
+                                                disabled={!isToday}
                                                 className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-black transition-all duration-300 ${member.status === 'absent'
                                                     ? 'bg-rose-600 text-white shadow-lg shadow-rose-100 scale-105'
                                                     : 'bg-gray-50 text-gray-400 border border-transparent hover:bg-gray-100'
-                                                    }`}
+                                                    } ${!isToday ? 'opacity-50 cursor-not-allowed' : ''}`}
                                             >
                                                 <XCircle size={16} />
                                                 OFF DUTY
@@ -269,8 +336,9 @@ const StaffAttendance = () => {
                                         <div className="relative">
                                             <input
                                                 type="text"
-                                                placeholder="Add internal observations..."
-                                                className="w-full px-5 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-purple-50 focus:border-purple-200 outline-none transition-all placeholder:text-gray-300 italic"
+                                                placeholder={isToday ? "Add internal observations..." : "No remarks allowed"}
+                                                readOnly={!isToday}
+                                                className={`w-full px-5 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl text-sm font-medium outline-none transition-all placeholder:text-gray-300 italic ${!isToday ? 'cursor-not-allowed opacity-70' : 'focus:bg-white focus:ring-4 focus:ring-purple-50 focus:border-purple-200'}`}
                                                 value={member.remarks}
                                                 onChange={(e) => handleRemarksChange(member._id, e.target.value)}
                                             />
@@ -278,16 +346,16 @@ const StaffAttendance = () => {
                                     </td>
                                     <td className="px-10 py-6 text-right">
                                         <button
-                                            onClick={() => handleSave(member)}
-                                            disabled={savingId === member._id}
-                                            className="inline-flex items-center gap-2 px-6 py-3.5 bg-gray-900 text-white text-xs font-black rounded-2xl shadow-xl shadow-gray-200 hover:bg-purple-700 hover:shadow-purple-200 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 uppercase tracking-widest"
+                                            onClick={() => isToday && handleSave(member)}
+                                            disabled={savingId === member._id || !isToday}
+                                            className={`inline-flex items-center gap-2 px-6 py-3.5 bg-gray-900 text-white text-xs font-black rounded-2xl shadow-xl shadow-gray-200 hover:bg-purple-700 hover:shadow-purple-200 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 uppercase tracking-widest ${!isToday ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         >
                                             {savingId === member._id ? (
                                                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                             ) : (
                                                 <Save size={18} />
                                             )}
-                                            {savingId === member._id ? 'Syncing' : 'Commit'}
+                                            {savingId === member._id ? 'Syncing' : isToday ? 'Commit' : 'Locked'}
                                         </button>
                                     </td>
                                 </tr>

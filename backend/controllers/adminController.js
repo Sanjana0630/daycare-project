@@ -36,6 +36,18 @@ const upsertStaffAttendance = async (req, res) => {
         const attendanceDate = new Date(date);
         attendanceDate.setHours(0, 0, 0, 0);
 
+        const getTodayString = () => {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        };
+
+        const dateStr = date.split('T')[0];
+        const todayStr = getTodayString();
+
+        if (dateStr !== todayStr) {
+            return res.status(400).json({ success: false, message: "Staff attendance can only be marked for today." });
+        }
+
         const attendance = await StaffAttendance.findOneAndUpdate(
             { staff: finalStaffId, date: attendanceDate },
             { status, remarks },

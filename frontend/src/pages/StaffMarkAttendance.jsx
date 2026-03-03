@@ -8,7 +8,12 @@ const StaffMarkAttendance = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(null); // ID of child being saved
     const [searchTerm, setSearchTerm] = useState('');
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const getTodayString = () => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+
+    const [date, setDate] = useState(getTodayString());
     const [currentTime, setCurrentTime] = useState(new Date());
 
     // Live Clock Effect
@@ -115,6 +120,10 @@ const StaffMarkAttendance = () => {
         day: 'numeric'
     }).format(currentTime);
 
+    const isToday = date === getTodayString();
+    const isFuture = date > getTodayString();
+    const isPast = date < getTodayString();
+
     const formattedTime = currentTime.toLocaleTimeString('en-US', {
         hour: '2-digit',
         minute: '2-digit',
@@ -162,6 +171,18 @@ const StaffMarkAttendance = () => {
                                     className="bg-transparent border-none outline-none text-sm font-bold text-white cursor-pointer pr-2"
                                 />
                             </div>
+                            {isPast && (
+                                <p className="text-[10px] font-bold text-amber-300 uppercase tracking-widest mt-2 flex items-center justify-end gap-1">
+                                    <AlertCircle size={10} />
+                                    Past Record (Read-only)
+                                </p>
+                            )}
+                            {isFuture && (
+                                <p className="text-[10px] font-bold text-rose-300 uppercase tracking-widest mt-2 flex items-center justify-end gap-1">
+                                    <AlertCircle size={10} />
+                                    Future Locked
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -203,104 +224,130 @@ const StaffMarkAttendance = () => {
                 </div>
             </div>
 
-            {/* Table Section */}
-            <div className="bg-white rounded-[3rem] border border-gray-100 shadow-2xl shadow-gray-200/50 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-gray-50/50 border-b border-gray-100">
-                                <th className="px-10 py-8 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Student Name</th>
-                                <th className="px-10 py-8 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] text-center">Status</th>
-                                <th className="px-10 py-8 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Time Log</th>
-                                <th className="px-10 py-8 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Internal Remarks</th>
-                                <th className="px-10 py-8 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">Commit</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-50">
-                            {filteredChildren.map((child, index) => (
-                                <tr key={child._id} className="hover:bg-purple-50/20 transition-colors group animate-in fade-in slide-in-from-left-4 duration-500" style={{ animationDelay: `${index * 50}ms` }}>
-                                    <td className="px-10 py-8">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-16 h-16 bg-gradient-to-tr from-purple-100 to-indigo-100 rounded-2xl flex items-center justify-center text-purple-700 font-black text-2xl shadow-inner group-hover:scale-105 transition-transform">
-                                                {child.childName[0].toUpperCase()}
-                                            </div>
-                                            <div>
-                                                <div className="font-black text-gray-900 text-xl leading-tight">{child.childName}</div>
-                                                <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Student ID: {child._id.slice(-6)}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-10 py-8">
-                                        <div className="flex items-center justify-center gap-3">
-                                            <button
-                                                onClick={() => handleStatusChange(child._id, 'Present')}
-                                                className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-black transition-all duration-300 ${attendance[child._id].status === 'Present'
-                                                    ? 'bg-green-600 text-white shadow-lg shadow-green-100 scale-105'
-                                                    : 'bg-gray-50 text-gray-400 border border-transparent hover:bg-gray-100'
-                                                    }`}
-                                            >
-                                                <CheckCircle2 size={16} />
-                                                PRESENT
-                                            </button>
-                                            <button
-                                                onClick={() => handleStatusChange(child._id, 'Absent')}
-                                                className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-black transition-all duration-300 ${attendance[child._id].status === 'Absent'
-                                                    ? 'bg-rose-600 text-white shadow-lg shadow-rose-100 scale-105'
-                                                    : 'bg-gray-50 text-gray-400 border border-transparent hover:bg-gray-100'
-                                                    }`}
-                                            >
-                                                <XCircle size={16} />
-                                                ABSENT
-                                            </button>
-                                        </div>
-                                    </td>
-                                    <td className="px-10 py-8">
-                                        <div className="flex items-center gap-3 bg-gray-50/50 p-3 rounded-2xl border border-gray-100">
-                                            <input
-                                                type="time"
-                                                value={attendance[child._id].checkIn}
-                                                onChange={(e) => handleInputChange(child._id, 'checkIn', e.target.value)}
-                                                className="bg-transparent border-none outline-none text-sm font-black text-gray-700"
-                                            />
-                                            <span className="text-gray-300 font-bold">—</span>
-                                            <input
-                                                type="time"
-                                                value={attendance[child._id].checkOut}
-                                                placeholder="Out"
-                                                onChange={(e) => handleInputChange(child._id, 'checkOut', e.target.value)}
-                                                className="bg-transparent border-none outline-none text-sm font-black text-gray-700"
-                                            />
-                                        </div>
-                                    </td>
-                                    <td className="px-10 py-8">
-                                        <input
-                                            type="text"
-                                            value={attendance[child._id].remarks}
-                                            placeholder="Note for parent/admin..."
-                                            onChange={(e) => handleInputChange(child._id, 'remarks', e.target.value)}
-                                            className="w-full px-5 py-4 bg-gray-50/50 border border-gray-100 rounded-2xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-purple-50 focus:border-purple-200 outline-none transition-all placeholder:text-gray-300 italic"
-                                        />
-                                    </td>
-                                    <td className="px-10 py-8 text-right">
-                                        <button
-                                            onClick={() => handleSave(child._id)}
-                                            disabled={saving === child._id}
-                                            className="inline-flex items-center gap-2 px-8 py-4 bg-gray-900 text-white text-xs font-black rounded-2xl shadow-xl shadow-gray-200 hover:bg-purple-700 hover:shadow-purple-200 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 uppercase tracking-widest"
-                                        >
-                                            {saving === child._id ? (
-                                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                            ) : (
-                                                <Save size={18} />
-                                            )}
-                                            {saving === child._id ? 'Syncing' : 'Commit'}
-                                        </button>
-                                    </td>
+            {/* Table Section or Locked Message */}
+            {!isFuture ? (
+                <div className="bg-white rounded-[3rem] border border-gray-100 shadow-2xl shadow-gray-200/50 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-gray-50/50 border-b border-gray-100">
+                                    <th className="px-10 py-8 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Student Name</th>
+                                    <th className="px-10 py-8 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] text-center">Status</th>
+                                    <th className="px-10 py-8 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Time Log</th>
+                                    <th className="px-10 py-8 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Internal Remarks</th>
+                                    <th className="px-10 py-8 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">Commit</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {filteredChildren.map((child, index) => (
+                                    <tr key={child._id} className="hover:bg-purple-50/20 transition-colors group animate-in fade-in slide-in-from-left-4 duration-500" style={{ animationDelay: `${index * 50}ms` }}>
+                                        <td className="px-10 py-8">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-16 h-16 bg-gradient-to-tr from-purple-100 to-indigo-100 rounded-2xl flex items-center justify-center text-purple-700 font-black text-2xl shadow-inner group-hover:scale-105 transition-transform">
+                                                    {child.childName[0].toUpperCase()}
+                                                </div>
+                                                <div>
+                                                    <div className="font-black text-gray-900 text-xl leading-tight">{child.childName}</div>
+                                                    <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Student ID: {child._id.slice(-6)}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-10 py-8">
+                                            <div className="flex items-center justify-center gap-3">
+                                                <button
+                                                    onClick={() => isToday && handleStatusChange(child._id, 'Present')}
+                                                    disabled={!isToday}
+                                                    className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-black transition-all duration-300 ${attendance[child._id].status === 'Present'
+                                                        ? 'bg-green-600 text-white shadow-lg shadow-green-100 scale-105'
+                                                        : 'bg-gray-50 text-gray-400 border border-transparent hover:bg-gray-100'
+                                                        } ${!isToday ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                >
+                                                    <CheckCircle2 size={16} />
+                                                    PRESENT
+                                                </button>
+                                                <button
+                                                    onClick={() => isToday && handleStatusChange(child._id, 'Absent')}
+                                                    disabled={!isToday}
+                                                    className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-black transition-all duration-300 ${attendance[child._id].status === 'Absent'
+                                                        ? 'bg-rose-600 text-white shadow-lg shadow-rose-100 scale-105'
+                                                        : 'bg-gray-50 text-gray-400 border border-transparent hover:bg-gray-100'
+                                                        } ${!isToday ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                >
+                                                    <XCircle size={16} />
+                                                    ABSENT
+                                                </button>
+                                            </div>
+                                        </td>
+                                        <td className="px-10 py-8">
+                                            <div className="flex items-center gap-3 bg-gray-50/50 p-3 rounded-2xl border border-gray-100">
+                                                <input
+                                                    type="time"
+                                                    value={attendance[child._id].checkIn}
+                                                    readOnly={!isToday}
+                                                    onChange={(e) => handleInputChange(child._id, 'checkIn', e.target.value)}
+                                                    className={`bg-transparent border-none outline-none text-sm font-black text-gray-700 ${!isToday ? 'cursor-not-allowed' : ''}`}
+                                                />
+                                                <span className="text-gray-300 font-bold">—</span>
+                                                <input
+                                                    type="time"
+                                                    value={attendance[child._id].checkOut}
+                                                    placeholder="Out"
+                                                    readOnly={!isToday}
+                                                    onChange={(e) => handleInputChange(child._id, 'checkOut', e.target.value)}
+                                                    className={`bg-transparent border-none outline-none text-sm font-black text-gray-700 ${!isToday ? 'cursor-not-allowed' : ''}`}
+                                                />
+                                            </div>
+                                        </td>
+                                        <td className="px-10 py-8">
+                                            <input
+                                                type="text"
+                                                value={attendance[child._id].remarks}
+                                                placeholder={isToday ? "Note for parent/admin..." : "No remarks allowed"}
+                                                readOnly={!isToday}
+                                                onChange={(e) => handleInputChange(child._id, 'remarks', e.target.value)}
+                                                className={`w-full px-5 py-4 bg-gray-50/50 border border-gray-100 rounded-2xl text-sm font-medium outline-none transition-all placeholder:text-gray-300 italic ${!isToday ? 'cursor-not-allowed opacity-70' : 'focus:bg-white focus:ring-4 focus:ring-purple-50 focus:border-purple-200'}`}
+                                            />
+                                        </td>
+                                        <td className="px-10 py-8 text-right">
+                                            <button
+                                                onClick={() => isToday && handleSave(child._id)}
+                                                disabled={saving === child._id || !isToday}
+                                                className={`inline-flex items-center gap-2 px-8 py-4 bg-gray-900 text-white text-xs font-black rounded-2xl shadow-xl shadow-gray-200 hover:bg-purple-700 hover:shadow-purple-200 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 uppercase tracking-widest ${!isToday ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            >
+                                                {saving === child._id ? (
+                                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                                ) : (
+                                                    <Save size={18} />
+                                                )}
+                                                {saving === child._id ? 'Syncing' : isToday ? 'Commit' : 'Locked'}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
+            ) : (
+                <div className="bg-white rounded-[3rem] p-16 border border-gray-100 shadow-2xl shadow-gray-200/50 flex flex-col items-center text-center space-y-8 animate-in zoom-in-95 duration-500">
+                    <div className="w-32 h-32 bg-rose-50 rounded-[2.5rem] flex items-center justify-center text-rose-500 animate-bounce">
+                        <AlertCircle size={64} />
+                    </div>
+                    <div className="space-y-3 max-w-md">
+                        <h3 className="text-4xl font-black text-gray-900 leading-tight">Future Locked</h3>
+                        <p className="text-gray-500 font-medium text-lg">
+                            You can't mark future dates attendance. Please select today's date or a past date to view records.
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => setDate(getTodayString())}
+                        className="flex items-center gap-3 px-10 py-5 bg-purple-600 text-white rounded-2xl font-black shadow-xl shadow-purple-100 hover:bg-purple-700 hover:-translate-y-1 transition-all active:scale-95 uppercase tracking-widest text-sm"
+                    >
+                        <Calendar size={20} />
+                        Jump to Today
+                    </button>
+                </div>
+            )}
         </div>
     );
 };

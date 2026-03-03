@@ -126,6 +126,18 @@ const markChildAttendance = async (req, res) => {
         const attendanceDate = new Date(date || new Date());
         attendanceDate.setHours(0, 0, 0, 0);
 
+        const getTodayString = () => {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        };
+
+        const dateStr = (date || getTodayString()).split('T')[0];
+        const todayStr = getTodayString();
+
+        if (dateStr !== todayStr) {
+            return res.status(400).json({ success: false, message: "Attendance can only be marked for today." });
+        }
+
         const attendance = await Attendance.findOneAndUpdate(
             { child: childId, date: attendanceDate },
             { status, remarks, checkIn, checkOut },

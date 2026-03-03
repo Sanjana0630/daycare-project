@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, Filter, User, Search, Edit2, X } from 'lucide-react';
+import { Calendar, Filter, User, Search, Edit2, X, AlertCircle } from 'lucide-react';
 import { BASE_URL } from '../config';
 
 const ChildrenAttendance = () => {
@@ -7,7 +6,14 @@ const ChildrenAttendance = () => {
     const [children, setChildren] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const getTodayString = () => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+
+    const [selectedDate, setSelectedDate] = useState(getTodayString());
+
+    const isToday = selectedDate === getTodayString();
 
     useEffect(() => {
         fetchChildren();
@@ -61,16 +67,46 @@ const ChildrenAttendance = () => {
                     <h2 className="text-2xl font-bold text-gray-900">Children Attendance</h2>
                     <p className="text-gray-500">View and manage daily attendance records for children.</p>
                 </div>
-                <div className="flex items-center gap-3 bg-white p-2 rounded-xl border border-gray-100 shadow-sm">
-                    <Calendar size={20} className="text-gray-400" />
-                    <input
-                        type="date"
-                        value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
-                        className="border-none outline-none text-sm font-medium text-gray-700"
-                    />
+                <div className="flex flex-col items-end gap-1">
+                    <div className="flex items-center gap-3 bg-white p-2 rounded-xl border border-gray-100 shadow-sm">
+                        <Calendar size={20} className="text-gray-400" />
+                        <input
+                            type="date"
+                            value={selectedDate}
+                            onChange={(e) => setSelectedDate(e.target.value)}
+                            className="border-none outline-none text-sm font-medium text-gray-700"
+                        />
+                    </div>
+                    {!isToday && (
+                        <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest flex items-center gap-1 mt-1 pr-2">
+                            <AlertCircle size={10} />
+                            Read-Only Day
+                        </p>
+                    )}
                 </div>
             </div>
+
+            {/* Locked Warning Banner */}
+            {!isToday && (
+                <div className="bg-amber-50 border border-amber-100 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 animate-in slide-in-from-top-4 duration-500 shadow-sm shadow-amber-50">
+                    <div className="flex items-center gap-5">
+                        <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-amber-500 shadow-sm border border-amber-50">
+                            <AlertCircle size={28} />
+                        </div>
+                        <div>
+                            <h4 className="text-xl font-black text-gray-900 leading-tight">Historical View</h4>
+                            <p className="text-gray-500 font-medium">Attendance records for past or future dates are read-only. Editing is disabled.</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => setSelectedDate(getTodayString())}
+                        className="whitespace-nowrap px-8 py-4 bg-white text-amber-700 border border-amber-200 rounded-2xl font-black shadow-sm hover:bg-amber-100/50 transition-all active:scale-95 uppercase tracking-widest text-xs flex items-center gap-2"
+                    >
+                        <Calendar size={16} />
+                        Go to Today
+                    </button>
+                </div>
+            )}
 
             {/* Filters */}
             <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row gap-4">
@@ -144,7 +180,11 @@ const ChildrenAttendance = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <button className="p-2 text-gray-400 hover:text-blue-600 transition-all" title="Edit Record">
+                                            <button
+                                                disabled={!isToday}
+                                                className={`p-2 transition-all ${!isToday ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-blue-600'}`}
+                                                title={isToday ? "Edit Record" : "Records are locked"}
+                                            >
                                                 <Edit2 size={18} />
                                             </button>
                                         </td>
