@@ -154,7 +154,7 @@ const StaffProfile = () => {
                         <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Email Address</label>
                         <div className="relative">
                             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                            <input type="email" name="email" value={formData.email} readOnly className="w-full pl-12 pr-4 py-4 bg-gray-100 border border-transparent rounded-2xl cursor-not-allowed font-bold text-gray-500" placeholder="email@example.com" />
+                            <input type="email" name="email" value={formData.email} readOnly className="w-full pl-12 pr-4 py-4 bg-gray-100 border border-transparent rounded-2xl cursor-not-allowed font-bold text-gray-500" />
                         </div>
                     </div>
                     <div className="space-y-2">

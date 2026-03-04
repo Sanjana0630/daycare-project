@@ -36,6 +36,7 @@ const LoginPage = () => {
                 // Store JWT and role in localStorage
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('role', data.role);
+                localStorage.setItem('email', data.email);
                 localStorage.setItem('fullName', data.fullName);
                 localStorage.setItem('status', data.status); // Store status
 

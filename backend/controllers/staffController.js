@@ -231,7 +231,7 @@ const updateMyProfile = async (req, res) => {
     try {
         const staff = await Staff.findOneAndUpdate(
             { email: req.user.email },
-            req.body,
+            { ...req.body, email: req.user.email },
             { new: true, runValidators: true, upsert: true }
         );
         res.status(200).json({ success: true, data: staff });
