@@ -40,7 +40,8 @@ const Staff = () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`${BASE_URL}/api/admin/staff/active`, {
+            // Fetch from admin endpoint which now returns full Staff profiles
+            const response = await fetch(`${BASE_URL}/api/admin/staff`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
@@ -50,6 +51,7 @@ const Staff = () => {
                 setError(data.message || 'Failed to fetch staff');
             }
         } catch (err) {
+            console.error('--- FRONTEND: API error:', err);
             setError('Connection failed. Please check your backend.');
         } finally {
             setLoading(false);
@@ -78,11 +80,13 @@ const Staff = () => {
         }
     };
 
-    const filteredStaff = staff.filter(member =>
-        member.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        member.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        member.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredStaff = staff.filter(member => {
+        const nameMatch = (member.name || member.fullName || '').toLowerCase().includes(searchTerm.toLowerCase());
+        const roleMatch = (member.role || '').toLowerCase().includes(searchTerm.toLowerCase());
+        const emailMatch = (member.email || '').toLowerCase().includes(searchTerm.toLowerCase());
+        return nameMatch || roleMatch || emailMatch;
+    });
+
 
     if (loading) return <div className="p-8 text-center text-gray-500">Loading staff data...</div>;
 
@@ -120,10 +124,12 @@ const Staff = () => {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-gray-50 border-b border-gray-100">
-                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Staff Member</th>
-                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Role & Status</th>
-                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Contact Info</th>
-                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Joining Date</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Name</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Email</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Phone</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Role</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Experience</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
                             </tr>
                         </thead>
@@ -132,35 +138,38 @@ const Staff = () => {
                                 <tr key={member._id} className="hover:bg-purple-50/30 transition-colors">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold">
-                                                {member.fullName[0].toUpperCase()}
+                                            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold text-xs">
+                                                {member.name ? member.name[0].toUpperCase() : (member.fullName ? member.fullName[0].toUpperCase() : 'S')}
                                             </div>
                                             <div>
-                                                <div className="font-bold text-gray-900">{member.fullName}</div>
-                                                <div className="text-xs text-gray-400">{member.email}</div>
+                                                <div className="font-bold text-gray-900">{member.name || member.fullName || 'N/A'}</div>
                                             </div>
                                         </div>
                                     </td>
+                                    <td className="px-6 py-4 text-sm text-gray-700">
+                                        {member.email}
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-gray-700">
+                                        {member.phone || 'N/A'}
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-gray-700 capitalize">
+                                        {member.role || 'N/A'}
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-gray-700">
+                                        {member.experience || '0'} Years
+                                    </td>
                                     <td className="px-6 py-4">
-                                        <div className="text-gray-700 font-medium capitalize">{member.role}</div>
-                                        <span className={`inline-flex items-center px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${member.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                                        <span className={`inline-flex items-center px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${member.status?.toLowerCase() === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                                             }`}>
-                                            {member.status}
+                                            {member.status || 'Pending'}
                                         </span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="text-sm text-gray-700">{member.email}</div>
-                                        <div className="text-xs text-gray-400">{member.phone}</div>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-gray-500">
-                                        {new Date(member.createdAt).toLocaleDateString()}
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
                                             <button
                                                 onClick={() => { setSelectedMember(member); setIsViewModalOpen(true); }}
                                                 className="p-2 text-gray-400 hover:text-purple-600 hover:bg-white rounded-lg transition-all"
-                                                title="View Details"
+                                                title="View/Edit"
                                             >
                                                 <Eye size={18} />
                                             </button>
@@ -177,7 +186,7 @@ const Staff = () => {
                             ))}
                             {filteredStaff.length === 0 && (
                                 <tr>
-                                    <td colSpan="5" className="px-6 py-12 text-center text-gray-400 italic">
+                                    <td colSpan="7" className="px-6 py-12 text-center text-gray-400 italic">
                                         No staff members found matching your search.
                                     </td>
                                 </tr>
@@ -199,19 +208,19 @@ const Staff = () => {
                             <div className="space-y-4">
                                 <h4 className="text-primary font-bold border-b pb-2 flex items-center gap-2"><User size={18} /> Personal Info</h4>
                                 <div className="space-y-2">
-                                    <p><span className="text-gray-400 text-sm">Full Name:</span> <br /><span className="font-medium">{selectedMember.name}</span></p>
-                                    <p><span className="text-gray-400 text-sm">D.O.B:</span> <br /><span className="font-medium">{new Date(selectedMember.dob).toLocaleDateString()}</span></p>
-                                    <p><span className="text-gray-400 text-sm">Gender:</span> <br /><span className="font-medium">{selectedMember.gender}</span></p>
-                                    <p><span className="text-gray-400 text-sm">Address:</span> <br /><span className="font-medium text-sm">{selectedMember.address}</span></p>
+                                    <p><span className="text-gray-400 text-sm">Full Name:</span> <br /><span className="font-medium">{selectedMember.name || selectedMember.fullName || 'N/A'}</span></p>
+                                    <p><span className="text-gray-400 text-sm">D.O.B:</span> <br /><span className="font-medium">{selectedMember.dob && !isNaN(new Date(selectedMember.dob)) ? new Date(selectedMember.dob).toLocaleDateString() : 'N/A'}</span></p>
+                                    <p><span className="text-gray-400 text-sm">Gender:</span> <br /><span className="font-medium">{selectedMember.gender || 'N/A'}</span></p>
+                                    <p><span className="text-gray-400 text-sm">Address:</span> <br /><span className="font-medium text-sm">{selectedMember.address || 'N/A'}</span></p>
                                 </div>
                             </div>
                             <div className="space-y-4">
                                 <h4 className="text-primary font-bold border-b pb-2 flex items-center gap-2"><Briefcase size={18} /> Professional Info</h4>
                                 <div className="space-y-2">
-                                    <p><span className="text-gray-400 text-sm">Role:</span> <br /><span className="font-medium">{selectedMember.role}</span></p>
-                                    <p><span className="text-gray-400 text-sm">Qualification:</span> <br /><span className="font-medium">{selectedMember.qualification}</span></p>
-                                    <p><span className="text-gray-400 text-sm">Experience:</span> <br /><span className="font-medium">{selectedMember.experience}</span></p>
-                                    <p><span className="text-gray-400 text-sm">Joining Date:</span> <br /><span className="font-medium">{new Date(selectedMember.joiningDate).toLocaleDateString()}</span></p>
+                                    <p><span className="text-gray-400 text-sm">Role:</span> <br /><span className="font-medium capitalize">{selectedMember.role || 'N/A'}</span></p>
+                                    <p><span className="text-gray-400 text-sm">Qualification:</span> <br /><span className="font-medium">{selectedMember.qualification || 'N/A'}</span></p>
+                                    <p><span className="text-gray-400 text-sm">Experience:</span> <br /><span className="font-medium">{selectedMember.experience || 'N/A'}</span></p>
+                                    <p><span className="text-gray-400 text-sm">Joining Date:</span> <br /><span className="font-medium">{selectedMember.joiningDate && !isNaN(new Date(selectedMember.joiningDate)) ? new Date(selectedMember.joiningDate).toLocaleDateString() : 'N/A'}</span></p>
                                 </div>
                             </div>
                             <div className="md:col-span-2 space-y-4 bg-purple-50 p-4 rounded-2xl border border-purple-100">

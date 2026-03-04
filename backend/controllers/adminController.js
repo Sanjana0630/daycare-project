@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const Staff = require("../models/Staff");
 const StaffAttendance = require("../models/StaffAttendance");
 const Attendance = require("../models/Attendance");
 const Child = require("../models/Child");
@@ -8,14 +9,15 @@ const Child = require("../models/Child");
 // @access  Private/Admin
 const getStaffUsers = async (req, res) => {
     try {
-        const staff = await User.find({ role: "staff" }).select("-password");
+        const staff = await Staff.find({}).lean();
+        console.log(`--- ADMIN: Fetched ${staff.length} staff profiles from Staff collection ---`);
         res.status(200).json({
             success: true,
             count: staff.length,
             data: staff,
         });
     } catch (error) {
-        console.error(error);
+        console.error('Error in getStaffUsers:', error);
         res.status(500).json({ success: false, message: "Server error" });
     }
 };
@@ -121,10 +123,21 @@ const getStaffAttendance = async (req, res) => {
 // @access  Private/Admin
 const getPendingStaff = async (req, res) => {
     try {
-        const staff = await User.find({ role: "staff", status: "pending" }).select("-password");
-        res.status(200).json({ success: true, count: staff.length, data: staff });
+        const Staff = require("../models/Staff");
+        const users = await User.find({ role: "staff", status: "pending" }).select("-password").lean();
+
+        const emails = users.map(u => u.email.toLowerCase().trim());
+        const profiles = await Staff.find({ email: { $in: emails.map(e => new RegExp('^' + e + '$', 'i')) } }).lean();
+
+        const mergedData = users.map(user => {
+            const userEmail = user.email.toLowerCase().trim();
+            const profile = profiles.find(p => p.email.toLowerCase().trim() === userEmail) || {};
+            return { ...profile, ...user, _id: user._id };
+        });
+
+        res.status(200).json({ success: true, count: mergedData.length, data: mergedData });
     } catch (error) {
-        console.error(error);
+        console.error('Error in getPendingStaff:', error);
         res.status(500).json({ success: false, message: "Server error" });
     }
 };
@@ -134,10 +147,31 @@ const getPendingStaff = async (req, res) => {
 // @access  Private/Admin
 const getActiveStaff = async (req, res) => {
     try {
-        const staff = await User.find({ role: "staff", status: "active" }).select("-password");
-        res.status(200).json({ success: true, count: staff.length, data: staff });
+        const users = await User.find({ role: "staff", status: "active" }).select("-password").lean();
+        const emails = users.map(u => u.email.toLowerCase().trim());
+
+        const profiles = await Staff.find({ email: { $in: emails.map(e => new RegExp('^' + e + '$', 'i')) } }).lean();
+
+        const mergedData = users.map(user => {
+            const userEmail = user.email.toLowerCase().trim();
+            const profile = profiles.find(p => p.email.toLowerCase().trim() === userEmail);
+
+            if (!profile) {
+                console.log(`--- ADMIN: Merge failed for ${user.email} - no profile object found`);
+                return { ...user };
+            }
+
+            return { ...profile, ...user, _id: user._id };
+        });
+
+        res.status(200).json({
+            success: true,
+            count: mergedData.length,
+            profilesMatched: profiles.length, // DIAGNOSTIC
+            data: mergedData
+        });
     } catch (error) {
-        console.error(error);
+        console.error('Error in getActiveStaff:', error);
         res.status(500).json({ success: false, message: "Server error" });
     }
 };
@@ -154,8 +188,7 @@ const approveStaff = async (req, res) => {
         user.status = "active";
         await user.save();
 
-        // Also update Staff collection status
-        const Staff = require("../models/Staff");
+        // No longer need local require as it is at top
         await Staff.findOneAndUpdate({ email: user.email }, { status: "Active" });
 
         res.status(200).json({ success: true, message: "Staff approved successfully", data: user });
@@ -177,8 +210,7 @@ const rejectStaff = async (req, res) => {
         user.status = "rejected";
         await user.save();
 
-        // Also update Staff collection status
-        const Staff = require("../models/Staff");
+        // No longer need local require as it is at top
         await Staff.findOneAndUpdate({ email: user.email }, { status: "Rejected" });
 
         res.status(200).json({ success: true, message: "Staff rejected successfully", data: user });
