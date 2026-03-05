@@ -27,6 +27,7 @@ const Children = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [error, setError] = useState('');
+    const [attendance, setAttendance] = useState([]);
 
     // UI States
     const [selectedChild, setSelectedChild] = useState(null);
@@ -38,7 +39,24 @@ const Children = () => {
     useEffect(() => {
         fetchChildren();
         fetchParents();
+        fetchAttendance();
     }, []);
+
+    const fetchAttendance = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const today = new Date().toISOString().split('T')[0];
+            const response = await fetch(`${BASE_URL}/api/admin/children-attendance?date=${today}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            if (data.success) {
+                setAttendance(data.data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch attendance');
+        }
+    };
 
     const fetchParents = async () => {
         try {
@@ -171,79 +189,104 @@ const Children = () => {
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Child</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Age/Gender</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Parent Info</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Today's Status</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Blood Group</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                            {filteredChildren.map((child) => (
-                                <tr key={child._id} className="hover:bg-purple-50/30 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold">
-                                                {child.childName[0].toUpperCase()}
+                            {filteredChildren.map((child) => {
+                                const attendanceRecord = attendance.find(a => a.child?._id === child._id || a.child === child._id);
+                                return (
+                                    <tr key={child._id} className="hover:bg-purple-50/30 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold">
+                                                    {child.childName[0].toUpperCase()}
+                                                </div>
+                                                <div>
+                                                    <div className="font-bold text-gray-900">{child.childName}</div>
+                                                    <div className="text-xs text-gray-400">ID: {child._id.slice(-6)}</div>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <div className="font-bold text-gray-900">{child.childName}</div>
-                                                <div className="text-xs text-gray-400">ID: {child._id.slice(-6)}</div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-gray-700">{calculateAge(child.dob)}</div>
+                                            <div className="text-xs text-gray-400">{child.gender}</div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-gray-700 font-medium">{child.parentName}</div>
+                                            <div className="flex items-center gap-1 mt-0.5">
+                                                {child.parent ? (
+                                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-50 text-green-600 text-[10px] font-bold rounded-md border border-green-100" title="Linked to parent account">
+                                                        <LinkIcon size={10} />
+                                                        Linked
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-50 text-amber-600 text-[10px] font-bold rounded-md border border-amber-100" title="Not linked to account">
+                                                        Unlinked
+                                                    </span>
+                                                )}
+                                                <span className="text-xs text-gray-400">{child.parentPhone}</span>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="text-gray-700">{calculateAge(child.dob)}</div>
-                                        <div className="text-xs text-gray-400">{child.gender}</div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="text-gray-700 font-medium">{child.parentName}</div>
-                                        <div className="flex items-center gap-1 mt-0.5">
-                                            {child.parent ? (
-                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-50 text-green-600 text-[10px] font-bold rounded-md border border-green-100" title="Linked to parent account">
-                                                    <LinkIcon size={10} />
-                                                    Linked
-                                                </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {attendanceRecord ? (
+                                                <div className="flex flex-col gap-1">
+                                                    <span className={`inline-flex items-center justify-center px-2 py-1 rounded-lg text-[10px] font-bold border ${attendanceRecord.status === 'Present'
+                                                        ? 'bg-green-50 text-green-600 border-green-100'
+                                                        : 'bg-red-50 text-red-600 border-red-100'
+                                                        }`}>
+                                                        {attendanceRecord.status.toUpperCase()}
+                                                    </span>
+                                                    {attendanceRecord.checkIn && (
+                                                        <span className="text-[10px] text-gray-400 text-center font-medium">
+                                                            {attendanceRecord.checkIn} {attendanceRecord.checkOut ? `- ${attendanceRecord.checkOut}` : ''}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             ) : (
-                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-50 text-amber-600 text-[10px] font-bold rounded-md border border-amber-100" title="Not linked to account">
-                                                    Unlinked
+                                                <span className="inline-flex items-center justify-center px-2 py-1 bg-gray-50 text-gray-400 text-[10px] font-bold rounded-lg border border-gray-100">
+                                                    NOT MARKED
                                                 </span>
                                             )}
-                                            <span className="text-xs text-gray-400">{child.parentPhone}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className="px-2 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-lg border border-red-100">
-                                            {child.bloodGroup}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                            <button
-                                                onClick={() => { setSelectedChild(child); setIsViewModalOpen(true); }}
-                                                className="p-2 text-gray-400 hover:text-purple-600 hover:bg-white rounded-lg transition-all"
-                                                title="View Details"
-                                            >
-                                                <Eye size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => navigate(`/admin/children/edit/${child._id}`)}
-                                                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-white rounded-lg transition-all"
-                                                title="Edit"
-                                            >
-                                                <Edit2 size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => { setSelectedChild(child); setIsDeleteModalOpen(true); }}
-                                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-white rounded-lg transition-all"
-                                                title="Delete"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className="px-2 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-lg border border-red-100">
+                                                {child.bloodGroup}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    onClick={() => { setSelectedChild(child); setIsViewModalOpen(true); }}
+                                                    className="p-2 text-gray-400 hover:text-purple-600 hover:bg-white rounded-lg transition-all"
+                                                    title="View Details"
+                                                >
+                                                    <Eye size={18} />
+                                                </button>
+                                                <button
+                                                    onClick={() => navigate(`/admin/children/edit/${child._id}`)}
+                                                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-white rounded-lg transition-all"
+                                                    title="Edit"
+                                                >
+                                                    <Edit2 size={18} />
+                                                </button>
+                                                <button
+                                                    onClick={() => { setSelectedChild(child); setIsDeleteModalOpen(true); }}
+                                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-white rounded-lg transition-all"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )
+                            })}
                             {filteredChildren.length === 0 && (
                                 <tr>
-                                    <td colSpan="5" className="px-6 py-12 text-center text-gray-400 italic">
+                                    <td colSpan="6" className="px-6 py-12 text-center text-gray-400 italic">
                                         No children found matching your search.
                                     </td>
                                 </tr>
