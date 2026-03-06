@@ -161,6 +161,103 @@ const addStaffActivity = async (req, res) => {
     }
 };
 
+const getScheduleActivities = async (req, res) => {
+    try {
+        const ScheduleActivity = require("../models/ScheduleActivity");
+        const { date } = req.query;
+        const queryDate = new Date(date || new Date());
+        queryDate.setHours(0, 0, 0, 0);
+
+        const endOfDay = new Date(queryDate.getTime() + 24 * 60 * 60 * 1000);
+
+        const storedActivities = await ScheduleActivity.find({
+            date: { $gte: queryDate, $lt: endOfDay }
+        });
+
+        const defaultActivities = [
+            { name: "Morning Prayer", startTime: "09:00", endTime: "09:30" },
+            { name: "Learning Session", startTime: "09:30", endTime: "10:30" },
+            { name: "Snack Time", startTime: "10:30", endTime: "11:00" },
+            { name: "Play Time", startTime: "11:00", endTime: "12:00" },
+            { name: "Story Time", startTime: "12:00", endTime: "12:30" },
+            { name: "Lunch Time", startTime: "12:30", endTime: "13:00" },
+            { name: "Nap Time", startTime: "13:00", endTime: "15:00" }
+        ];
+
+        const now = new Date();
+        const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const isToday = queryDate.getTime() === new Date().setHours(0, 0, 0, 0);
+
+        const mergedActivities = defaultActivities.map(def => {
+            const stored = storedActivities.find(a => a.name === def.name && a.isDefault);
+            if (stored) return stored;
+
+            let status = "Pending";
+            if (isToday) {
+                if (currentTimeStr > def.endTime) status = "Missed";
+            } else if (queryDate < new Date().setHours(0, 0, 0, 0)) {
+                status = "Missed";
+            }
+
+            return {
+                ...def,
+                status,
+                isDefault: true,
+                _id: `default-${def.name.replace(/\s+/g, '-').toLowerCase()}`
+            };
+        });
+
+        const customActivities = storedActivities.filter(a => !a.isDefault).map(a => {
+            if (a.status === "Pending" && isToday && currentTimeStr > a.endTime) {
+                return { ...a.toObject(), status: "Missed" };
+            }
+            return a;
+        });
+
+        res.status(200).json({
+            success: true,
+            data: [...mergedActivities, ...customActivities].sort((a, b) => a.startTime.localeCompare(b.startTime))
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const markScheduleActivityCompleted = async (req, res) => {
+    try {
+        const ScheduleActivity = require("../models/ScheduleActivity");
+        const { name, date, startTime, endTime, isDefault } = req.body;
+
+        const activityDate = new Date(date);
+        activityDate.setHours(0, 0, 0, 0);
+
+        const activity = await ScheduleActivity.findOneAndUpdate(
+            { name, date: activityDate, createdBy: req.user._id },
+            { name, date: activityDate, startTime, endTime, status: "Completed", isDefault, createdBy: req.user._id },
+            { new: true, upsert: true }
+        );
+
+        res.status(200).json({ success: true, data: activity });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const addCustomScheduleActivity = async (req, res) => {
+    try {
+        const ScheduleActivity = require("../models/ScheduleActivity");
+        const activity = await ScheduleActivity.create({
+            ...req.body,
+            createdBy: req.user._id,
+            isDefault: false,
+            status: "Pending"
+        });
+        res.status(201).json({ success: true, data: activity });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 const getStaffDashboardSummary = async (req, res) => {
     try {
         const staff = await Staff.findOne({ email: req.user.email });
@@ -171,6 +268,7 @@ const getStaffDashboardSummary = async (req, res) => {
         const Child = require("../models/Child");
         const Attendance = require("../models/Attendance");
         const Activity = require("../models/Activity");
+        const ScheduleActivity = require("../models/ScheduleActivity");
 
         const children = await Child.find({
             $or: [
@@ -182,24 +280,58 @@ const getStaffDashboardSummary = async (req, res) => {
         const childIds = children.map(c => c._id);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
+        const endOfToday = new Date(today.getTime() + 24 * 60 * 60 * 1000);
 
         const attendance = await Attendance.find({
             child: { $in: childIds },
             date: {
                 $gte: today,
-                $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
+                $lt: endOfToday
             }
         });
 
         const presentToday = attendance.filter(a => a.status === 'Present').length;
         const absentToday = attendance.filter(a => a.status === 'Absent').length;
 
-        const activitiesToday = await Activity.countDocuments({
-            child: { $in: childIds },
-            createdAt: {
-                $gte: today,
-                $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
+        // Schedule activities counts
+        const storedSchedule = await ScheduleActivity.find({
+            date: { $gte: today, $lt: endOfToday }
+        });
+
+        const defaultActivities = [
+            { name: "Morning Prayer", endTime: "09:30" },
+            { name: "Learning Session", endTime: "10:30" },
+            { name: "Snack Time", endTime: "11:00" },
+            { name: "Play Time", endTime: "12:00" },
+            { name: "Story Time", endTime: "12:30" },
+            { name: "Lunch Time", endTime: "13:00" },
+            { name: "Nap Time", endTime: "15:00" }
+        ];
+
+        const now = new Date();
+        const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+        let completed = 0;
+        let missed = 0;
+        let pending = 0;
+
+        defaultActivities.forEach(def => {
+            const stored = storedSchedule.find(s => s.name === def.name && s.isDefault);
+            if (stored) {
+                if (stored.status === "Completed") completed++;
+                else if (stored.status === "Missed") missed++;
+                else pending++;
+            } else {
+                if (currentTimeStr > def.endTime) missed++;
+                else pending++;
             }
+        });
+
+        const customActivities = storedSchedule.filter(s => !s.isDefault);
+        customActivities.forEach(s => {
+            if (s.status === "Completed") completed++;
+            else if (s.status === "Missed" || (s.status === "Pending" && currentTimeStr > s.endTime)) missed++;
+            else pending++;
         });
 
         res.status(200).json({
@@ -208,7 +340,12 @@ const getStaffDashboardSummary = async (req, res) => {
                 totalChildren: children.length,
                 presentToday,
                 absentToday,
-                activitiesToday
+                scheduleStats: {
+                    total: defaultActivities.length + customActivities.length,
+                    completed,
+                    pending,
+                    missed
+                }
             }
         });
     } catch (error) {
@@ -252,5 +389,8 @@ module.exports = {
     addStaffActivity,
     getStaffDashboardSummary,
     getMyProfile,
-    updateMyProfile
+    updateMyProfile,
+    getScheduleActivities,
+    markScheduleActivityCompleted,
+    addCustomScheduleActivity
 };

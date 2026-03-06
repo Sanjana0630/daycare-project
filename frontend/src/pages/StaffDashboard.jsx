@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, CalendarCheck, Activity, TrendingUp, Clock } from 'lucide-react';
+import { Users, CalendarCheck, Activity, TrendingUp, Clock, CheckCircle2, AlertCircle, Plus, Layout, Save, X } from 'lucide-react';
 
 const StaffDashboard = () => {
     const navigate = useNavigate();
@@ -8,11 +8,57 @@ const StaffDashboard = () => {
         totalChildren: 0,
         presentToday: 0,
         absentToday: 0,
-        activitiesToday: 0
+        scheduleStats: { total: 0, completed: 0, pending: 0, missed: 0 }
     });
+    const [schedule, setSchedule] = useState([]);
     const [loading, setLoading] = useState(true);
     const [profileMissing, setProfileMissing] = useState(false);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [newActivity, setNewActivity] = useState({
+        name: '',
+        startTime: '',
+        endTime: '',
+        description: ''
+    });
     const status = localStorage.getItem('status');
+
+    const fetchStats = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005';
+            const response = await fetch(`${apiUrl}/api/staff/dashboard-stats`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.status === 404) {
+                setProfileMissing(true);
+                return;
+            }
+
+            const result = await response.json();
+            if (result.success) {
+                setStats(result.data);
+            }
+        } catch (error) {
+            console.error('Error fetching dashboard stats:', error);
+        }
+    };
+
+    const fetchSchedule = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005';
+            const response = await fetch(`${apiUrl}/api/staff/schedule`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await response.json();
+            if (result.success) {
+                setSchedule(result.data);
+            }
+        } catch (error) {
+            console.error('Error fetching schedule:', error);
+        }
+    };
 
     useEffect(() => {
         if (status === 'pending') {
@@ -20,30 +66,68 @@ const StaffDashboard = () => {
             return;
         }
 
-        const fetchStats = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005';
-                const response = await fetch(`${apiUrl}/api/staff/dashboard-stats`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (response.status === 404) {
-                    setProfileMissing(true);
-                }
-
-                const result = await response.json();
-                if (result.success) {
-                    setStats(result.data);
-                }
-            } catch (error) {
-                console.error('Error fetching dashboard stats:', error);
-            } finally {
-                setLoading(false);
-            }
+        const initializeData = async () => {
+            setLoading(true);
+            await Promise.all([fetchStats(), fetchSchedule()]);
+            setLoading(false);
         };
-        fetchStats();
+        initializeData();
     }, [status]);
+
+    const handleMarkCompleted = async (activity) => {
+        try {
+            const token = localStorage.getItem('token');
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005';
+
+            const response = await fetch(`${apiUrl}/api/staff/schedule/mark`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    ...activity,
+                    date: new Date().toISOString()
+                })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                await Promise.all([fetchStats(), fetchSchedule()]);
+            }
+        } catch (error) {
+            console.error('Error marking activity completed:', error);
+        }
+    };
+
+    const handleAddCustomActivity = async (e) => {
+        e.preventDefault();
+        try {
+            const token = localStorage.getItem('token');
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005';
+
+            const response = await fetch(`${apiUrl}/api/staff/schedule/custom`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    ...newActivity,
+                    date: new Date().toISOString()
+                })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                setIsAddModalOpen(false);
+                setNewActivity({ name: '', startTime: '', endTime: '', description: '' });
+                await Promise.all([fetchStats(), fetchSchedule()]);
+            }
+        } catch (error) {
+            console.error('Error adding custom activity:', error);
+        }
+    };
 
     if (loading) return (
         <div className="flex items-center justify-center min-h-[50vh]">
@@ -104,11 +188,41 @@ const StaffDashboard = () => {
     }
 
     const cards = [
-        { title: 'My Children', value: stats.totalChildren, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-        { title: 'Present Today', value: stats.presentToday, icon: CalendarCheck, color: 'text-green-600', bg: 'bg-green-50' },
-        { title: 'Absent Today', value: stats.absentToday, icon: TrendingUp, color: 'text-rose-600', bg: 'bg-rose-50' },
-        { title: 'Daily Activities', value: stats.activitiesToday, icon: Activity, color: 'text-purple-600', bg: 'bg-purple-50' }
+        { title: 'Today\'s Activities', value: stats.scheduleStats?.total || 0, icon: Layout, color: 'text-blue-600', bg: 'bg-blue-50' },
+        { title: 'Completed', value: stats.scheduleStats?.completed || 0, icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50' },
+        { title: 'Pending', value: stats.scheduleStats?.pending || 0, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
+        { title: 'Missed', value: stats.scheduleStats?.missed || 0, icon: AlertCircle, color: 'text-rose-600', bg: 'bg-rose-50' }
     ];
+
+    const isWithinTimeWindow = (start, end) => {
+        const now = new Date();
+        const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        return currentTimeStr >= start && currentTimeStr <= end;
+    };
+
+    const getStatusStyles = (status, start, end) => {
+        if (status === 'Completed') return 'bg-green-50 text-green-600 border-green-100';
+        if (status === 'Missed') return 'bg-rose-50 text-rose-600 border-rose-100';
+
+        const now = new Date();
+        const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+        if (currentTimeStr < start) return 'bg-gray-50 text-gray-400 border-gray-100';
+        if (currentTimeStr >= start && currentTimeStr <= end) return 'bg-blue-50 text-blue-600 border-blue-100 ring-4 ring-blue-50/50';
+        return 'bg-rose-50 text-rose-600 border-rose-100';
+    };
+
+    const getStatusText = (status, start, end) => {
+        if (status === 'Completed') return 'COMPLETED';
+        if (status === 'Missed') return 'MISSED';
+
+        const now = new Date();
+        const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+        if (currentTimeStr < start) return 'NOT STARTED';
+        if (currentTimeStr >= start && currentTimeStr <= end) return 'IN PROGRESS';
+        return 'MISSED';
+    };
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -140,28 +254,156 @@ const StaffDashboard = () => {
                 ))}
             </div>
 
-            {/* Recent Section Placeholder */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
-                    <h3 className="text-xl font-black text-gray-900 mb-6">Today's Schedule</h3>
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-4 p-4 rounded-2xl bg-gray-50 border border-gray-100 border-dashed">
-                            <div className="w-2 h-12 bg-blue-500 rounded-full"></div>
-                            <div>
-                                <p className="font-bold text-gray-900">Morning Session</p>
-                                <p className="text-sm text-gray-500">9:00 AM - 12:00 PM</p>
-                            </div>
+            {/* Schedule Section */}
+            <div className="grid grid-cols-1 gap-8">
+                <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h3 className="text-2xl font-black text-gray-900">Today's Schedule</h3>
+                            <p className="text-gray-500 font-medium">Daily curriculum and custom activities</p>
                         </div>
-                        <div className="flex items-center gap-4 p-4 rounded-2xl bg-gray-50 border border-gray-100 border-dashed opacity-50">
-                            <div className="w-2 h-12 bg-gray-300 rounded-full"></div>
-                            <div>
-                                <p className="font-bold text-gray-900">Nap Time</p>
-                                <p className="text-sm text-gray-500">1:00 PM - 3:00 PM</p>
-                            </div>
-                        </div>
+                        <button
+                            onClick={() => setIsAddModalOpen(true)}
+                            className="p-3 bg-purple-600 text-white rounded-2xl shadow-lg shadow-purple-100 hover:bg-purple-700 transition-all active:scale-95 flex items-center gap-2 font-bold"
+                        >
+                            <Plus size={20} />
+                            <span className="hidden sm:inline">Add Activity</span>
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        {schedule.map((item, idx) => {
+                            const statusStyle = getStatusStyles(item.status, item.startTime, item.endTime);
+                            const statusText = getStatusText(item.status, item.startTime, item.endTime);
+                            const canComplete = item.status === 'Pending' && isWithinTimeWindow(item.startTime, item.endTime);
+
+                            return (
+                                <div key={item._id || idx} className="p-6 rounded-3xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:shadow-xl hover:shadow-gray-100 transition-all duration-300 group relative overflow-hidden">
+                                    {item.isDefault && (
+                                        <div className="absolute top-0 right-0 p-3">
+                                            <div className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Default</div>
+                                        </div>
+                                    )}
+                                    <div className="flex flex-col h-full space-y-4">
+                                        <div className="flex items-start justify-between">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2 text-gray-400 font-bold text-xs uppercase tracking-wider">
+                                                    <Clock size={12} />
+                                                    {item.startTime} – {item.endTime}
+                                                </div>
+                                                <h4 className="text-lg font-black text-gray-900 line-clamp-1">{item.name}</h4>
+                                            </div>
+                                            <span className={`px-3 py-1 rounded-full text-[10px] font-black border tracking-widest ${statusStyle}`}>
+                                                {statusText}
+                                            </span>
+                                        </div>
+
+                                        {item.description && (
+                                            <p className="text-sm text-gray-500 font-medium line-clamp-2">{item.description}</p>
+                                        )}
+
+                                        <div className="mt-auto pt-4">
+                                            {item.status === 'Completed' ? (
+                                                <div className="flex items-center gap-2 text-green-600 font-bold text-sm">
+                                                    <CheckCircle2 size={18} />
+                                                    Completed
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    disabled={!canComplete}
+                                                    onClick={() => handleMarkCompleted(item)}
+                                                    className={`w-full py-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all ${canComplete
+                                                            ? 'bg-purple-600 text-white shadow-lg shadow-purple-100 hover:bg-purple-700 active:scale-95'
+                                                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                                        }`}
+                                                >
+                                                    {statusText === 'NOT STARTED' ? 'Not Started' : 'Mark Completed'}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             </div>
+
+            {/* Add Activity Modal */}
+            {isAddModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+                        <div className="px-8 py-6 bg-purple-600 text-white flex items-center justify-between">
+                            <div>
+                                <h3 className="text-xl font-black">Add New Activity</h3>
+                                <p className="text-purple-100 text-sm font-medium">Create a custom schedule item</p>
+                            </div>
+                            <button onClick={() => setIsAddModalOpen(false)} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleAddCustomActivity} className="p-8 space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-gray-400 uppercase tracking-wider ml-1">Activity Name</label>
+                                <input
+                                    required
+                                    className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-purple-50 focus:border-purple-200 outline-none transition-all font-bold placeholder:text-gray-300"
+                                    placeholder="e.g., Gardening Session"
+                                    value={newActivity.name}
+                                    onChange={(e) => setNewActivity({ ...newActivity, name: e.target.value })}
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-gray-400 uppercase tracking-wider ml-1">Start Time</label>
+                                    <input
+                                        type="time"
+                                        required
+                                        className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-purple-50 focus:border-purple-200 outline-none transition-all font-bold"
+                                        value={newActivity.startTime}
+                                        onChange={(e) => setNewActivity({ ...newActivity, startTime: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-gray-400 uppercase tracking-wider ml-1">End Time</label>
+                                    <input
+                                        type="time"
+                                        required
+                                        className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-purple-50 focus:border-purple-200 outline-none transition-all font-bold"
+                                        value={newActivity.endTime}
+                                        onChange={(e) => setNewActivity({ ...newActivity, endTime: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-gray-400 uppercase tracking-wider ml-1">Description (Optional)</label>
+                                <textarea
+                                    className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-purple-50 focus:border-purple-200 outline-none transition-all font-medium placeholder:text-gray-300 min-h-[100px]"
+                                    placeholder="Add more details about this activity..."
+                                    value={newActivity.description}
+                                    onChange={(e) => setNewActivity({ ...newActivity, description: e.target.value })}
+                                />
+                            </div>
+                            <div className="pt-4 flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsAddModalOpen(false)}
+                                    className="flex-1 py-4 bg-gray-100 text-gray-600 font-black rounded-2xl uppercase tracking-widest hover:bg-gray-200 transition-all active:scale-95"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-2 py-4 px-10 bg-purple-600 text-white font-black rounded-2xl uppercase tracking-widest shadow-xl shadow-purple-100 hover:bg-purple-700 transition-all active:scale-95 flex items-center justify-center gap-2"
+                                >
+                                    <Save size={20} />
+                                    Save Activity
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

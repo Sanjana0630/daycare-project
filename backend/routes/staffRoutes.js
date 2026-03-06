@@ -13,6 +13,9 @@ const {
     getStaffDashboardSummary,
     getMyProfile,
     updateMyProfile,
+    getScheduleActivities,
+    markScheduleActivityCompleted,
+    addCustomScheduleActivity
 } = require("../controllers/staffController");
 
 router.route("/")
@@ -23,6 +26,9 @@ router.get("/assigned-children", protect, getStaffChildren);
 router.post("/mark-attendance", protect, markChildAttendance);
 router.post("/add-activity", protect, addStaffActivity);
 router.get("/dashboard-stats", protect, getStaffDashboardSummary);
+router.get("/schedule", protect, getScheduleActivities);
+router.post("/schedule/mark", protect, markScheduleActivityCompleted);
+router.post("/schedule/custom", protect, addCustomScheduleActivity);
 router.get("/me", protect, getMyProfile);
 router.put("/me", protect, updateMyProfile);
 
