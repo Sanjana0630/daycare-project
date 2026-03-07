@@ -1,5 +1,26 @@
 const Staff = require("../models/Staff");
 
+// Timezone helpers to ensure Render server matches Localhost behavior
+const getCurrentTimeIST = () => {
+    return new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Kolkata',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    }).format(new Date());
+};
+
+const getNormalizedDate = (dateParam) => {
+    const d = dateParam ? new Date(dateParam) : new Date();
+    const dateStr = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Kolkata',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    }).format(d);
+    return new Date(`${dateStr}T00:00:00.000Z`);
+};
+
 // @desc    Register a new staff member
 // @route   POST /api/staff
 // @access  Public
@@ -124,16 +145,10 @@ const markChildAttendance = async (req, res) => {
         const { childId, status, date, remarks, checkIn, checkOut } = req.body;
         const Attendance = require("../models/Attendance");
 
-        const attendanceDate = new Date(date || new Date());
-        attendanceDate.setHours(0, 0, 0, 0);
+        const attendanceDate = getNormalizedDate(date);
 
-        const getTodayString = () => {
-            const d = new Date();
-            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        };
-
-        const dateStr = (date || getTodayString()).split('T')[0];
-        const todayStr = getTodayString();
+        const dateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(date ? new Date(date) : new Date());
+        const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
 
         if (dateStr !== todayStr) {
             return res.status(400).json({ success: false, message: "Attendance can only be marked for today." });
@@ -165,8 +180,7 @@ const getScheduleActivities = async (req, res) => {
     try {
         const ScheduleActivity = require("../models/ScheduleActivity");
         const { date } = req.query;
-        const queryDate = new Date(date || new Date());
-        queryDate.setHours(0, 0, 0, 0);
+        const queryDate = getNormalizedDate(date);
 
         const endOfDay = new Date(queryDate.getTime() + 24 * 60 * 60 * 1000);
 
@@ -184,9 +198,9 @@ const getScheduleActivities = async (req, res) => {
             { name: "Nap Time", startTime: "13:00", endTime: "15:00" }
         ];
 
-        const now = new Date();
-        const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        const isToday = queryDate.getTime() === new Date().setHours(0, 0, 0, 0);
+        const currentTimeStr = getCurrentTimeIST();
+        const todayStart = getNormalizedDate();
+        const isToday = queryDate.getTime() === todayStart.getTime();
 
         const mergedActivities = defaultActivities.map(def => {
             const stored = storedActivities.find(a => a.name === def.name && a.isDefault);
@@ -195,7 +209,7 @@ const getScheduleActivities = async (req, res) => {
             let status = "Pending";
             if (isToday) {
                 if (currentTimeStr > def.endTime) status = "Missed";
-            } else if (queryDate < new Date().setHours(0, 0, 0, 0)) {
+            } else if (queryDate < todayStart) {
                 status = "Missed";
             }
 
@@ -242,8 +256,7 @@ const markScheduleActivityCompleted = async (req, res) => {
         const ScheduleActivity = require("../models/ScheduleActivity");
         const { _id, name, date, startTime, endTime, isDefault } = req.body;
 
-        const activityDate = new Date(date);
-        activityDate.setHours(0, 0, 0, 0);
+        const activityDate = getNormalizedDate(date);
 
         let activity;
 
@@ -271,8 +284,7 @@ const addCustomScheduleActivity = async (req, res) => {
     try {
         const ScheduleActivity = require("../models/ScheduleActivity");
 
-        const activityDate = new Date(req.body.date);
-        activityDate.setHours(0, 0, 0, 0);
+        const activityDate = getNormalizedDate(req.body.date);
 
         const activity = await ScheduleActivity.create({
             ...req.body,
@@ -328,8 +340,9 @@ const getStaffDashboardSummary = async (req, res) => {
         });
 
         const childIds = children.map(c => c._id);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+
+        // Use normalized IST dates to prevent counting bugs on Render vs Localhost
+        const today = getNormalizedDate();
         const endOfToday = new Date(today.getTime() + 24 * 60 * 60 * 1000);
 
         const attendance = await Attendance.find({
@@ -358,8 +371,7 @@ const getStaffDashboardSummary = async (req, res) => {
             { name: "Nap Time", endTime: "15:00" }
         ];
 
-        const now = new Date();
-        const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const currentTimeStr = getCurrentTimeIST();
 
         let completed = 0;
         let missed = 0;
