@@ -15,7 +15,8 @@ const {
     updateMyProfile,
     getScheduleActivities,
     markScheduleActivityCompleted,
-    addCustomScheduleActivity
+    addCustomScheduleActivity,
+    deleteScheduleActivity
 } = require("../controllers/staffController");
 
 router.route("/")
@@ -29,6 +30,7 @@ router.get("/dashboard-stats", protect, getStaffDashboardSummary);
 router.get("/schedule", protect, getScheduleActivities);
 router.post("/schedule/mark", protect, markScheduleActivityCompleted);
 router.post("/schedule/custom", protect, addCustomScheduleActivity);
+router.delete("/schedule/:id", protect, deleteScheduleActivity);
 router.get("/me", protect, getMyProfile);
 router.put("/me", protect, updateMyProfile);
 

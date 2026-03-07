@@ -208,15 +208,29 @@ const getScheduleActivities = async (req, res) => {
         });
 
         const customActivities = storedActivities.filter(a => !a.isDefault).map(a => {
-            if (a.status === "Pending" && isToday && currentTimeStr > a.endTime) {
-                return { ...a.toObject(), status: "Missed" };
+            const obj = a.toObject ? a.toObject() : a;
+            if (obj.status === "Pending" && isToday && currentTimeStr > obj.endTime) {
+                return { ...obj, status: "Missed" };
             }
-            return a;
+            return obj;
         });
+
+        // Optional: deduplicate custom activities by name to avoid displaying the duplicated bug records
+        // but wait, if a user intentionally creates two custom activities with the same name but different times, this would break.
+        // Let's deduplicate by name AND start time to be safe.
+        const uniqueCustomsMap = new Map();
+        for (const c of customActivities) {
+            const key = `${c.name}-${c.startTime}`;
+            // If there's a duplicate, keep the one that was updated most recently (likely the one marked completed)
+            if (!uniqueCustomsMap.has(key) || c.updatedAt > uniqueCustomsMap.get(key).updatedAt) {
+                uniqueCustomsMap.set(key, c);
+            }
+        }
+        const uniqueCustoms = Array.from(uniqueCustomsMap.values());
 
         res.status(200).json({
             success: true,
-            data: [...mergedActivities, ...customActivities].sort((a, b) => a.startTime.localeCompare(b.startTime))
+            data: [...mergedActivities, ...uniqueCustoms].sort((a, b) => a.startTime.localeCompare(b.startTime))
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -226,16 +240,26 @@ const getScheduleActivities = async (req, res) => {
 const markScheduleActivityCompleted = async (req, res) => {
     try {
         const ScheduleActivity = require("../models/ScheduleActivity");
-        const { name, date, startTime, endTime, isDefault } = req.body;
+        const { _id, name, date, startTime, endTime, isDefault } = req.body;
 
         const activityDate = new Date(date);
         activityDate.setHours(0, 0, 0, 0);
 
-        const activity = await ScheduleActivity.findOneAndUpdate(
-            { name, date: activityDate, createdBy: req.user._id },
-            { name, date: activityDate, startTime, endTime, status: "Completed", isDefault, createdBy: req.user._id },
-            { new: true, upsert: true }
-        );
+        let activity;
+
+        if (!isDefault && _id && typeof _id === 'string' && !_id.startsWith('default-')) {
+            activity = await ScheduleActivity.findByIdAndUpdate(
+                _id,
+                { status: "Completed" },
+                { new: true }
+            );
+        } else {
+            activity = await ScheduleActivity.findOneAndUpdate(
+                { name, date: activityDate, createdBy: req.user._id, isDefault: true },
+                { name, date: activityDate, startTime, endTime, status: "Completed", isDefault: true, createdBy: req.user._id },
+                { new: true, upsert: true }
+            );
+        }
 
         res.status(200).json({ success: true, data: activity });
     } catch (error) {
@@ -246,13 +270,39 @@ const markScheduleActivityCompleted = async (req, res) => {
 const addCustomScheduleActivity = async (req, res) => {
     try {
         const ScheduleActivity = require("../models/ScheduleActivity");
+
+        const activityDate = new Date(req.body.date);
+        activityDate.setHours(0, 0, 0, 0);
+
         const activity = await ScheduleActivity.create({
             ...req.body,
+            date: activityDate,
             createdBy: req.user._id,
             isDefault: false,
             status: "Pending"
         });
         res.status(201).json({ success: true, data: activity });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const deleteScheduleActivity = async (req, res) => {
+    try {
+        const ScheduleActivity = require("../models/ScheduleActivity");
+        const activity = await ScheduleActivity.findById(req.params.id);
+
+        if (!activity) {
+            return res.status(404).json({ success: false, message: "Activity not found" });
+        }
+
+        if (activity.isDefault) {
+            return res.status(400).json({ success: false, message: "Cannot delete default activities" });
+        }
+
+        await activity.deleteOne();
+
+        res.status(200).json({ success: true, data: {}, message: "Activity removed" });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -327,7 +377,18 @@ const getStaffDashboardSummary = async (req, res) => {
             }
         });
 
-        const customActivities = storedSchedule.filter(s => !s.isDefault);
+        // Deduplicate custom activities to prevent inflated stats from old duplicates
+        // Deduplicate by name and start time. Keep the most recently updated one.
+        let customActivities = storedSchedule.filter(s => !s.isDefault);
+        const uniqueCustomsMap = new Map();
+        for (const c of customActivities) {
+            const key = `${c.name}-${c.startTime}`;
+            if (!uniqueCustomsMap.has(key) || c.updatedAt > uniqueCustomsMap.get(key).updatedAt) {
+                uniqueCustomsMap.set(key, c);
+            }
+        }
+        customActivities = Array.from(uniqueCustomsMap.values());
+
         customActivities.forEach(s => {
             if (s.status === "Completed") completed++;
             else if (s.status === "Missed" || (s.status === "Pending" && currentTimeStr > s.endTime)) missed++;
@@ -392,5 +453,6 @@ module.exports = {
     updateMyProfile,
     getScheduleActivities,
     markScheduleActivityCompleted,
-    addCustomScheduleActivity
+    addCustomScheduleActivity,
+    deleteScheduleActivity
 };

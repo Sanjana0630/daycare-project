@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, CalendarCheck, Activity, TrendingUp, Clock, CheckCircle2, AlertCircle, Plus, Layout, Save, X } from 'lucide-react';
+import { Users, CalendarCheck, Activity, TrendingUp, Clock, CheckCircle2, AlertCircle, Plus, Layout, Save, X, Trash2 } from 'lucide-react';
 
 const StaffDashboard = () => {
     const navigate = useNavigate();
@@ -72,6 +72,14 @@ const StaffDashboard = () => {
             setLoading(false);
         };
         initializeData();
+
+        // Auto-refresh every minute to update activity statuses automatically
+        const interval = setInterval(() => {
+            fetchStats();
+            fetchSchedule();
+        }, 60000);
+
+        return () => clearInterval(interval);
     }, [status]);
 
     const handleMarkCompleted = async (activity) => {
@@ -126,6 +134,29 @@ const StaffDashboard = () => {
             }
         } catch (error) {
             console.error('Error adding custom activity:', error);
+        }
+    };
+
+    const handleDeleteActivity = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this activity?")) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005';
+
+            const response = await fetch(`${apiUrl}/api/staff/schedule/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                await Promise.all([fetchStats(), fetchSchedule()]);
+            }
+        } catch (error) {
+            console.error('Error deleting activity:', error);
         }
     };
 
@@ -279,11 +310,19 @@ const StaffDashboard = () => {
 
                             return (
                                 <div key={item._id || idx} className="p-6 rounded-3xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:shadow-xl hover:shadow-gray-100 transition-all duration-300 group relative overflow-hidden">
-                                    {item.isDefault && (
-                                        <div className="absolute top-0 right-0 p-3">
-                                            <div className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Default</div>
-                                        </div>
-                                    )}
+                                    <div className="absolute top-0 right-0 p-3">
+                                        {item.isDefault ? (
+                                            <div className="text-[10px] font-black text-gray-300 uppercase tracking-widest px-2 py-1">Default</div>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleDeleteActivity(item._id)}
+                                                className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                                title="Delete Activity"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        )}
+                                    </div>
                                     <div className="flex flex-col h-full space-y-4">
                                         <div className="flex items-start justify-between">
                                             <div className="space-y-1">
@@ -304,17 +343,20 @@ const StaffDashboard = () => {
 
                                         <div className="mt-auto pt-4">
                                             {item.status === 'Completed' ? (
-                                                <div className="flex items-center gap-2 text-green-600 font-bold text-sm">
+                                                <button
+                                                    disabled
+                                                    className="w-full py-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all bg-green-50 text-green-600 border border-green-200 flex items-center justify-center gap-2 cursor-default"
+                                                >
                                                     <CheckCircle2 size={18} />
                                                     Completed
-                                                </div>
+                                                </button>
                                             ) : (
                                                 <button
                                                     disabled={!canComplete}
                                                     onClick={() => handleMarkCompleted(item)}
                                                     className={`w-full py-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all ${canComplete
-                                                            ? 'bg-purple-600 text-white shadow-lg shadow-purple-100 hover:bg-purple-700 active:scale-95'
-                                                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                                        ? 'bg-purple-600 text-white shadow-lg shadow-purple-100 hover:bg-purple-700 active:scale-95'
+                                                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                                         }`}
                                                 >
                                                     {statusText === 'NOT STARTED' ? 'Not Started' : 'Mark Completed'}
