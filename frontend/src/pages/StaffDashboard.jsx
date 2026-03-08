@@ -6,6 +6,7 @@ const StaffDashboard = () => {
     const navigate = useNavigate();
     const [stats, setStats] = useState({
         totalChildren: 0,
+        pendingToday: 0,
         presentToday: 0,
         absentToday: 0,
         scheduleStats: { total: 0, completed: 0, pending: 0, missed: 0 }
@@ -218,10 +219,17 @@ const StaffDashboard = () => {
         );
     }
 
+    const activeAttendanceCards = [
+        { title: 'Assigned Students', value: stats.totalChildren || 0, icon: Users, color: 'text-purple-600', bg: 'bg-purple-50' },
+        { title: 'Pending Attendance', value: stats.pendingToday || 0, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
+        { title: 'Present', value: stats.presentToday || 0, icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50' },
+        { title: 'Absent', value: stats.absentToday || 0, icon: AlertCircle, color: 'text-rose-600', bg: 'bg-rose-50' }
+    ];
+
     const cards = [
         { title: 'Today\'s Activities', value: stats.scheduleStats?.total || 0, icon: Layout, color: 'text-blue-600', bg: 'bg-blue-50' },
         { title: 'Completed', value: stats.scheduleStats?.completed || 0, icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50' },
-        { title: 'Pending', value: stats.scheduleStats?.pending || 0, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
+        { title: 'Pending Activities', value: stats.scheduleStats?.pending || 0, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
         { title: 'Missed', value: stats.scheduleStats?.missed || 0, icon: AlertCircle, color: 'text-rose-600', bg: 'bg-rose-50' }
     ];
 
@@ -268,7 +276,7 @@ const StaffDashboard = () => {
                 <div className="absolute right-0 top-0 w-64 h-full bg-gradient-to-l from-blue-50/50 to-transparent -z-0"></div>
             </div>
 
-            {/* Quick Stats Grid */}
+            {/* Schedule Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {cards.map((card, idx) => (
                     <div key={idx} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 group">

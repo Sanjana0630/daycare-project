@@ -59,7 +59,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     const staffNavItems = [
         { name: 'Dashboard', icon: LayoutDashboard, path: '/staff/dashboard' },
         { name: 'My Children', icon: Users, path: '/staff/my-children' },
-        { name: 'Attendance', icon: CalendarCheck, path: '/staff/attendance' },
+        { name: 'My Class Attendance', icon: CalendarCheck, path: '/staff/attendance' },
         { name: 'Activities', icon: Activity, path: '/staff/activities' },
         { name: 'Notifications', icon: Bell, path: '/staff/notifications' },
         { name: 'Settings', icon: Settings, path: '/staff/settings' },

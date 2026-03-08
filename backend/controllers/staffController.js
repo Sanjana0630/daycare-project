@@ -145,6 +145,8 @@ const markChildAttendance = async (req, res) => {
         const { childId, status, date, remarks, checkIn, checkOut } = req.body;
         const Attendance = require("../models/Attendance");
 
+        // Use the raw date param for matching today if that's what the client sends
+        // getNormalizedDate strips time to local midnight UTC
         const attendanceDate = getNormalizedDate(date);
 
         const dateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(date ? new Date(date) : new Date());
@@ -154,13 +156,84 @@ const markChildAttendance = async (req, res) => {
             return res.status(400).json({ success: false, message: "Attendance can only be marked for today." });
         }
 
+        const updateData = { status, remarks, checkIn, checkOut, markedBy: req.user._id, markedAt: new Date() };
+
         const attendance = await Attendance.findOneAndUpdate(
             { child: childId, date: attendanceDate },
-            { status, remarks, checkIn, checkOut },
+            updateData,
             { new: true, upsert: true }
         );
 
         res.status(200).json({ success: true, data: attendance });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const getChildrenAttendance = async (req, res) => {
+    try {
+        const staffMember = await Staff.findOne({ email: req.user.email });
+        if (!staffMember) {
+            return res.status(404).json({ success: false, message: "Staff record not found" });
+        }
+
+        const Child = require("../models/Child");
+        const Attendance = require("../models/Attendance");
+
+        // 1. Get children assigned to the staff 
+        const children = await Child.find({
+            $or: [
+                { assignedTeacher: staffMember._id },
+                { assignedCaretaker: staffMember._id }
+            ]
+        });
+
+        const childIds = children.map(c => c._id);
+        const queryDate = req.query.date ? getNormalizedDate(req.query.date) : getNormalizedDate();
+        const endOfDay = new Date(queryDate.getTime() + 24 * 60 * 60 * 1000);
+
+        // 2. Fetch the attendance records across these children for the specified date
+        const attendance = await Attendance.find({
+            child: { $in: childIds },
+            date: { $gte: queryDate, $lt: endOfDay }
+        });
+
+        res.status(200).json({ success: true, count: attendance.length, data: attendance });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const getAttendanceHistory = async (req, res) => {
+    try {
+        const staffMember = await Staff.findOne({ email: req.user.email });
+        if (!staffMember) {
+            return res.status(404).json({ success: false, message: "Staff record not found" });
+        }
+
+        const Child = require("../models/Child");
+        const Attendance = require("../models/Attendance");
+
+        // 1. Get children assigned to the staff 
+        const children = await Child.find({
+            $or: [
+                { assignedTeacher: staffMember._id },
+                { assignedCaretaker: staffMember._id }
+            ]
+        });
+
+        const childIds = children.map(c => c._id);
+
+        // 2. Fetch recent attendance records for these children
+        const history = await Attendance.find({
+            child: { $in: childIds }
+        })
+            .populate("child", "childName parentName")
+            .populate("markedBy", "name")
+            .sort({ markedAt: -1, date: -1 })
+            .limit(50); // Fetch last 50 records for performance
+
+        res.status(200).json({ success: true, count: history.length, data: history });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -355,6 +428,7 @@ const getStaffDashboardSummary = async (req, res) => {
 
         const presentToday = attendance.filter(a => a.status === 'Present').length;
         const absentToday = attendance.filter(a => a.status === 'Absent').length;
+        const pendingToday = children.length - presentToday - absentToday;
 
         // Schedule activities counts
         const storedSchedule = await ScheduleActivity.find({
@@ -411,6 +485,7 @@ const getStaffDashboardSummary = async (req, res) => {
             success: true,
             data: {
                 totalChildren: children.length,
+                pendingToday: pendingToday > 0 ? pendingToday : 0,
                 presentToday,
                 absentToday,
                 scheduleStats: {
@@ -458,6 +533,8 @@ module.exports = {
     updateStaff,
     deleteStaff,
     getStaffChildren,
+    getChildrenAttendance,
+    getAttendanceHistory,
     markChildAttendance,
     addStaffActivity,
     getStaffDashboardSummary,

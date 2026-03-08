@@ -34,19 +34,36 @@ const StaffMarkAttendance = () => {
                 const childrenData = await childrenRes.json();
 
                 if (childrenData.success) {
-                    setChildren(childrenData.data);
+                    // Fetch existing attendance for the date
+                    const attendanceRes = await fetch(`${BASE_URL}/api/staff/children-attendance?date=${date}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const attendanceData = await attendanceRes.json();
 
-                    // Initialize attendance state (could fetch existing attendance for date here if API exists)
+                    const existingAttendance = attendanceData.success ? attendanceData.data : [];
+
+                    // Initialize attendance state taking existing DB records into account
                     const initialAttendance = {};
                     childrenData.data.forEach(child => {
-                        initialAttendance[child._id] = {
-                            status: 'Present',
-                            checkIn: '09:00',
-                            checkOut: '',
-                            remarks: ''
-                        };
+                        const record = existingAttendance.find(a => a.child === child._id);
+                        if (record) {
+                            initialAttendance[child._id] = {
+                                status: record.status, // "Pending", "Present", "Absent"
+                                checkIn: record.checkIn || '',
+                                checkOut: record.checkOut || '',
+                                remarks: record.remarks || ''
+                            };
+                        } else {
+                            initialAttendance[child._id] = {
+                                status: 'Pending',
+                                checkIn: '09:00',
+                                checkOut: '',
+                                remarks: ''
+                            };
+                        }
                     });
                     setAttendance(initialAttendance);
+                    setChildren(childrenData.data);
                 }
             } catch (error) {
                 console.error('Error fetching data:', error);
@@ -57,12 +74,37 @@ const StaffMarkAttendance = () => {
         fetchData();
     }, [date]);
 
+    // History state
+    const [history, setHistory] = useState([]);
+    const [historyLoading, setHistoryLoading] = useState(false);
+
+    useEffect(() => {
+        const fetchHistory = async () => {
+            setHistoryLoading(true);
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${BASE_URL}/api/staff/attendance-history`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    setHistory(data.data);
+                }
+            } catch (error) {
+                console.error("Error fetching history:", error);
+            } finally {
+                setHistoryLoading(false);
+            }
+        };
+        fetchHistory();
+    }, []);
+
     // Calculated Stats
     const stats = {
         total: children.length,
         present: Object.values(attendance).filter(a => a.status === 'Present').length,
         absent: Object.values(attendance).filter(a => a.status === 'Absent').length,
-        unmarked: children.length - Object.keys(attendance).length
+        unmarked: Object.values(attendance).filter(a => a.status === 'Pending').length
     };
 
     const handleStatusChange = (childId, status) => {
@@ -101,6 +143,14 @@ const StaffMarkAttendance = () => {
             const result = await response.json();
             if (result.success) {
                 console.log('Attendance saved successfully');
+                // Opt: refreshing history upon save
+                const historyResponse = await fetch(`${BASE_URL}/api/staff/attendance-history`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const historyData = await historyResponse.json();
+                if (historyData.success) {
+                    setHistory(historyData.data);
+                }
             }
         } catch (error) {
             console.error('Error saving attendance:', error);
@@ -153,7 +203,7 @@ const StaffMarkAttendance = () => {
                     <div className="space-y-2">
                         <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/20 text-xs font-bold tracking-wider uppercase">
                             <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                            Live Class Status
+                            My Class Attendance
                         </div>
                         <h2 className="text-5xl font-black tracking-tight font-mono">{formattedTime}</h2>
                         <p className="text-purple-100 font-medium opacity-80 text-lg">{formattedDate}</p>
@@ -194,7 +244,7 @@ const StaffMarkAttendance = () => {
                     { label: 'Assigned Students', value: stats.total, color: 'purple', icon: User, bg: 'bg-purple-50', text: 'text-purple-600' },
                     { label: 'Present Now', value: stats.present, color: 'green', icon: CheckCircle2, bg: 'bg-green-50', text: 'text-green-600' },
                     { label: 'Absent Now', value: stats.absent, color: 'rose', icon: XCircle, bg: 'bg-rose-50', text: 'text-rose-600' },
-                    { label: 'Total Class', value: stats.total, color: 'indigo', icon: CalendarCheck, bg: 'bg-indigo-50', text: 'text-indigo-600' }
+                    { label: 'Pending', value: stats.unmarked, color: 'amber', icon: AlertCircle, bg: 'bg-amber-50', text: 'text-amber-600' }
                 ].map((stat) => (
                     <div key={stat.label} className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
                         <div className="flex items-center gap-5">
@@ -250,6 +300,11 @@ const StaffMarkAttendance = () => {
                                                     <div className="font-black text-gray-900 text-xl leading-tight">{child.childName}</div>
                                                     <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Student ID: {child._id.slice(-6)}</div>
                                                 </div>
+                                                {attendance[child._id].status === 'Pending' && (
+                                                    <div className="ml-2 px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-black uppercase tracking-widest rounded-full border border-amber-200">
+                                                        Pending
+                                                    </div>
+                                                )}
                                             </div>
                                         </td>
                                         <td className="px-10 py-8">
@@ -348,6 +403,63 @@ const StaffMarkAttendance = () => {
                     </button>
                 </div>
             )}
+
+            {/* Attendance History */}
+            <div className="bg-white rounded-[3rem] border border-gray-100 shadow-2xl shadow-gray-200/50 p-8">
+                <div className="flex items-center justify-between mb-8">
+                    <div>
+                        <h3 className="text-2xl font-black text-gray-900">Attendance History</h3>
+                        <p className="text-gray-500 font-medium">Recent attendance logs for your assigned students</p>
+                    </div>
+                    <div className="p-3 bg-purple-50 text-purple-600 rounded-2xl">
+                        <Clock size={24} />
+                    </div>
+                </div>
+
+                {historyLoading ? (
+                    <div className="py-12 flex justify-center">
+                        <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+                    </div>
+                ) : history.length === 0 ? (
+                    <div className="py-12 text-center text-gray-500 font-medium bg-gray-50 rounded-2xl border border-gray-100 border-dashed">
+                        No recent history records found.
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-gray-50/50 border-b border-gray-100">
+                                    <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Child Name</th>
+                                    <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Date</th>
+                                    <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
+                                    <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Marked By</th>
+                                    <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">Marked Time</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {history.map((record, idx) => {
+                                    const formattedRecordDate = new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric' }).format(new Date(record.date));
+                                    const formattedMarkedTime = record.markedAt ? new Date(record.markedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+
+                                    return (
+                                        <tr key={record._id || idx} className="hover:bg-purple-50/20 transition-colors">
+                                            <td className="px-6 py-4 font-black text-gray-900">{record.child?.childName || 'Unknown'}</td>
+                                            <td className="px-6 py-4 font-bold text-gray-600">{formattedRecordDate}</td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border ${record.status === 'Present' ? 'bg-green-50 text-green-700 border-green-200' : record.status === 'Absent' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                                                    {record.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 font-bold text-gray-600">{record.markedBy?.name || 'Unknown'}</td>
+                                            <td className="px-6 py-4 text-right font-medium text-gray-500">{formattedMarkedTime}</td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

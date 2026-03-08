@@ -8,6 +8,8 @@ const {
     updateStaff,
     deleteStaff,
     getStaffChildren,
+    getChildrenAttendance,
+    getAttendanceHistory,
     markChildAttendance,
     addStaffActivity,
     getStaffDashboardSummary,
@@ -24,6 +26,8 @@ router.route("/")
     .get(getStaffMembers);
 
 router.get("/assigned-children", protect, getStaffChildren);
+router.get("/children-attendance", protect, getChildrenAttendance);
+router.get("/attendance-history", protect, getAttendanceHistory);
 router.post("/mark-attendance", protect, markChildAttendance);
 router.post("/add-activity", protect, addStaffActivity);
 router.get("/dashboard-stats", protect, getStaffDashboardSummary);
