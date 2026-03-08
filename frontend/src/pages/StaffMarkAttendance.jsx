@@ -450,7 +450,7 @@ const StaffMarkAttendance = () => {
                                                     {record.status}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 font-bold text-gray-600">{record.markedBy?.name || 'Unknown'}</td>
+                                            <td className="px-6 py-4 font-bold text-gray-600">{record.markedBy?.name || 'System'}</td>
                                             <td className="px-6 py-4 text-right font-medium text-gray-500">{formattedMarkedTime}</td>
                                         </tr>
                                     );

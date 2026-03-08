@@ -144,6 +144,12 @@ const markChildAttendance = async (req, res) => {
     try {
         const { childId, status, date, remarks, checkIn, checkOut } = req.body;
         const Attendance = require("../models/Attendance");
+        const Staff = require("../models/Staff");
+
+        const staffMember = await Staff.findOne({ email: req.user.email });
+        if (!staffMember) {
+            return res.status(404).json({ success: false, message: "Staff record not found" });
+        }
 
         // Use the raw date param for matching today if that's what the client sends
         // getNormalizedDate strips time to local midnight UTC
@@ -156,7 +162,7 @@ const markChildAttendance = async (req, res) => {
             return res.status(400).json({ success: false, message: "Attendance can only be marked for today." });
         }
 
-        const updateData = { status, remarks, checkIn, checkOut, markedBy: req.user._id, markedAt: new Date() };
+        const updateData = { status, remarks, checkIn, checkOut, markedBy: staffMember._id, markedAt: new Date() };
 
         const attendance = await Attendance.findOneAndUpdate(
             { child: childId, date: attendanceDate },
