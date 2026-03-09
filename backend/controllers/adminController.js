@@ -82,7 +82,9 @@ const getChildrenAttendance = async (req, res) => {
                 $gte: queryDate,
                 $lt: new Date(queryDate.getTime() + 24 * 60 * 60 * 1000)
             }
-        }).populate("child", "childName parentName parentPhone");
+        })
+            .populate("child", "childName parentName parentPhone")
+            .populate("markedBy", "name");
 
         res.status(200).json({
             success: true,

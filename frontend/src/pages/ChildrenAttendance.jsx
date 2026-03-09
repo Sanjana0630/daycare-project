@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { Calendar, Filter, User, Search, Edit2, X, AlertCircle } from 'lucide-react';
 import { BASE_URL } from '../config';
 
@@ -133,10 +134,10 @@ const ChildrenAttendance = () => {
                         <thead>
                             <tr className="bg-gray-50 border-b border-gray-100">
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Child</th>
-                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Parent</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Timing</th>
-                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Marked By</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Marked Time</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
@@ -157,8 +158,7 @@ const ChildrenAttendance = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="text-gray-700 font-medium">{child.parentName}</div>
-                                            <div className="text-xs text-gray-400">{child.parentPhone}</div>
+                                            <div className="text-gray-700 font-medium">{selectedDate}</div>
                                         </td>
                                         <td className="px-6 py-4">
                                             {record ? (
@@ -176,17 +176,13 @@ const ChildrenAttendance = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-sm text-gray-700">
-                                                {record ? `${record.checkIn || '--:--'} - ${record.checkOut || '--:--'}` : '--:-- - --:--'}
+                                                {record?.markedBy?.name || (record ? 'System' : '--')}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <button
-                                                disabled={!isToday}
-                                                className={`p-2 transition-all ${!isToday ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-blue-600'}`}
-                                                title={isToday ? "Edit Record" : "Records are locked"}
-                                            >
-                                                <Edit2 size={18} />
-                                            </button>
+                                            <div className="text-sm text-gray-700 font-medium">
+                                                {record?.markedAt ? new Date(record.markedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                                            </div>
                                         </td>
                                     </tr>
                                 );
