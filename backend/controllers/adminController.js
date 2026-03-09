@@ -266,6 +266,26 @@ const getChildAttendanceHistory = async (req, res) => {
     }
 };
 
+// @desc    Get attendance history for a specific staff member
+// @route   GET /api/admin/staff-attendance/history/:staffId
+// @access  Private/Admin
+const getStaffAttendanceHistory = async (req, res) => {
+    try {
+        const history = await StaffAttendance.find({ staff: req.params.staffId })
+            .populate("staff", "name fullName email")
+            .sort({ date: -1 });
+
+        res.status(200).json({
+            success: true,
+            count: history.length,
+            data: history,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
 module.exports = {
     getStaffUsers,
     upsertStaffAttendance,
@@ -277,4 +297,5 @@ module.exports = {
     rejectStaff,
     deleteStaff,
     getChildAttendanceHistory,
+    getStaffAttendanceHistory,
 };
