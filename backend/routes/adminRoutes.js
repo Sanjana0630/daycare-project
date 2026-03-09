@@ -11,6 +11,7 @@ const {
     approveStaff,
     rejectStaff,
     deleteStaff,
+    getChildAttendanceHistory,
 } = require("../controllers/adminController");
 
 router.get("/staff", protect, admin, getStaffUsers);
@@ -22,5 +23,6 @@ router.delete("/staff/:id", protect, admin, deleteStaff);
 router.post("/staff-attendance", protect, admin, upsertStaffAttendance);
 router.get("/staff-attendance", protect, admin, getStaffAttendance);
 router.get("/children-attendance", protect, admin, getChildrenAttendance);
+router.get("/attendance-history/:childId", protect, admin, getChildAttendanceHistory);
 
 module.exports = router;

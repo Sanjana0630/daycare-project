@@ -1,6 +1,82 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Filter, User, Search, Edit2, X, AlertCircle } from 'lucide-react';
+import { Calendar, Filter, User, Search, Edit2, X, AlertCircle, History } from 'lucide-react';
 import { BASE_URL } from '../config';
+
+const AttendanceHistoryModal = ({ isOpen, onClose, childName, history, loading }) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="bg-white rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+                <div className="px-8 py-6 bg-purple-600 text-white flex items-center justify-between">
+                    <div>
+                        <h3 className="text-xl font-black">Attendance History</h3>
+                        <p className="text-purple-100 text-sm font-medium">{childName}</p>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
+                        <X size={24} />
+                    </button>
+                </div>
+                <div className="p-8">
+                    {loading ? (
+                        <div className="flex flex-col items-center justify-center py-12 gap-4">
+                            <div className="w-10 h-10 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+                            <p className="text-gray-500 font-medium">Fetching history...</p>
+                        </div>
+                    ) : history.length > 0 ? (
+                        <div className="max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="border-b border-gray-100">
+                                        <th className="pb-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Date</th>
+                                        <th className="pb-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Status</th>
+                                        <th className="pb-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Marked By</th>
+                                        <th className="pb-4 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {history.map((record, idx) => (
+                                        <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
+                                            <td className="py-4 text-sm font-bold text-gray-900">
+                                                {new Date(record.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            </td>
+                                            <td className="py-4">
+                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${record.status === 'Present'
+                                                    ? 'bg-green-50 text-green-700 border-green-100'
+                                                    : 'bg-red-50 text-red-700 border-red-100'
+                                                    }`}>
+                                                    {record.status}
+                                                </span>
+                                            </td>
+                                            <td className="py-4 text-sm text-gray-600 font-medium">
+                                                {record.markedBy?.name || 'System'}
+                                            </td>
+                                            <td className="py-4 text-right text-sm text-gray-500">
+                                                {record.markedAt ? new Date(record.markedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <div className="text-center py-12">
+                            <p className="text-gray-500 font-medium">No previous attendance records found.</p>
+                        </div>
+                    )}
+                    <div className="mt-8 flex justify-end">
+                        <button
+                            onClick={onClose}
+                            className="px-8 py-3 bg-gray-100 text-gray-600 font-black rounded-2xl uppercase tracking-widest hover:bg-gray-200 transition-all active:scale-95"
+                        >
+                            Close History
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 const ChildrenAttendance = () => {
     const [attendance, setAttendance] = useState([]);
@@ -13,6 +89,9 @@ const ChildrenAttendance = () => {
     };
 
     const [selectedDate, setSelectedDate] = useState(getTodayString());
+    const [historyModal, setHistoryModal] = useState({ isOpen: false, childName: '', childId: '' });
+    const [historyData, setHistoryData] = useState([]);
+    const [historyLoading, setHistoryLoading] = useState(false);
 
     const isToday = selectedDate === getTodayString();
 
@@ -51,6 +130,25 @@ const ChildrenAttendance = () => {
             console.error('Failed to fetch attendance');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchHistory = async (childId, childName) => {
+        setHistoryModal({ isOpen: true, childName, childId });
+        setHistoryLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${BASE_URL}/api/admin/attendance-history/${childId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            if (data.success) {
+                setHistoryData(data.data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch attendance history');
+        } finally {
+            setHistoryLoading(false);
         }
     };
 
@@ -137,7 +235,8 @@ const ChildrenAttendance = () => {
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Marked By</th>
-                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Marked Time</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Marked Time</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
@@ -184,6 +283,15 @@ const ChildrenAttendance = () => {
                                                 {record?.markedAt ? new Date(record.markedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
                                             </div>
                                         </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <button
+                                                onClick={() => fetchHistory(child._id, child.childName)}
+                                                className="inline-flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-purple-100 transition-all active:scale-95 border border-purple-100"
+                                            >
+                                                <History size={14} />
+                                                View History
+                                            </button>
+                                        </td>
                                     </tr>
                                 );
                             })}
@@ -191,6 +299,14 @@ const ChildrenAttendance = () => {
                     </table>
                 </div>
             </div>
+
+            <AttendanceHistoryModal
+                isOpen={historyModal.isOpen}
+                onClose={() => setHistoryModal({ ...historyModal, isOpen: false })}
+                childName={historyModal.childName}
+                history={historyData}
+                loading={historyLoading}
+            />
         </div>
     );
 };
