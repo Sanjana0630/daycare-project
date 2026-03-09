@@ -39,7 +39,9 @@ const AttendanceHistoryModal = ({ isOpen, onClose, childName, history, loading }
                                     {history.map((record, idx) => (
                                         <tr key={idx} className="bg-gray-50/50 hover:bg-white hover:shadow-sm transition-all group">
                                             <td className="py-4 px-4 rounded-l-2xl text-sm font-bold text-gray-900">
-                                                {new Date(record.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                                {new Date(record.date).toDateString() === new Date().toDateString()
+                                                    ? 'Today'
+                                                    : new Date(record.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                             </td>
                                             <td className="py-4 px-2">
                                                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${record.status === 'Present'
@@ -265,7 +267,7 @@ const ChildrenAttendance = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="text-gray-700 font-medium">{selectedDate}</div>
+                                            <div className="text-gray-700 font-medium">{isToday ? 'Today' : selectedDate}</div>
                                         </td>
                                         <td className="px-6 py-4">
                                             {record ? (
