@@ -17,6 +17,7 @@ import MyChildren from './pages/MyChildren';
 import StaffMarkAttendance from './pages/StaffMarkAttendance';
 import StaffActivities from './pages/StaffActivities';
 import StaffProfile from './pages/StaffProfile';
+import Reports from './pages/Reports';
 import EditChild from './pages/EditChild';
 
 // Security Guards
@@ -86,7 +87,7 @@ function App() {
                   <Route path="/parents" element={<RoleBasedRoute allowedRoles={["admin"]}><div className="p-8 text-gray-500 font-medium">Parents Management</div></RoleBasedRoute>} />
                   <Route path="/attendance" element={<RoleBasedRoute allowedRoles={["admin"]}><div className="p-8 text-gray-500 font-medium">Admin Attendance</div></RoleBasedRoute>} />
                   <Route path="/fees" element={<RoleBasedRoute allowedRoles={["admin"]}><div className="p-8 text-gray-500 font-medium">Admin Fees</div></RoleBasedRoute>} />
-                  <Route path="/reports" element={<RoleBasedRoute allowedRoles={["admin"]}><div className="p-8 text-gray-500 font-medium">Admin Reports</div></RoleBasedRoute>} />
+                  <Route path="/reports" element={<RoleBasedRoute allowedRoles={["admin"]}><Reports /></RoleBasedRoute>} />
                   <Route path="/settings" element={<RoleBasedRoute allowedRoles={["admin"]}><div className="p-8 text-gray-500 font-medium">Admin Settings</div></RoleBasedRoute>} />
 
                   {/* Staff Routes */}
