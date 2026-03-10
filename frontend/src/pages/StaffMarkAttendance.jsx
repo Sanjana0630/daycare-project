@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, CalendarCheck, Clock, CheckCircle2, XCircle, AlertCircle, Save, Calendar, User } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { BASE_URL } from '../config';
 
 const StaffMarkAttendance = () => {
@@ -142,7 +143,7 @@ const StaffMarkAttendance = () => {
 
             const result = await response.json();
             if (result.success) {
-                console.log('Attendance saved successfully');
+                toast.success(`Child attendance marked as ${attendance[childId].status}`);
                 // Opt: refreshing history upon save
                 const historyResponse = await fetch(`${BASE_URL}/api/staff/attendance-history`, {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -153,6 +154,7 @@ const StaffMarkAttendance = () => {
                 }
             }
         } catch (error) {
+            toast.error('Failed to save attendance. Please try again.');
             console.error('Error saving attendance:', error);
         } finally {
             setSaving(null);

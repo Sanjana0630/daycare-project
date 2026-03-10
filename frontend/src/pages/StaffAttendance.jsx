@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Save, CheckCircle2, XCircle, Search, User, AlertCircle, History, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { BASE_URL } from '../config';
 
 const StaffAttendanceHistoryModal = ({ isOpen, onClose, staffName, history, loading }) => {
@@ -204,13 +205,12 @@ const StaffAttendance = () => {
             });
             const data = await response.json();
             if (data.success) {
-                // Optional: Show success feedback
-                console.log('Saved successfully');
+                toast.success('Staff attendance saved successfully');
             } else {
-                alert(data.message || 'Failed to save attendance');
+                toast.error(data.message || 'Failed to save attendance. Please try again.');
             }
         } catch (err) {
-            alert('Save failed');
+            toast.error('Failed to save attendance. Please try again.');
         } finally {
             setSavingId(null);
         }
