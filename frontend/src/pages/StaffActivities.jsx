@@ -1,20 +1,57 @@
 import React, { useState, useEffect } from 'react';
-import { Baby, Utensils, Moon, Activity, Heart, Smile, Save, Search, PlusCircle } from 'lucide-react';
+import { Baby, Utensils, Moon, Activity, Heart, Smile, Save, Search, PlusCircle, Star, CheckCircle2, XCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
+
+const DEFAULT_ACTIVITIES = [
+    "Morning Prayer",
+    "Learning Session",
+    "Snack Time",
+    "Play Time",
+    "Story Time",
+    "Lunch Time",
+    "Nap Time"
+];
+
+const StarRating = ({ rating, onRate, disabled }) => {
+    return (
+        <div className="flex items-center gap-1">
+            {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                    key={star}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => onRate(star)}
+                    className={`transition-all ${disabled ? 'cursor-not-allowed' : 'hover:scale-110 active:scale-95'}`}
+                >
+                    <Star
+                        size={18}
+                        className={`${star <= rating ? 'fill-amber-400 text-amber-400' : 'text-gray-200'}`}
+                    />
+                </button>
+            ))}
+        </div>
+    );
+};
 
 const StaffActivities = () => {
     const [children, setChildren] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(null);
+    const [saving, setSaving] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedChild, setSelectedChild] = useState(null);
-    const [form, setForm] = useState({
-        meals: '',
-        napTime: '',
-        activityDescription: '',
-        healthNotes: '',
-        behaviorNotes: '',
-        title: 'Daily Activity'
-    });
+    const [activities, setActivities] = useState(
+        DEFAULT_ACTIVITIES.map(name => ({
+            activityName: name,
+            completed: false,
+            rating: 0,
+            notes: ""
+        }))
+    );
+
+    const getTodayString = () => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
 
     useEffect(() => {
         const fetchChildren = async () => {
@@ -30,6 +67,7 @@ const StaffActivities = () => {
                 }
             } catch (error) {
                 console.error('Error fetching children:', error);
+                toast.error("Failed to load children list");
             } finally {
                 setLoading(false);
             }
@@ -37,26 +75,71 @@ const StaffActivities = () => {
         fetchChildren();
     }, []);
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setForm(prev => ({ ...prev, [name]: value }));
+    useEffect(() => {
+        if (selectedChild) {
+            fetchDailyLog(selectedChild._id);
+        } else {
+            resetForm();
+        }
+    }, [selectedChild]);
+
+    const fetchDailyLog = async (childId) => {
+        try {
+            const token = localStorage.getItem('token');
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005';
+            const date = getTodayString();
+            const response = await fetch(`${apiUrl}/api/staff/activity-log/${childId}?date=${date}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                // Merge default activities with saved data to ensure all are present
+                const savedActivities = result.data.activities;
+                const merged = DEFAULT_ACTIVITIES.map(name => {
+                    const saved = savedActivities.find(a => a.activityName === name);
+                    return saved || { activityName: name, completed: false, rating: 0, notes: "" };
+                });
+                setActivities(merged);
+            } else {
+                resetForm();
+            }
+        } catch (error) {
+            console.error('Error fetching daily log:', error);
+            resetForm();
+        }
+    };
+
+    const resetForm = () => {
+        setActivities(DEFAULT_ACTIVITIES.map(name => ({
+            activityName: name,
+            completed: false,
+            rating: 0,
+            notes: ""
+        })));
+    };
+
+    const handleActivityChange = (index, field, value) => {
+        const updated = [...activities];
+        updated[index] = { ...updated[index], [field]: value };
+        setActivities(updated);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!selectedChild) return;
 
-        setSaving(selectedChild._id);
+        setSaving(true);
         try {
             const token = localStorage.getItem('token');
             const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005';
             const data = {
-                child: selectedChild._id,
-                ...form,
-                description: form.activityDescription // Mapping to model field
+                childId: selectedChild._id,
+                date: getTodayString(),
+                activities: activities
             };
 
-            const response = await fetch(`${apiUrl}/api/staff/add-activity`, {
+            const response = await fetch(`${apiUrl}/api/staff/log-activity`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -67,21 +150,15 @@ const StaffActivities = () => {
 
             const result = await response.json();
             if (result.success) {
-                alert(`Activity logged for ${selectedChild.childName}!`);
-                setForm({
-                    meals: '',
-                    napTime: '',
-                    activityDescription: '',
-                    healthNotes: '',
-                    behaviorNotes: '',
-                    title: 'Daily Activity'
-                });
-                setSelectedChild(null);
+                toast.success("Daily activity report saved successfully.");
+            } else {
+                toast.error(result.message || "Failed to save activity report");
             }
         } catch (error) {
             console.error('Error logging activity:', error);
+            toast.error("Connection error. Please try again.");
         } finally {
-            setSaving(null);
+            setSaving(false);
         }
     };
 
@@ -106,7 +183,11 @@ const StaffActivities = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
                     <h1 className="text-3xl font-black text-gray-900 mb-2">Daily Activities</h1>
-                    <p className="text-gray-500 font-medium">Log meals, naps, and behavior for your assigned children</p>
+                    <p className="text-gray-500 font-medium">Log participation, ratings, and notes for student activities</p>
+                </div>
+                <div className="bg-white px-6 py-3 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3">
+                    <Activity className="text-purple-600" size={20} />
+                    <span className="text-sm font-black text-gray-900 uppercase tracking-widest">{getTodayString()}</span>
                 </div>
             </div>
 
@@ -121,7 +202,7 @@ const StaffActivities = () => {
                                 placeholder="Search children..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-2xl w-full text-sm font-medium focus:bg-white focus:ring-4 focus:ring-purple-50 focus:border-purple-200 transition-all"
+                                className="pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-2xl w-full text-sm font-medium focus:bg-white focus:ring-4 focus:ring-purple-50 focus:border-purple-200 transition-all outline-none"
                             />
                         </div>
                         <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
@@ -130,8 +211,8 @@ const StaffActivities = () => {
                                     key={child._id}
                                     onClick={() => setSelectedChild(child)}
                                     className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all border-2 ${selectedChild?._id === child._id
-                                            ? 'bg-purple-50 border-purple-200'
-                                            : 'bg-transparent border-transparent hover:bg-gray-50'
+                                        ? 'bg-purple-50 border-purple-200'
+                                        : 'bg-transparent border-transparent hover:bg-gray-50'
                                         }`}
                                 >
                                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm ${selectedChild?._id === child._id ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-600'
@@ -151,101 +232,81 @@ const StaffActivities = () => {
                 {/* Activity Entry Form */}
                 <div className="lg:col-span-2">
                     {selectedChild ? (
-                        <form onSubmit={handleSubmit} className="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm space-y-8 relative overflow-hidden">
+                        <div className="bg-white p-8 md:p-10 rounded-[40px] border border-gray-100 shadow-sm space-y-8 relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-40 h-40 bg-purple-50 -mr-16 -mt-16 rounded-full opacity-30"></div>
 
-                            <div className="relative z-10">
-                                <span className="px-4 py-1.5 bg-purple-50 text-purple-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-purple-100">Logging Entry For</span>
-                                <h2 className="text-3xl font-black text-gray-900 mt-3">{selectedChild.childName}</h2>
+                            <div className="relative z-10 flex items-center justify-between">
+                                <div>
+                                    <span className="px-4 py-1.5 bg-purple-50 text-purple-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-purple-100">Daily Activity Report</span>
+                                    <h2 className="text-3xl font-black text-gray-900 mt-3">{selectedChild.childName}</h2>
+                                </div>
+                                <div className="w-16 h-16 bg-gradient-to-tr from-purple-100 to-indigo-100 rounded-2xl flex items-center justify-center text-purple-700 font-black text-2xl shadow-inner">
+                                    {selectedChild.childName[0].toUpperCase()}
+                                </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="space-y-3">
-                                    <label className="flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-widest pl-1">
-                                        <Utensils size={14} className="text-amber-500" /> Meals & Nutrition
-                                    </label>
-                                    <textarea
-                                        name="meals"
-                                        value={form.meals}
-                                        onChange={handleInputChange}
-                                        placeholder="What did they eat today?"
-                                        className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-purple-50 focus:border-purple-200 transition-all min-h-[100px] outline-none"
-                                    ></textarea>
-                                </div>
-
-                                <div className="space-y-3">
-                                    <label className="flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-widest pl-1">
-                                        <Moon size={14} className="text-indigo-500" /> Nap & Rest Time
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="napTime"
-                                        value={form.napTime}
-                                        onChange={handleInputChange}
-                                        placeholder="Duration (e.g., 1h 30m)"
-                                        className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-purple-50 focus:border-purple-200 transition-all outline-none"
-                                    />
-                                </div>
-
-                                <div className="space-y-3 md:col-span-2">
-                                    <label className="flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-widest pl-1">
-                                        <Activity size={14} className="text-emerald-500" /> Activity Description
-                                    </label>
-                                    <textarea
-                                        name="activityDescription"
-                                        value={form.activityDescription}
-                                        onChange={handleInputChange}
-                                        placeholder="What fun things did they do?"
-                                        className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-purple-50 focus:border-purple-200 transition-all min-h-[100px] outline-none"
-                                    ></textarea>
-                                </div>
-
-                                <div className="space-y-3">
-                                    <label className="flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-widest pl-1">
-                                        <Heart size={14} className="text-rose-500" /> Health Notes
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="healthNotes"
-                                        value={form.healthNotes}
-                                        onChange={handleInputChange}
-                                        placeholder="Any medications, bruises, etc."
-                                        className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-purple-50 focus:border-purple-200 transition-all outline-none"
-                                    />
-                                </div>
-
-                                <div className="space-y-3">
-                                    <label className="flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-widest pl-1">
-                                        <Smile size={14} className="text-purple-500" /> Behavior
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="behaviorNotes"
-                                        value={form.behaviorNotes}
-                                        onChange={handleInputChange}
-                                        placeholder="Mood, social interaction..."
-                                        className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-purple-50 focus:border-purple-200 transition-all outline-none"
-                                    />
-                                </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="border-b border-gray-50">
+                                            <th className="pb-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] pl-2">Activity</th>
+                                            <th className="pb-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-center">Completed</th>
+                                            <th className="pb-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Rating</th>
+                                            <th className="pb-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Notes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-50">
+                                        {activities.map((activity, index) => (
+                                            <tr key={activity.activityName} className="group hover:bg-gray-50/50 transition-colors">
+                                                <td className="py-5 font-bold text-gray-700 pl-2">
+                                                    {activity.activityName}
+                                                </td>
+                                                <td className="py-5 text-center">
+                                                    <button
+                                                        onClick={() => handleActivityChange(index, 'completed', !activity.completed)}
+                                                        className={`transition-all ${activity.completed ? 'text-green-500 scale-110' : 'text-gray-200 hover:text-gray-300'}`}
+                                                    >
+                                                        {activity.completed ? <CheckCircle2 size={24} /> : <XCircle size={24} />}
+                                                    </button>
+                                                </td>
+                                                <td className="py-5">
+                                                    <StarRating
+                                                        rating={activity.rating}
+                                                        onRate={(val) => handleActivityChange(index, 'rating', val)}
+                                                    />
+                                                </td>
+                                                <td className="py-5">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Add observations..."
+                                                        value={activity.notes}
+                                                        onChange={(e) => handleActivityChange(index, 'notes', e.target.value)}
+                                                        className="w-full bg-gray-50/50 border border-transparent rounded-xl px-3 py-2 text-xs font-medium focus:bg-white focus:ring-2 focus:ring-purple-100 focus:border-purple-200 transition-all outline-none italic placeholder:text-gray-300 shadow-inner"
+                                                    />
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
 
                             <div className="flex justify-end pt-6 border-t border-gray-50">
                                 <button
-                                    type="submit"
-                                    disabled={saving === selectedChild._id}
-                                    className="px-10 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl shadow-xl shadow-purple-100 font-black flex items-center gap-3 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                                    onClick={handleSubmit}
+                                    disabled={saving}
+                                    className="px-10 py-5 bg-gradient-to-r from-purple-800 to-indigo-900 text-white rounded-2xl shadow-xl shadow-purple-100 font-black flex items-center gap-3 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 uppercase tracking-widest text-sm"
                                 >
-                                    {saving === selectedChild._id ? (
+                                    {saving ? (
                                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                                     ) : (
                                         <Save size={20} />
                                     )}
-                                    SUBMIT DAILY JOURNAL
+                                    Save Daily Activity Report
                                 </button>
                             </div>
-                        </form>
+                        </div>
                     ) : (
-                        <div className="bg-white p-20 rounded-[40px] border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center">
+                        <div className="bg-white p-20 rounded-[40px] border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center animate-in zoom-in-95 duration-500">
                             <div className="w-24 h-24 bg-purple-50 text-purple-200 rounded-full flex items-center justify-center mb-6">
                                 <PlusCircle size={48} />
                             </div>

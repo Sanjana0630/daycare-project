@@ -18,7 +18,9 @@ const {
     getScheduleActivities,
     markScheduleActivityCompleted,
     addCustomScheduleActivity,
-    deleteScheduleActivity
+    deleteScheduleActivity,
+    logChildDailyActivity,
+    getChildDailyActivity
 } = require("../controllers/staffController");
 
 router.route("/")
@@ -37,6 +39,9 @@ router.post("/schedule/custom", protect, addCustomScheduleActivity);
 router.delete("/schedule/:id", protect, deleteScheduleActivity);
 router.get("/me", protect, getMyProfile);
 router.put("/me", protect, updateMyProfile);
+
+router.get("/activity-log/:childId", protect, getChildDailyActivity);
+router.post("/log-activity", protect, logChildDailyActivity);
 
 router.route("/:id")
     .get(getStaffById)

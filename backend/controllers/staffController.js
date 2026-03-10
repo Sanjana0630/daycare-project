@@ -532,6 +532,54 @@ const updateMyProfile = async (req, res) => {
     }
 };
 
+const logChildDailyActivity = async (req, res) => {
+    try {
+        const ChildDailyActivity = require("../models/ChildDailyActivity");
+        const { childId, date, activities } = req.body;
+
+        const staffMember = await Staff.findOne({ email: req.user.email });
+        if (!staffMember) {
+            return res.status(404).json({ success: false, message: "Staff record not found" });
+        }
+
+        const activityDate = getNormalizedDate(date);
+
+        const dailyLog = await ChildDailyActivity.findOneAndUpdate(
+            { childId, date: activityDate },
+            {
+                childId,
+                date: activityDate,
+                activities,
+                recordedBy: staffMember._id
+            },
+            { new: true, upsert: true }
+        );
+
+        res.status(200).json({ success: true, data: dailyLog, message: "Daily activity report saved successfully." });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const getChildDailyActivity = async (req, res) => {
+    try {
+        const ChildDailyActivity = require("../models/ChildDailyActivity");
+        const { childId } = req.params;
+        const { date } = req.query;
+
+        const queryDate = getNormalizedDate(date);
+
+        const dailyLog = await ChildDailyActivity.findOne({
+            childId,
+            date: queryDate
+        });
+
+        res.status(200).json({ success: true, data: dailyLog });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 module.exports = {
     registerStaff,
     getStaffMembers,
@@ -549,5 +597,7 @@ module.exports = {
     getScheduleActivities,
     markScheduleActivityCompleted,
     addCustomScheduleActivity,
-    deleteScheduleActivity
+    deleteScheduleActivity,
+    logChildDailyActivity,
+    getChildDailyActivity
 };
