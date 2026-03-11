@@ -3,6 +3,19 @@ const Staff = require("../models/Staff");
 const StaffAttendance = require("../models/StaffAttendance");
 const Attendance = require("../models/Attendance");
 const Child = require("../models/Child");
+const ChildDailyActivity = require("../models/ChildDailyActivity");
+
+// Consistent date normalization helper (matches staffController)
+const getNormalizedDate = (dateParam) => {
+    const d = dateParam ? new Date(dateParam) : new Date();
+    const dateStr = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Kolkata',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    }).format(d);
+    return new Date(`${dateStr}T00:00:00.000Z`);
+};
 
 // @desc    Get all users with role staff
 // @route   GET /api/admin/staff
@@ -286,6 +299,77 @@ const getStaffAttendanceHistory = async (req, res) => {
     }
 };
 
+// @desc    Get daily activity log for a child
+// @route   GET /api/admin/child-activity/:childId
+// @access  Private/Admin
+const getChildDailyActivityLog = async (req, res) => {
+    try {
+        const { childId } = req.params;
+        const { date } = req.query;
+        const activityDate = getNormalizedDate(date);
+
+        const dailyLog = await ChildDailyActivity.findOne({
+            childId,
+            date: activityDate
+        }).populate("recordedBy", "name fullName");
+
+        res.status(200).json({ success: true, data: dailyLog });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
+// @desc    Get monthly activity stats for a child
+// @route   GET /api/admin/child-activity/monthly/:childId
+// @access  Private/Admin
+const getChildMonthlyActivityStats = async (req, res) => {
+    try {
+        const { childId } = req.params;
+        const { month, year } = req.query;
+
+        // Create range for the entire month using ISO date strings for clarity
+        const startOfMonth = getNormalizedDate(`${year}-${month.toString().padStart(2, '0')}-01`);
+        const nextMonth = month == 12 ? 1 : parseInt(month) + 1;
+        const nextYear = month == 12 ? parseInt(year) + 1 : year;
+        const endOfMonth = getNormalizedDate(`${nextYear}-${nextMonth.toString().padStart(2, '0')}-01`);
+
+        const logs = await ChildDailyActivity.find({
+            childId,
+            date: { $gte: startOfMonth, $lt: endOfMonth }
+        }).populate("recordedBy", "name fullName");
+
+        res.status(200).json({ success: true, count: logs.length, data: logs });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
+// @desc    Get yearly activity stats for a child
+// @route   GET /api/admin/child-activity/yearly/:childId
+// @access  Private/Admin
+const getChildYearlyActivityStats = async (req, res) => {
+    try {
+        const { childId } = req.params;
+        const { year } = req.query;
+
+        const startOfYear = getNormalizedDate(`${year}-01-01`);
+        const nextYear = parseInt(year) + 1;
+        const endOfYear = getNormalizedDate(`${nextYear}-01-01`);
+
+        const logs = await ChildDailyActivity.find({
+            childId,
+            date: { $gte: startOfYear, $lt: endOfYear }
+        }).populate("recordedBy", "name fullName");
+
+        res.status(200).json({ success: true, count: logs.length, data: logs });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
 module.exports = {
     getStaffUsers,
     upsertStaffAttendance,
@@ -298,4 +382,7 @@ module.exports = {
     deleteStaff,
     getChildAttendanceHistory,
     getStaffAttendanceHistory,
+    getChildDailyActivityLog,
+    getChildMonthlyActivityStats,
+    getChildYearlyActivityStats
 };

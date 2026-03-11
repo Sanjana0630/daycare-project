@@ -13,6 +13,9 @@ const {
     deleteStaff,
     getChildAttendanceHistory,
     getStaffAttendanceHistory,
+    getChildDailyActivityLog,
+    getChildMonthlyActivityStats,
+    getChildYearlyActivityStats
 } = require("../controllers/adminController");
 
 router.get("/staff", protect, admin, getStaffUsers);
@@ -26,5 +29,8 @@ router.get("/staff-attendance", protect, admin, getStaffAttendance);
 router.get("/children-attendance", protect, admin, getChildrenAttendance);
 router.get("/attendance-history/:childId", protect, admin, getChildAttendanceHistory);
 router.get("/staff-attendance/history/:staffId", protect, admin, getStaffAttendanceHistory);
+router.get("/child-activity/:childId", protect, admin, getChildDailyActivityLog);
+router.get("/child-activity/monthly/:childId", protect, admin, getChildMonthlyActivityStats);
+router.get("/child-activity/yearly/:childId", protect, admin, getChildYearlyActivityStats);
 
 module.exports = router;

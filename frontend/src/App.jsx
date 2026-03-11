@@ -19,6 +19,7 @@ import StaffActivities from './pages/StaffActivities';
 import StaffProfile from './pages/StaffProfile';
 import Reports from './pages/Reports';
 import EditChild from './pages/EditChild';
+import ChildProgress from './pages/ChildProgress';
 
 // Security Guards
 const ProtectedRoute = ({ children }) => {
@@ -78,6 +79,7 @@ function App() {
                   <Route path="/admin/dashboard" element={<RoleBasedRoute allowedRoles={["admin"]}><Dashboard /></RoleBasedRoute>} />
                   <Route path="/admin/children/add" element={<RoleBasedRoute allowedRoles={["admin"]}><AddChild /></RoleBasedRoute>} />
                   <Route path="/admin/children/edit/:id" element={<RoleBasedRoute allowedRoles={["admin"]}><EditChild /></RoleBasedRoute>} />
+                  <Route path="/admin/children/progress/:id" element={<RoleBasedRoute allowedRoles={["admin"]}><ChildProgress /></RoleBasedRoute>} />
                   <Route path="/children" element={<RoleBasedRoute allowedRoles={["admin"]}><Children /></RoleBasedRoute>} />
                   <Route path="/staff" element={<RoleBasedRoute allowedRoles={["admin"]}><Staff /></RoleBasedRoute>} />
                   <Route path="/admin/staff" element={<RoleBasedRoute allowedRoles={["admin"]}><Staff /></RoleBasedRoute>} />

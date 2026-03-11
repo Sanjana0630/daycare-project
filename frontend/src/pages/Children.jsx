@@ -8,6 +8,7 @@ import {
     Edit2,
     Trash2,
     MoreVertical,
+    TrendingUp,
     ChevronLeft,
     ChevronRight,
     User,
@@ -230,6 +231,13 @@ const Children = () => {
                                                     title="Edit"
                                                 >
                                                     <Edit2 size={18} />
+                                                </button>
+                                                <button
+                                                    onClick={() => navigate(`/admin/children/progress/${child._id}`)}
+                                                    className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-white rounded-lg transition-all"
+                                                    title="View Progress"
+                                                >
+                                                    <TrendingUp size={18} />
                                                 </button>
                                                 <button
                                                     onClick={() => { setSelectedChild(child); setIsDeleteModalOpen(true); }}
