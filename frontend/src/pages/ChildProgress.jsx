@@ -12,7 +12,16 @@ import {
     CheckCircle2,
     XCircle,
     Layout,
-    Table as TableIcon
+    Table as TableIcon,
+    User,
+    Phone,
+    Trophy,
+    Activity,
+    Target,
+    Zap,
+    MapPin,
+    Search,
+    ArrowUpRight
 } from 'lucide-react';
 import {
     BarChart,
@@ -27,6 +36,8 @@ import {
     Cell,
     LineChart,
     Line,
+    AreaChart,
+    Area,
     Legend
 } from 'recharts';
 import { BASE_URL } from '../config';
@@ -38,7 +49,7 @@ const ChildProgress = () => {
 
     // UI States
     const [reportType, setReportType] = useState('monthly'); // 'daily' | 'monthly' | 'yearly'
-    const [viewFormat, setViewFormat] = useState('tabular'); // 'tabular' | 'graph'
+    const [viewFormat, setViewFormat] = useState('graph'); // 'tabular' | 'graph'
 
     // Data States
     const [child, setChild] = useState(null);
@@ -50,12 +61,18 @@ const ChildProgress = () => {
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
-    // Color Palette
-    const CHART_COLORS = {
-        rating: '#3b82f6',    // Blue for Ratings
-        completed: '#10b981', // Green for Completed
-        absent: '#ef4444',    // Red for Not Completed
-        background: '#f9fafb'
+    // Premium Color Palette
+    const COLORS = {
+        primary: '#6366f1',    // Indigo
+        secondary: '#ec4899',  // Pink
+        success: '#10b981',    // Emerald
+        warning: '#f59e0b',    // Amber
+        danger: '#ef4444',     // Red
+        info: '#3b82f6',       // Blue
+        gradientStart: '#818cf8',
+        gradientEnd: '#c084fc',
+        bg: '#f8fafc',
+        card: '#ffffff'
     };
 
     useEffect(() => {
@@ -93,8 +110,6 @@ const ChildProgress = () => {
             });
             const result = await response.json();
 
-            console.log("Activity Report Data:", result.data);
-
             if (result.success) {
                 if (reportType === 'daily') {
                     setData(result.data ? [result.data] : []);
@@ -110,59 +125,55 @@ const ChildProgress = () => {
         }
     };
 
-    // Advanced Data Aggregation for different report types
+    // Advanced Data Aggregation
     const stats = useMemo(() => {
         if (!data.length) return null;
 
         let totalCompleted = 0;
         let totalActivities = 0;
+        let totalRating = 0;
         let mainChartData = [];
 
         if (reportType === 'daily') {
-            // Daily View: Bar Chart of individual activities
             const log = data[0];
             if (log && log.activities) {
                 mainChartData = log.activities.map(act => {
                     if (act.completed) totalCompleted++;
                     totalActivities++;
+                    totalRating += act.rating;
                     return {
                         name: act.activityName,
-                        rating: act.rating
+                        rating: act.rating,
+                        status: act.completed ? 'Completed' : 'Pending'
                     };
                 });
             }
         } else if (reportType === 'monthly') {
-            // Monthly View: Line Chart of avg daily rating
-            // Sort data by date first
             const sortedLogs = [...data].sort((a, b) => new Date(a.date) - new Date(b.date));
-
             mainChartData = sortedLogs.map(log => {
                 let daySum = 0;
                 log.activities.forEach(act => {
                     daySum += act.rating;
                     if (act.completed) totalCompleted++;
                     totalActivities++;
+                    totalRating += act.rating;
                 });
                 return {
-                    name: new Date(log.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
+                    name: new Date(log.date).getDate(),
+                    fullDate: new Date(log.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
                     rating: log.activities.length > 0 ? Number((daySum / log.activities.length).toFixed(1)) : 0
                 };
             });
         } else if (reportType === 'yearly') {
-            // Yearly View: Bar Chart of monthly averages
-            const monthlyStats = Array.from({ length: 12 }, (_, i) => ({ month: i, sum: 0, count: 0, totalAct: 0, compAct: 0 }));
-
+            const monthlyStats = Array.from({ length: 12 }, (_, i) => ({ month: i, sum: 0, count: 0 }));
             data.forEach(log => {
                 const month = new Date(log.date).getMonth();
                 log.activities.forEach(act => {
                     monthlyStats[month].sum += act.rating;
                     monthlyStats[month].count++;
-                    if (act.completed) {
-                        monthlyStats[month].compAct++;
-                        totalCompleted++;
-                    }
+                    if (act.completed) totalCompleted++;
                     totalActivities++;
-                    monthlyStats[month].totalAct++;
+                    totalRating += act.rating;
                 });
             });
 
@@ -172,23 +183,20 @@ const ChildProgress = () => {
             }));
         }
 
-        console.log("Transformed Chart Data:", mainChartData);
-
-        const pieData = [
-            { name: 'Completed', value: totalCompleted },
-            { name: 'Not Completed', value: totalActivities - totalCompleted }
-        ];
+        const avgRating = totalActivities > 0 ? (totalRating / totalActivities).toFixed(1) : 0;
+        const completionRate = totalActivities > 0 ? ((totalCompleted / totalActivities) * 100).toFixed(0) : 0;
 
         return {
             mainChartData,
-            pieData,
-            completionRate: totalActivities > 0 ? ((totalCompleted / totalActivities) * 100).toFixed(0) : 0
+            totalActivities,
+            totalCompleted,
+            avgRating,
+            completionRate
         };
     }, [data, reportType]);
 
     const downloadCSV = () => {
         if (!data.length) return toast.error("No data to export");
-
         let csvContent = "Date,Activity,Completed,Rating,Notes,Staff\n";
         data.forEach(log => {
             const dateStr = new Date(log.date).toLocaleDateString();
@@ -196,373 +204,554 @@ const ChildProgress = () => {
                 csvContent += `${dateStr},"${act.activityName}",${act.completed ? 'Yes' : 'No'},${act.rating},"${act.notes || ''}","${log.recordedBy?.name || 'Unknown'}"\n`;
             });
         });
-
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `${child?.childName}_Progress_${reportType}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute("download", `${child?.childName}_${reportType}_Report.csv`);
         link.click();
-        document.body.removeChild(link);
-        toast.success("CSV Exported successfully");
+        toast.success("CSV Exported");
     };
 
-    if (loading && !child) return (
-        <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="flex flex-col items-center gap-4">
-                <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
-                <p className="text-gray-500 font-medium animate-pulse">Analyzing activity trends...</p>
+    if (loading && !child) {
+        return (
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="relative">
+                        <div className="w-16 h-16 border-4 border-indigo-100 rounded-full animate-ping absolute"></div>
+                        <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                    <p className="text-indigo-600 font-bold tracking-tight">Syncing Performance Data...</p>
+                </div>
             </div>
-        </div>
-    );
+        );
+    }
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 print:p-0">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 print:hidden">
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="p-3 bg-white border border-gray-100 rounded-2xl shadow-sm text-gray-400 hover:text-purple-600 transition-all active:scale-95"
-                    >
-                        <ChevronLeft size={24} />
-                    </button>
-                    <div>
-                        <h1 className="text-3xl font-black text-gray-900 mb-1">Child Progress Statistics</h1>
-                        <p className="text-gray-500 font-medium">Performance analytics for <span className="text-purple-600 font-bold">{child?.childName}</span></p>
+        <div className="min-h-screen bg-slate-50/50 pb-20 px-4 md:px-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+            {/* Transparent Glass Sticky Header */}
+            <div className="sticky top-0 z-50 py-4 bg-slate-50/80 backdrop-blur-xl border-b border-slate-200/50 -mx-4 md:-mx-8 px-4 md:px-8 mb-8">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="flex items-center gap-5">
+                        <button
+                            onClick={() => navigate(-1)}
+                            className="p-3 bg-white border border-slate-200 rounded-2xl shadow-sm text-slate-500 hover:bg-slate-50 hover:text-indigo-600 transition-all active:scale-95 group"
+                        >
+                            <ChevronLeft size={22} className="group-hover:-translate-x-0.5 transition-transform" />
+                        </button>
+                        <div>
+                            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Child Progress Stats</h1>
+                            <div className="flex items-center gap-2 mt-0.5">
+                                <span className="flex w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <p className="text-slate-500 text-sm font-semibold tracking-wide uppercase">Real-time Analytics</p>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={downloadCSV}
-                        className="px-6 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-2xl shadow-sm hover:bg-gray-50 transition-all flex items-center gap-2"
-                    >
-                        <Download size={18} />
-                        CSV
-                    </button>
-                    <button
-                        onClick={() => window.print()}
-                        className="px-6 py-3 bg-purple-600 text-white font-bold rounded-2xl shadow-lg shadow-purple-200 hover:bg-purple-700 transition-all flex items-center gap-2"
-                    >
-                        <FileText size={18} />
-                        Download PDF
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={downloadCSV}
+                            className="flex items-center gap-2.5 px-6 py-3 bg-white border border-slate-200 text-slate-700 font-bold rounded-2xl shadow-sm hover:border-indigo-200 hover:bg-indigo-50/30 transition-all active:scale-95"
+                        >
+                            <Download size={18} className="text-indigo-500" />
+                            <span className="hidden sm:inline text-sm">Export CSV</span>
+                        </button>
+                        <button
+                            onClick={() => window.print()}
+                            className="flex items-center gap-2.5 px-6 py-3 bg-indigo-600 text-white font-bold rounded-2xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95"
+                        >
+                            <FileText size={18} />
+                            <span className="hidden sm:inline text-sm">Print Report</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            {/* Filter Section */}
-            <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm space-y-8 print:hidden">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {/* Report Type */}
-                    <div className="space-y-3">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Report Type</label>
-                        <div className="flex p-1 bg-gray-50 rounded-2xl border border-gray-100 mt-1">
-                            {['daily', 'monthly', 'yearly'].map((type) => (
-                                <button
-                                    key={type}
-                                    onClick={() => setReportType(type)}
-                                    className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${reportType === type
-                                        ? 'bg-white text-purple-600 shadow-sm border border-purple-100 scale-[1.02]'
-                                        : 'text-gray-400 hover:text-gray-600'
-                                        }`}
-                                >
-                                    {type}
-                                </button>
-                            ))}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Side Section: Filters & Info */}
+                <div className="lg:col-span-4 space-y-8">
+                    {/* Child Profile Card */}
+                    <div className="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110 duration-500"></div>
+                        <div className="relative z-10">
+                            <div className="flex items-center gap-4 mb-6">
+                                <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-indigo-100">
+                                    {child?.childName?.[0]}
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-black text-slate-900 leading-tight">{child?.childName}</h2>
+                                    <p className="text-indigo-600 text-sm font-bold uppercase tracking-widest">{child?.gender || 'N/A'}</p>
+                                </div>
+                            </div>
+                            <div className="space-y-4 pt-4 border-t border-slate-50">
+                                <div className="flex items-center gap-3 text-slate-600 font-medium">
+                                    <div className="p-2 bg-slate-50 rounded-xl"><User size={16} /></div>
+                                    <span className="text-sm">Parent: {child?.parentName}</span>
+                                </div>
+                                <div className="flex items-center gap-3 text-slate-600 font-medium">
+                                    <div className="p-2 bg-slate-50 rounded-xl"><Phone size={16} /></div>
+                                    <span className="text-sm">{child?.parentPhone}</span>
+                                </div>
+                                <div className="flex items-center gap-3 text-slate-600 font-medium">
+                                    <div className="p-2 bg-slate-50 rounded-xl"><MapPin size={16} /></div>
+                                    <span className="text-sm">Age: {child?.age} Years</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Time Filters */}
-                    <div className="space-y-3">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Select Period</label>
-                        <div className="mt-1">
-                            {reportType === 'daily' && (
-                                <input
-                                    type="date"
-                                    value={selectedDate}
-                                    onChange={(e) => setSelectedDate(e.target.value)}
-                                    className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold focus:bg-white focus:ring-4 focus:ring-purple-50 transition-all outline-none"
-                                />
-                            )}
-                            {reportType === 'monthly' && (
-                                <div className="grid grid-cols-2 gap-2">
-                                    <select
-                                        value={selectedMonth}
-                                        onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                                        className="p-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold focus:bg-white focus:ring-4 focus:ring-purple-50 outline-none"
+                    {/* Filter Card */}
+                    <div className="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm space-y-6">
+                        <h3 className="text-sm font-black text-slate-400 uppercase tracking-[2px] mb-2 px-1">Report Configuration</h3>
+
+                        <div className="space-y-4">
+                            <label className="block text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Time Range</label>
+                            <div className="flex p-1.5 bg-slate-50 rounded-2xl border border-slate-200/60">
+                                {['daily', 'monthly', 'yearly'].map((type) => (
+                                    <button
+                                        key={type}
+                                        onClick={() => setReportType(type)}
+                                        className={`flex-1 py-3 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all ${reportType === type
+                                            ? 'bg-white text-indigo-600 shadow-sm border border-slate-100 scale-[1.02]'
+                                            : 'text-slate-400 hover:text-slate-600'
+                                            }`}
                                     >
-                                        {Array.from({ length: 12 }, (_, i) => (
-                                            <option key={i + 1} value={i + 1}>{new Date(0, i).toLocaleString('default', { month: 'long' })}</option>
-                                        ))}
-                                    </select>
+                                        {type}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <label className="block text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Period Selection</label>
+                            <div className="relative group">
+                                {reportType === 'daily' && (
+                                    <input
+                                        type="date"
+                                        value={selectedDate}
+                                        onChange={(e) => setSelectedDate(e.target.value)}
+                                        className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:bg-white focus:ring-4 focus:ring-indigo-50 transition-all outline-none"
+                                    />
+                                )}
+                                {reportType === 'monthly' && (
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <select
+                                            value={selectedMonth}
+                                            onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                                            className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:bg-white focus:ring-4 focus:ring-indigo-50 outline-none appearance-none"
+                                        >
+                                            {Array.from({ length: 12 }, (_, i) => (
+                                                <option key={i + 1} value={i + 1}>{new Date(0, i).toLocaleString('default', { month: 'long' })}</option>
+                                            ))}
+                                        </select>
+                                        <input
+                                            type="number"
+                                            value={selectedYear}
+                                            onChange={(e) => setSelectedYear(Number(e.target.value))}
+                                            className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:bg-white focus:ring-4 focus:ring-indigo-50 outline-none"
+                                        />
+                                    </div>
+                                )}
+                                {reportType === 'yearly' && (
                                     <input
                                         type="number"
                                         value={selectedYear}
                                         onChange={(e) => setSelectedYear(Number(e.target.value))}
-                                        className="p-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold focus:bg-white focus:ring-4 focus:ring-purple-50 outline-none"
+                                        className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:bg-white focus:ring-4 focus:ring-indigo-50 outline-none"
                                     />
-                                </div>
-                            )}
-                            {reportType === 'yearly' && (
-                                <input
-                                    type="number"
-                                    value={selectedYear}
-                                    onChange={(e) => setSelectedYear(Number(e.target.value))}
-                                    className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold focus:bg-white focus:ring-4 focus:ring-purple-50 outline-none"
-                                />
-                            )}
+                                )}
+                            </div>
                         </div>
-                    </div>
 
-                    {/* View Format */}
-                    <div className="space-y-3">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">View Format</label>
-                        <div className="flex p-1 bg-gray-50 rounded-2xl border border-gray-100 mt-1">
-                            {[
-                                { id: 'tabular', icon: TableIcon, label: 'Tabular' },
-                                { id: 'graph', icon: BarChart2, label: 'Graph' }
-                            ].map((format) => (
-                                <button
-                                    key={format.id}
-                                    onClick={() => setViewFormat(format.id)}
-                                    className={`flex-1 py-3 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${viewFormat === format.id
-                                        ? 'bg-white text-indigo-600 shadow-sm border border-indigo-100 scale-[1.02]'
-                                        : 'text-gray-400 hover:text-gray-600'
-                                        }`}
-                                >
-                                    <format.icon size={16} />
-                                    {format.label}
-                                </button>
-                            ))}
+                        <div className="space-y-4">
+                            <label className="block text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Display Mode</label>
+                            <div className="flex p-1.5 bg-slate-50 rounded-2xl border border-slate-200/60">
+                                {[
+                                    { id: 'graph', icon: BarChart2, label: 'Analytics' },
+                                    { id: 'tabular', icon: TableIcon, label: 'Raw Data' }
+                                ].map((format) => (
+                                    <button
+                                        key={format.id}
+                                        onClick={() => setViewFormat(format.id)}
+                                        className={`flex-1 py-3 flex items-center justify-center gap-2 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all ${viewFormat === format.id
+                                            ? 'bg-white text-indigo-600 shadow-sm border border-slate-100 scale-[1.02]'
+                                            : 'text-slate-400 hover:text-slate-600'
+                                            }`}
+                                    >
+                                        <format.icon size={14} />
+                                        {format.label}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
+
+                        <button
+                            onClick={fetchStats}
+                            disabled={loading}
+                            className="w-full mt-4 py-4 bg-slate-900 text-white rounded-[22px] font-black tracking-widest text-xs hover:bg-black transition-all flex items-center justify-center gap-3 active:scale-[0.98] shadow-xl shadow-slate-200 group"
+                        >
+                            {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <TrendingUp size={18} className="group-hover:translate-y-[-2px] transition-transform" />}
+                            GENERATE INSIGHTS
+                        </button>
                     </div>
                 </div>
 
-                <div className="flex justify-center pt-2">
-                    <button
-                        onClick={fetchStats}
-                        disabled={loading}
-                        className="px-12 py-4 bg-gray-900 text-white rounded-2xl font-black text-sm hover:bg-black transition-all flex items-center gap-3 active:scale-95 shadow-xl shadow-gray-200"
-                    >
-                        {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <TrendingUp size={20} />}
-                        GENERATE INSIGHTS
-                    </button>
+                {/* Main Section: Summary & Content */}
+                <div className="lg:col-span-8 space-y-8">
+                    {/* Summary Scoreboard */}
+                    {stats && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {[
+                                { label: 'Total Tasks', value: stats.totalActivities, trend: 'Activities', icon: Activity, color: 'indigo' },
+                                { label: 'Performance', value: `${stats.avgRating}/5`, trend: 'Avg Rating', icon: Target, color: 'amber' },
+                                { label: 'Completion', value: `${stats.completionRate}%`, trend: 'Success Rate', icon: Zap, color: 'emerald' }
+                            ].map((item, idx) => (
+                                <div key={idx} className="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm group hover:shadow-md transition-all">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className={`p-3 bg-${item.color}-50 text-${item.color}-600 rounded-2xl group-hover:scale-110 transition-transform`}>
+                                            <item.icon size={20} />
+                                        </div>
+                                        <ArrowUpRight size={18} className="text-slate-300" />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-3xl font-black text-slate-900 tracking-tight mb-1">{item.value}</span>
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.label}</span>
+                                    </div>
+                                    <div className="mt-4 flex items-center gap-1.5">
+                                        <div className={`w-1 h-4 bg-${item.color}-500 rounded-full`}></div>
+                                        <span className="text-xs font-bold text-slate-500">{item.trend}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Content Area */}
+                    {data.length > 0 ? (
+                        <div className="space-y-8">
+                            {viewFormat === 'graph' ? (
+                                <div className="bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm">
+                                    <div className="flex items-center justify-between mb-10">
+                                        <div>
+                                            <h3 className="text-xl font-black text-slate-900 tracking-tight capitalize flex items-center gap-3">
+                                                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl"><Activity size={20} /></div>
+                                                {reportType === 'daily' ? 'Daily Activity Performance' :
+                                                    reportType === 'monthly' ? 'Monthly Activity Progress' :
+                                                        'Yearly Activity Summary'}
+                                            </h3>
+                                            <p className="text-slate-400 text-sm font-medium mt-1">
+                                                {reportType === 'daily' ? 'Performance tracking for today\'s scheduled tasks' :
+                                                    reportType === 'monthly' ? 'Average performance trends across the current month' :
+                                                        'Summary of monthly performance for the selected year'}
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-6">
+                                            {reportType === 'daily' ? (
+                                                <div className="flex items-center gap-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-sm shadow-emerald-100"></div>
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Completed (Rating 4-5)</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-3 h-3 rounded-full bg-indigo-500 shadow-sm shadow-indigo-100"></div>
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Good (Rating 2.5-3.9)</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-3 h-3 rounded-full bg-rose-500 shadow-sm shadow-rose-100"></div>
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Low (Rating {'<'} 2.5)</span>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-3 h-3 rounded-full bg-indigo-500 shadow-sm shadow-indigo-100"></div>
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Avg Rating</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="h-[430px] w-full">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            {reportType === 'monthly' ? (
+                                                <LineChart data={stats?.mainChartData} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                                    <XAxis
+                                                        dataKey="name"
+                                                        axisLine={false}
+                                                        tickLine={false}
+                                                        tick={{ fontSize: 10, fontWeight: 800, fill: '#64748b' }}
+                                                        dy={10}
+                                                        label={{ value: 'Dates of the Month', position: 'insideBottom', offset: -20, fill: '#94a3b8', fontSize: 11, fontWeight: 'black', textAnchor: 'middle' }}
+                                                    />
+                                                    <YAxis
+                                                        domain={[0, 5]}
+                                                        axisLine={false}
+                                                        tickLine={false}
+                                                        tick={{ fontSize: 10, fontWeight: 800, fill: '#64748b' }}
+                                                        dx={-10}
+                                                        label={{ value: 'Avg Rating (1–5)', angle: -90, position: 'insideLeft', offset: 0, fill: '#94a3b8', fontSize: 11, fontWeight: 'black' }}
+                                                    />
+                                                    <Tooltip
+                                                        contentStyle={{
+                                                            borderRadius: '20px',
+                                                            border: 'none',
+                                                            boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)',
+                                                            fontWeight: '900',
+                                                            background: '#fff'
+                                                        }}
+                                                    />
+                                                    <Legend
+                                                        verticalAlign="top"
+                                                        align="right"
+                                                        height={36}
+                                                        content={({ payload }) => (
+                                                            <div className="flex justify-end gap-4 mb-4">
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
+                                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Daily Avg Rating</span>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    />
+                                                    <Line
+                                                        type="monotone"
+                                                        dataKey="rating"
+                                                        stroke={COLORS.info}
+                                                        strokeWidth={4}
+                                                        dot={{ r: 6, fill: COLORS.info, strokeWidth: 2, stroke: '#fff' }}
+                                                        activeDot={{ r: 8, strokeWidth: 0 }}
+                                                        animationDuration={1500}
+                                                        label={{ position: 'top', fill: '#64748b', fontSize: 10, fontWeight: 'bold', offset: 10 }}
+                                                    />
+                                                </LineChart>
+                                            ) : (
+                                                <BarChart data={stats?.mainChartData} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                                    <XAxis
+                                                        dataKey="name"
+                                                        axisLine={false}
+                                                        tickLine={false}
+                                                        tick={{ fontSize: 9, fontWeight: 800, fill: '#64748b' }}
+                                                        interval={0}
+                                                        angle={reportType === 'daily' ? -15 : 0}
+                                                        textAnchor={reportType === 'daily' ? "end" : "middle"}
+                                                        dy={10}
+                                                        label={{
+                                                            value: reportType === 'daily' ? 'Activities' : 'Months',
+                                                            position: 'insideBottom',
+                                                            offset: -20,
+                                                            fill: '#94a3b8',
+                                                            fontSize: 11,
+                                                            fontWeight: 'black'
+                                                        }}
+                                                    />
+                                                    <YAxis
+                                                        domain={[0, 5]}
+                                                        axisLine={false}
+                                                        tickLine={false}
+                                                        tick={{ fontSize: 10, fontWeight: 800, fill: '#64748b' }}
+                                                        dx={-10}
+                                                        label={{
+                                                            value: reportType === 'daily' ? 'Activity Rating (1–5)' : 'Avg Rating (1–5)',
+                                                            angle: -90,
+                                                            position: 'insideLeft',
+                                                            offset: 0,
+                                                            fill: '#94a3b8',
+                                                            fontSize: 11,
+                                                            fontWeight: 'black'
+                                                        }}
+                                                    />
+                                                    <Tooltip
+                                                        cursor={{ fill: '#f8fafc', radius: 10 }}
+                                                        contentStyle={{
+                                                            borderRadius: '20px',
+                                                            border: 'none',
+                                                            boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)',
+                                                            fontWeight: '900',
+                                                            background: '#fff'
+                                                        }}
+                                                    />
+                                                    <Legend
+                                                        verticalAlign="top"
+                                                        align="right"
+                                                        height={36}
+                                                        content={() => (
+                                                            <div className="flex justify-end gap-4 mb-4">
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="w-2 h-2 rounded-full bg-slate-400"></div>
+                                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                                                        {reportType === 'daily' ? 'Activity Performance' : 'Monthly Performance'}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    />
+                                                    <Bar
+                                                        dataKey="rating"
+                                                        fill={COLORS.primary}
+                                                        radius={[10, 10, 2, 2]}
+                                                        barSize={reportType === 'daily' ? 30 : 45}
+                                                        animationDuration={1500}
+                                                        label={{ position: 'top', fill: '#64748b', fontSize: 10, fontWeight: 'bold', offset: 5 }}
+                                                    >
+                                                        {stats?.mainChartData.map((entry, index) => (
+                                                            <Cell
+                                                                key={`cell-${index}`}
+                                                                fill={entry.rating >= 4 ? COLORS.success : entry.rating >= 2.5 ? COLORS.info : COLORS.danger}
+                                                            />
+                                                        ))}
+                                                    </Bar>
+                                                </BarChart>
+                                            )}
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden">
+                                    <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
+                                        <div>
+                                            <h4 className="text-lg font-black text-slate-900 tracking-tight">Records Feed</h4>
+                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Aggregated History</p>
+                                        </div>
+                                        <div className="p-3 bg-white border border-slate-200 rounded-2xl shadow-sm text-slate-400">
+                                            <Search size={18} />
+                                        </div>
+                                    </div>
+
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left border-collapse">
+                                            <thead>
+                                                <tr className="bg-slate-50/50">
+                                                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Schedule</th>
+                                                    <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Activity</th>
+                                                    <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
+                                                    <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Performance</th>
+                                                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Mentor</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {data.flatMap(log =>
+                                                    log.activities.map((act, idx) => (
+                                                        <tr key={`${log._id}-${idx}`} className="group hover:bg-slate-50/80 transition-all cursor-default">
+                                                            <td className="px-8 py-6">
+                                                                <div className="flex flex-col">
+                                                                    <span className="font-black text-slate-900 text-xs tracking-tight">
+                                                                        {new Date(log.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                                                                    </span>
+                                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Year {new Date(log.date).getFullYear()}</span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-6">
+                                                                <div className="flex flex-col">
+                                                                    <span className="font-bold text-slate-700 text-sm group-hover:text-indigo-600 transition-colors">{act.activityName}</span>
+                                                                    <span className="text-[10px] text-slate-400 font-medium italic truncate max-w-[150px]">{act.notes || "No extra notes."}</span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-6 text-center">
+                                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-black border shadow-sm ${act.completed
+                                                                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                                                    : 'bg-rose-50 text-rose-600 border-rose-100'
+                                                                    }`}>
+                                                                    {act.completed ? <CheckCircle2 size={12} strokeWidth={3} /> : <XCircle size={12} strokeWidth={3} />}
+                                                                    {act.completed ? 'DONE' : 'MISS'}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-6 py-6">
+                                                                <div className="flex items-center gap-0.5">
+                                                                    {[1, 2, 3, 4, 5].map(s => (
+                                                                        <Star
+                                                                            key={s}
+                                                                            size={13}
+                                                                            className={s <= act.rating ? "fill-amber-400 text-amber-400" : "text-slate-200"}
+                                                                            strokeWidth={s <= act.rating ? 0 : 2}
+                                                                        />
+                                                                    ))}
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-8 py-6">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-black text-xs">
+                                                                        {log.recordedBy?.name?.[0].toUpperCase()}
+                                                                    </div>
+                                                                    <span className="text-xs font-bold text-slate-600 group-hover:text-slate-900 transition-colors">{log.recordedBy?.name || 'Staff'}</span>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="bg-white p-20 rounded-[40px] border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center">
+                            <div className="w-24 h-24 bg-indigo-50/50 text-indigo-300 rounded-[30%] flex items-center justify-center mb-8 rotate-12 group-hover:rotate-0 transition-transform duration-500">
+                                <Calendar size={48} strokeWidth={1} />
+                            </div>
+                            <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">No Insights Found</h3>
+                            <p className="text-slate-400 font-medium max-w-sm mx-auto leading-relaxed">
+                                We couldn't find any activity logs for the selected <span className="text-indigo-600 font-bold">{reportType}</span> period.
+                                Please try adjusting your filters or checking a different date.
+                            </p>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* Content Section */}
-            {data.length > 0 ? (
-                <>
-                    {viewFormat === 'graph' ? (
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            {/* Main Performance Chart (Bar or Line depending on timeframe) */}
-                            <div className="lg:col-span-2 bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
-                                <h4 className="text-xl font-black text-gray-900 flex items-center gap-2 capitalize">
-                                    <BarChart2 className="text-blue-600" size={24} />
-                                    {reportType} Activity Progress
-                                </h4>
-                                <div className="h-[400px] w-full mt-4">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        {reportType === 'monthly' ? (
-                                            <LineChart data={stats?.mainChartData}>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                                                <XAxis
-                                                    dataKey="name"
-                                                    axisLine={false}
-                                                    tickLine={false}
-                                                    tick={{ fontSize: 10, fontWeight: 700, fill: '#9ca3af' }}
-                                                    label={{ value: 'Date', position: 'insideBottom', offset: -10, fontSize: 12, fontWeight: 800 }}
-                                                />
-                                                <YAxis
-                                                    domain={[0, 5]}
-                                                    axisLine={false}
-                                                    tickLine={false}
-                                                    tick={{ fontSize: 10, fontWeight: 700, fill: '#9ca3af' }}
-                                                    label={{ value: 'Avg Rating', angle: -90, position: 'insideLeft', fontSize: 12, fontWeight: 800 }}
-                                                />
-                                                <Tooltip
-                                                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }}
-                                                />
-                                                <Legend verticalAlign="top" height={36} />
-                                                <Line
-                                                    name="Average Rating"
-                                                    type="monotone"
-                                                    dataKey="rating"
-                                                    stroke={CHART_COLORS.rating}
-                                                    strokeWidth={4}
-                                                    dot={{ fill: CHART_COLORS.rating, strokeWidth: 2, r: 6, stroke: '#fff' }}
-                                                    activeDot={{ r: 8 }}
-                                                />
-                                            </LineChart>
-                                        ) : (
-                                            <BarChart data={stats?.mainChartData}>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                                                <XAxis
-                                                    dataKey="name"
-                                                    axisLine={false}
-                                                    tickLine={false}
-                                                    tick={{ fontSize: 9, fontWeight: 700, fill: '#9ca3af' }}
-                                                    interval={0}
-                                                    angle={reportType === 'daily' ? -15 : 0}
-                                                    textAnchor={reportType === 'daily' ? "end" : "middle"}
-                                                    label={{ value: reportType === 'daily' ? 'Activity' : 'Month', position: 'insideBottom', offset: -10, fontSize: 12, fontWeight: 800 }}
-                                                />
-                                                <YAxis
-                                                    domain={[0, 5]}
-                                                    axisLine={false}
-                                                    tickLine={false}
-                                                    tick={{ fontSize: 10, fontWeight: 700, fill: '#9ca3af' }}
-                                                    label={{ value: 'Rating', angle: -90, position: 'insideLeft', fontSize: 12, fontWeight: 800 }}
-                                                />
-                                                <Tooltip
-                                                    cursor={{ fill: '#f9fafb' }}
-                                                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }}
-                                                />
-                                                <Legend verticalAlign="top" height={36} />
-                                                <Bar
-                                                    name="Rating"
-                                                    dataKey="rating"
-                                                    fill={CHART_COLORS.rating}
-                                                    radius={[6, 6, 0, 0]}
-                                                    barSize={reportType === 'daily' ? 32 : 40}
-                                                />
-                                            </BarChart>
-                                        )}
-                                    </ResponsiveContainer>
-                                </div>
-                            </div>
-
-                            {/* Side Completion Pie Chart */}
-                            <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6 flex flex-col justify-center">
-                                <div className="text-center">
-                                    <h4 className="text-xl font-black text-gray-900 flex items-center justify-center gap-2">
-                                        <PieChartIcon className="text-emerald-500" size={24} />
-                                        Activity Completion
-                                    </h4>
-                                    <div className="mt-4">
-                                        <span className="text-5xl font-black text-emerald-600 block">{stats?.completionRate}%</span>
-                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Global Success Rate</span>
-                                    </div>
-                                </div>
-                                <div className="h-[250px] w-full">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <PieChart>
-                                            <Pie
-                                                data={stats?.pieData}
-                                                cx="50%"
-                                                cy="50%"
-                                                innerRadius={60}
-                                                outerRadius={90}
-                                                paddingAngle={8}
-                                                dataKey="value"
-                                            >
-                                                <Cell key="completed" fill={CHART_COLORS.completed} stroke="none" />
-                                                <Cell key="absent" fill={CHART_COLORS.absent} stroke="none" />
-                                            </Pie>
-                                            <Tooltip />
-                                            <Legend verticalAlign="bottom" iconType="circle" />
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                </div>
-                                <div className="space-y-3 pt-4 border-t border-gray-50">
-                                    <div className="flex justify-between items-center text-xs font-bold text-gray-500">
-                                        <span>Completed</span>
-                                        <span className="text-emerald-600">{stats?.pieData[0].value}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-xs font-bold text-gray-500">
-                                        <span>Not Completed</span>
-                                        <span className="text-red-500">{stats?.pieData[1].value}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
-                        /* Tabular View */
-                        <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
-                            <div className="px-10 py-8 border-b border-gray-50 flex items-center justify-between">
-                                <div>
-                                    <h4 className="text-xl font-black text-gray-900">Activity Data Feed</h4>
-                                    <p className="text-sm font-medium text-gray-400">Showing {data.length} logs for the selected {reportType} period</p>
-                                </div>
-                                <div className="flex items-center gap-2 text-indigo-600 bg-indigo-50 px-4 py-2 rounded-2xl border border-indigo-100">
-                                    <Layout size={16} />
-                                    <span className="text-xs font-black uppercase tracking-widest">Tabular View</span>
-                                </div>
-                            </div>
-
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr className="bg-gray-50/50">
-                                            <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Date</th>
-                                            <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Activity</th>
-                                            <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Completed</th>
-                                            <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Rating</th>
-                                            <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Notes</th>
-                                            <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Staff</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-50">
-                                        {data.flatMap(log =>
-                                            log.activities.map((act, idx) => (
-                                                <tr key={`${log._id}-${idx}`} className="hover:bg-gray-50/50 transition-colors">
-                                                    <td className="px-8 py-6">
-                                                        <div className="font-black text-gray-900 text-xs">{new Date(log.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</div>
-                                                    </td>
-                                                    <td className="px-6 py-6 font-bold text-gray-700">{act.activityName}</td>
-                                                    <td className="px-6 py-6 text-center">
-                                                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black border shadow-sm ${act.completed
-                                                            ? 'bg-green-50 text-green-600 border-green-100'
-                                                            : 'bg-red-50 text-red-600 border-red-100'
-                                                            }`}>
-                                                            {act.completed ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
-                                                            {act.completed ? 'YES' : 'NO'}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-6">
-                                                        <div className="flex items-center gap-0.5">
-                                                            {[1, 2, 3, 4, 5].map(s => (
-                                                                <Star
-                                                                    key={s}
-                                                                    size={14}
-                                                                    className={s <= act.rating ? "fill-amber-400 text-amber-400" : "text-gray-200"}
-                                                                />
-                                                            ))}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-8 py-6 max-w-xs">
-                                                        <p className="text-xs font-medium text-gray-500 truncate italic">
-                                                            {act.notes || "No observations recorded."}
-                                                        </p>
-                                                    </td>
-                                                    <td className="px-8 py-6">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-6 h-6 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center text-[10px] font-bold">
-                                                                {log.recordedBy?.name?.[0].toUpperCase() || 'S'}
-                                                            </div>
-                                                            <span className="text-xs font-bold text-gray-600">{log.recordedBy?.name || 'Staff'}</span>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    )}
-                </>
-            ) : (
-                <div className="bg-white p-24 rounded-[40px] border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center animate-in zoom-in-95 duration-500">
-                    <div className="w-24 h-24 bg-purple-50 text-purple-200 rounded-full flex items-center justify-center mb-6">
-                        <Calendar size={48} />
+            {/* Print Only Section */}
+            <div className="hidden print:block fixed inset-0 bg-white p-12 overflow-visible">
+                <div className="flex justify-between items-center mb-10 pb-6 border-b-2 border-slate-100">
+                    <div>
+                        <h1 className="text-4xl font-black text-slate-900">Child Progress Report</h1>
+                        <p className="text-slate-500 font-bold text-lg mt-1">{reportType.toUpperCase()} SUMMARY • {child?.childName}</p>
                     </div>
-                    <h3 className="text-2xl font-black text-gray-900 mb-2">No data recorded</h3>
-                    <p className="text-gray-400 font-medium max-w-xs">There are no activity logs found for the selected {reportType} period. Try selecting a different timeframe.</p>
+                    <div className="text-right">
+                        <p className="text-slate-900 font-black text-2xl">Daycare Discovery</p>
+                        <p className="text-slate-500 font-bold">Generated on {new Date().toLocaleDateString()}</p>
+                    </div>
                 </div>
-            )}
+
+                <div className="grid grid-cols-2 gap-10 mb-12">
+                    <div className="bg-slate-50 p-6 rounded-3xl">
+                        <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Child Information</h2>
+                        <p className="text-xl font-black text-slate-900 mb-2">{child?.childName}</p>
+                        <p className="text-slate-600 font-bold">Parent: {child?.parentName} ({child?.parentPhone})</p>
+                    </div>
+                    <div className="bg-slate-900 text-white p-6 rounded-3xl flex justify-between items-center">
+                        <div>
+                            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Global Success Rate</h2>
+                            <p className="text-4xl font-black">{stats?.completionRate || 0}%</p>
+                        </div>
+                        <div className="text-right">
+                            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Avg Rating</h2>
+                            <p className="text-4xl font-black">{stats?.avgRating || 0}/5</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="border-2 border-slate-100 rounded-[32px] overflow-hidden">
+                    <table className="w-full text-left">
+                        <thead className="bg-slate-50">
+                            <tr>
+                                <th className="px-6 py-4 font-black text-slate-900">Date</th>
+                                <th className="px-6 py-4 font-black text-slate-900">Activity Name</th>
+                                <th className="px-6 py-4 font-black text-slate-900">Status</th>
+                                <th className="px-6 py-4 font-black text-slate-900">Rating</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {data.flatMap(log => log.activities.map((act, i) => (
+                                <tr key={i}>
+                                    <td className="px-6 py-4 text-slate-600 font-bold">{new Date(log.date).toLocaleDateString()}</td>
+                                    <td className="px-6 py-4 text-slate-900 font-black">{act.activityName}</td>
+                                    <td className="px-6 py-4 text-slate-600 font-bold">{act.completed ? 'Completed' : 'Pending'}</td>
+                                    <td className="px-6 py-4 text-slate-900 font-black">{act.rating}/5</td>
+                                </tr>
+                            )))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     );
 };
