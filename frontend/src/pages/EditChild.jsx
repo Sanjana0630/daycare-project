@@ -25,7 +25,7 @@ const SectionTitle = ({ icon: Icon, title }) => (
     </div>
 );
 
-const InputField = ({ label, name, type = "text", icon: Icon, placeholder, required = false, options = [], value, onChange, max, readOnly }) => (
+const InputField = ({ label, name, type = "text", icon: Icon, placeholder, required = false, options = [], value, onChange, onBlur, max, readOnly }) => (
     <div className="space-y-1.5 flex-1">
         <label className="text-sm font-medium text-gray-700 block">{label} {required && <span className="text-red-500">*</span>}</label>
         <div className="relative">
@@ -41,6 +41,7 @@ const InputField = ({ label, name, type = "text", icon: Icon, placeholder, requi
                         required={required}
                         value={value}
                         onChange={onChange}
+                        onBlur={onBlur}
                         className={`w-full ${Icon ? 'pl-10' : 'pl-4'} pr-10 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-100 focus:border-purple-400 transition-all outline-none appearance-none cursor-pointer`}
                     >
                         <option value="">Select {label}</option>
@@ -60,6 +61,7 @@ const InputField = ({ label, name, type = "text", icon: Icon, placeholder, requi
                     placeholder={placeholder}
                     value={value}
                     onChange={onChange}
+                    onBlur={onBlur}
                     max={max}
                     readOnly={readOnly}
                     className={`w-full ${Icon ? 'pl-10' : 'pl-4'} pr-4 py-2.5 ${readOnly ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'} border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-100 focus:border-purple-400 transition-all outline-none`}
@@ -171,7 +173,35 @@ const EditChild = () => {
 
         if (name === 'dob') {
             calculateAge(value);
+            // Trigger validation automatically when full date (YYYY-MM-DD) is selected or typed
+            if (value && value.length === 10 && new Date(value).getFullYear() >= 1900) {
+                checkAgeValidation(value);
+            }
         }
+    };
+
+    const checkAgeValidation = (dobString) => {
+        if (!dobString) return true;
+
+        const birthDate = new Date(dobString);
+        // Don't validate if year is obviously partial/invalid
+        if (birthDate.getFullYear() < 1900) return true;
+
+        const today = new Date();
+        let ageInMonths = (today.getFullYear() - birthDate.getFullYear()) * 12 + (today.getMonth() - birthDate.getMonth());
+
+        if (today.getDate() < birthDate.getDate()) {
+            ageInMonths--;
+        }
+
+        if (ageInMonths < 1 || ageInMonths > 120) {
+            setAlertModal({
+                isOpen: true,
+                message: "Child admission allowed only for ages between 1 month and 10 years."
+            });
+            return false;
+        }
+        return true;
     };
 
     const calculateAge = (dobString) => {
@@ -181,6 +211,12 @@ const EditChild = () => {
         }
         const today = new Date();
         const birthDate = new Date(dobString);
+
+        if (birthDate.getFullYear() < 1900) {
+            setAge('');
+            return;
+        }
+
         let years = today.getFullYear() - birthDate.getFullYear();
         let months = today.getMonth() - birthDate.getMonth();
 
@@ -189,10 +225,14 @@ const EditChild = () => {
             months += 12;
         }
 
-        if (years > 0) {
-            setAge(`${years} year${years > 1 ? 's' : ''} ${months} month${months !== 1 ? 's' : ''}`);
+        if (years >= 0) {
+            if (years > 0) {
+                setAge(`${years} year${years > 1 ? 's' : ''} ${months} month${months !== 1 ? 's' : ''}`);
+            } else {
+                setAge(`${months} month${months !== 1 ? 's' : ''}`);
+            }
         } else {
-            setAge(`${months} month${months !== 1 ? 's' : ''}`);
+            setAge('');
         }
     };
 
@@ -212,6 +252,9 @@ const EditChild = () => {
                 return;
             }
         }
+
+        // Final Age validation check
+        if (!checkAgeValidation(formData.dob)) return;
 
         setSaving(true);
         setError('');
