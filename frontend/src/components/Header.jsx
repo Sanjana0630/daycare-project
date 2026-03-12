@@ -1,14 +1,44 @@
-import { Search, Bell, ChevronDown, Menu as MenuIcon } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Search, Bell, ChevronDown, Menu as MenuIcon, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Header = ({ onMenuClick }) => {
+    const navigate = useNavigate();
     const fullName = localStorage.getItem('fullName') || 'Administrator';
     const role = localStorage.getItem('role') || 'admin';
+    const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+    const dropdownRef = useRef(null);
 
     // Get first letter for avatar
     const avatarInitial = fullName.charAt(0).toUpperCase();
 
     // Map role to display label
     const roleLabel = role === 'admin' ? 'Daycare Manager' : (role === 'staff' ? 'Daycare Staff' : 'Parent');
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsProfileMenuOpen(false);
+            }
+        };
+
+        if (isProfileMenuOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isProfileMenuOpen]);
+
+    const handleProfileClick = () => {
+        setIsProfileMenuOpen(false);
+        const profilePath = role === 'admin' ? '/admin/profile' :
+            role === 'staff' ? '/staff/profile' :
+                '/parent/profile';
+        navigate(profilePath);
+    };
 
     return (
         <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-4 sm:px-8 sticky top-0 z-10">
@@ -41,15 +71,39 @@ const Header = ({ onMenuClick }) => {
                     <span className="absolute top-1.5 right-2 w-2 h-2 bg-red-400 rounded-full border-2 border-white"></span>
                 </button>
 
-                <div className="flex items-center gap-2 sm:gap-3 pl-4 sm:pl-6 border-l border-gray-100 cursor-pointer group">
-                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-semibold border-2 border-white shadow-sm shrink-0">
-                        {avatarInitial}
+                <div className="relative" ref={dropdownRef}>
+                    <div
+                        onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                        className="flex items-center gap-2 sm:gap-3 pl-4 sm:pl-6 border-l border-gray-100 cursor-pointer group"
+                    >
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-semibold border-2 border-white shadow-sm shrink-0">
+                            {avatarInitial}
+                        </div>
+                        <div className="hidden md:block">
+                            <p className="text-sm font-semibold text-gray-700 group-hover:text-purple-700 transition-colors capitalize truncate max-w-[100px]">{fullName}</p>
+                            <p className="text-xs text-gray-400">{roleLabel}</p>
+                        </div>
+                        <ChevronDown size={14} className={`text-gray-400 group-hover:text-gray-600 transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
                     </div>
-                    <div className="hidden md:block">
-                        <p className="text-sm font-semibold text-gray-700 group-hover:text-purple-700 transition-colors capitalize truncate max-w-[100px]">{fullName}</p>
-                        <p className="text-xs text-gray-400">{roleLabel}</p>
-                    </div>
-                    <ChevronDown size={14} className="text-gray-400 group-hover:text-gray-600 transition-colors" />
+
+                    {/* Dropdown Menu */}
+                    {isProfileMenuOpen && (
+                        <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                            <div className="px-4 py-3 border-b border-gray-50 bg-gray-50/50 rounded-t-xl">
+                                <p className="text-sm font-bold text-gray-900 capitalize truncate">{fullName}</p>
+                                <p className="text-[10px] font-bold text-purple-600 uppercase tracking-wider">{roleLabel}</p>
+                            </div>
+                            <div className="p-1">
+                                <button
+                                    onClick={handleProfileClick}
+                                    className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-purple-50 hover:text-purple-700 rounded-lg transition-colors text-left font-medium"
+                                >
+                                    <User size={16} />
+                                    Profile
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </header>

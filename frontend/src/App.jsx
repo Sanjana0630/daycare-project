@@ -1,4 +1,4 @@
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import DashboardLayout from './components/DashboardLayout';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
@@ -44,15 +44,33 @@ const RoleBasedRoute = ({ children, allowedRoles }) => {
   return children;
 };
 
-const Placeholder = ({ title }) => (
-  <div className="p-8 text-center animate-in fade-in duration-500">
-    <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-purple-50 text-purple-600 mb-4 border border-purple-100 shadow-sm">
-      <div className="animate-pulse">✨</div>
+const Placeholder = ({ title }) => {
+  const navigate = useNavigate();
+  const role = localStorage.getItem('role') || 'admin';
+
+  const handleBackToDashboard = () => {
+    const dashboardPath = role === 'admin' ? '/dashboard' :
+      role === 'staff' ? '/staff/dashboard' :
+        '/parent/dashboard';
+    navigate(dashboardPath);
+  };
+
+  return (
+    <div className="p-8 text-center animate-in fade-in duration-500">
+      <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-purple-50 text-purple-600 mb-4 border border-purple-100 shadow-sm">
+        <div className="animate-pulse">✨</div>
+      </div>
+      <h2 className="text-2xl font-black text-gray-900 mb-2">{title}</h2>
+      <p className="text-gray-500 max-w-xs mx-auto mb-6">This module is currently being optimized for your experience. Check back soon!</p>
+      <button
+        onClick={handleBackToDashboard}
+        className="px-6 py-2.5 bg-gray-900 text-white font-bold rounded-xl hover:bg-purple-700 transition-all shadow-lg shadow-gray-200"
+      >
+        Back to Dashboard
+      </button>
     </div>
-    <h2 className="text-2xl font-black text-gray-900 mb-2">{title}</h2>
-    <p className="text-gray-500 max-w-xs mx-auto">This module is currently being optimized for your experience. Check back soon!</p>
-  </div>
-);
+  );
+};
 
 function App() {
   return (
@@ -91,6 +109,7 @@ function App() {
                   <Route path="/fees" element={<RoleBasedRoute allowedRoles={["admin"]}><div className="p-8 text-gray-500 font-medium">Admin Fees</div></RoleBasedRoute>} />
                   <Route path="/reports" element={<RoleBasedRoute allowedRoles={["admin"]}><Reports /></RoleBasedRoute>} />
                   <Route path="/settings" element={<RoleBasedRoute allowedRoles={["admin"]}><div className="p-8 text-gray-500 font-medium">Admin Settings</div></RoleBasedRoute>} />
+                  <Route path="/admin/profile" element={<RoleBasedRoute allowedRoles={["admin"]}><Placeholder title="Admin Profile" /></RoleBasedRoute>} />
 
                   {/* Staff Routes */}
                   <Route path="/staff/dashboard" element={<RoleBasedRoute allowedRoles={["staff", "admin"]}><StaffDashboard /></RoleBasedRoute>} />
@@ -98,6 +117,7 @@ function App() {
                   <Route path="/staff/attendance" element={<RoleBasedRoute allowedRoles={["staff"]}><StaffMarkAttendance /></RoleBasedRoute>} />
                   <Route path="/staff/activities" element={<RoleBasedRoute allowedRoles={["staff"]}><StaffActivities /></RoleBasedRoute>} />
                   <Route path="/staff/settings" element={<RoleBasedRoute allowedRoles={["staff"]}><StaffProfile /></RoleBasedRoute>} />
+                  <Route path="/staff/profile" element={<RoleBasedRoute allowedRoles={["staff"]}><StaffProfile /></RoleBasedRoute>} />
 
                   {/* Parent Specific Routes */}
                   <Route path="/parent/dashboard" element={<RoleBasedRoute allowedRoles={["parent"]}><ParentDashboard /></RoleBasedRoute>} />
@@ -107,6 +127,7 @@ function App() {
                   <Route path="/parent/fees" element={<RoleBasedRoute allowedRoles={["parent"]}><Placeholder title="Fee Records" /></RoleBasedRoute>} />
                   <Route path="/parent/notifications" element={<RoleBasedRoute allowedRoles={["parent"]}><Placeholder title="Notifications" /></RoleBasedRoute>} />
                   <Route path="/parent/settings" element={<RoleBasedRoute allowedRoles={["parent"]}><Placeholder title="Parent Settings" /></RoleBasedRoute>} />
+                  <Route path="/parent/profile" element={<RoleBasedRoute allowedRoles={["parent"]}><Placeholder title="Parent Profile" /></RoleBasedRoute>} />
 
                   {/* Catch-all or Redirects */}
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />

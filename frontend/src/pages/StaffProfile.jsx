@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Phone, MapPin, GraduationCap, Briefcase, Save, Calendar, UserCheck } from 'lucide-react';
+import { User, Mail, Phone, MapPin, GraduationCap, Briefcase, Save, Calendar, UserCheck, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { BASE_URL } from '../config';
 import AlertModal from '../components/AlertModal';
 
 const StaffProfile = () => {
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
@@ -124,11 +126,18 @@ const StaffProfile = () => {
                 message={alertModal.message}
             />
 
-            <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-sm relative overflow-hidden">
+            <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-sm relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="relative z-10">
                     <h2 className="text-3xl font-black text-gray-900">Professional Profile</h2>
                     <p className="text-gray-500 font-medium">Please complete your staff details to finalize your setup.</p>
                 </div>
+                <button
+                    onClick={() => navigate('/staff/dashboard')}
+                    className="relative z-10 flex items-center gap-2 px-6 py-3 bg-gray-50 text-gray-600 font-bold rounded-2xl hover:bg-purple-50 hover:text-purple-700 transition-all border border-transparent hover:border-purple-100"
+                >
+                    <ArrowLeft size={18} />
+                    Back to Dashboard
+                </button>
                 <div className="absolute right-0 top-0 w-32 h-full bg-gradient-to-l from-purple-50 to-transparent -z-0"></div>
             </div>
 
