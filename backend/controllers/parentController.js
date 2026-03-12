@@ -8,7 +8,12 @@ const Fee = require("../models/Fee");
 // @access  Private/Parent
 const getChildForParent = async (req, res) => {
     try {
-        const child = await Child.findOne({ parent: req.user._id }).populate("assignedTeacher assignedCaretaker");
+        // Try searching by parent ID first, then by email as fallback
+        let child = await Child.findOne({ parent: req.user._id }).populate("assignedTeacher assignedCaretaker");
+
+        if (!child) {
+            child = await Child.findOne({ parentEmail: req.user.email }).populate("assignedTeacher assignedCaretaker");
+        }
 
         if (!child) {
             return res.status(200).json({ success: true, data: null, message: "No child assigned yet. Please contact admin." });
@@ -21,12 +26,20 @@ const getChildForParent = async (req, res) => {
     }
 };
 
-// @desc    Get child attendance
+// @desc    Get child attendance (Current month only)
 // @route   GET /api/parent/attendance/child/:id
 // @access  Private/Parent
 const getChildAttendance = async (req, res) => {
     try {
-        const attendance = await Attendance.find({ child: req.params.id }).sort({ date: -1 });
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+        const attendance = await Attendance.find({
+            child: req.params.id,
+            date: { $gte: startOfMonth, $lte: endOfMonth }
+        }).sort({ date: -1 });
+
         res.status(200).json({ success: true, data: attendance });
     } catch (error) {
         console.error(error);
@@ -34,12 +47,22 @@ const getChildAttendance = async (req, res) => {
     }
 };
 
-// @desc    Get child activities
+// @desc    Get child activities (Today's only)
 // @route   GET /api/parent/activities/child/:id
 // @access  Private/Parent
 const getChildActivities = async (req, res) => {
     try {
-        const activities = await Activity.find({ child: req.params.id }).sort({ timestamp: -1 });
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const activities = await Activity.find({
+            child: req.params.id,
+            timestamp: { $gte: startOfDay, $lte: endOfDay }
+        }).sort({ timestamp: -1 });
+
         res.status(200).json({ success: true, data: activities });
     } catch (error) {
         console.error(error);

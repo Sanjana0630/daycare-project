@@ -95,9 +95,59 @@ const ParentDashboard = () => {
 
     // Calculate attendance %
     const calculateAttendancePercentage = () => {
-        if (attendance.length === 0) return 0;
+        if (attendance.length === 0) return { percentage: 0, present: 0, total: 0 };
         const presentCount = attendance.filter(a => a.status === 'Present').length;
-        return Math.round((presentCount / attendance.length) * 100);
+        const totalCount = attendance.length;
+        return {
+            percentage: Math.round((presentCount / totalCount) * 100),
+            present: presentCount,
+            total: totalCount
+        };
+    };
+
+    // Generate dynamic alerts based on today's data
+    const generateAlerts = () => {
+        const alerts = [];
+        const todayAttendance = attendance.find(a => new Date(a.date).toDateString() === new Date().toDateString());
+
+        if (todayAttendance) {
+            alerts.push({
+                type: 'success',
+                title: 'Attendance marked',
+                time: todayAttendance.checkIn || new Date(todayAttendance.markedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                desc: `Your child was marked as ${todayAttendance.status} today.`
+            });
+        }
+
+        activities.forEach(activity => {
+            alerts.push({
+                type: 'success',
+                title: 'Activity recorded',
+                time: new Date(activity.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                desc: `${activity.title}: ${activity.description}`
+            });
+
+            if (activity.healthNotes) {
+                alerts.push({
+                    type: 'alert',
+                    title: 'Medical updates',
+                    time: new Date(activity.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    desc: activity.healthNotes
+                });
+            }
+        });
+
+        // Add a placeholder if no alerts
+        if (alerts.length === 0) {
+            alerts.push({
+                type: 'alert',
+                title: 'No recent alerts',
+                time: 'Now',
+                desc: 'Check back later for updates on your child\'s day.'
+            });
+        }
+
+        return alerts.slice(0, 5); // Return top 5 most recent
     };
 
     const getActivityIcon = (title) => {
@@ -206,8 +256,9 @@ const ParentDashboard = () => {
         );
     }
 
-    const attendancePct = calculateAttendancePercentage();
+    const attendanceStats = calculateAttendancePercentage();
     const todayAttendance = attendance.find(a => new Date(a.date).toDateString() === new Date().toDateString());
+    const dynamicAlerts = generateAlerts();
 
     return (
         <div className="animate-in fade-in duration-700 space-y-8 pb-12">
@@ -221,7 +272,7 @@ const ParentDashboard = () => {
                     <div className="bg-white px-5 py-2.5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3">
                         <div className={`w-3 h-3 rounded-full ${todayAttendance?.status === 'Present' ? 'bg-green-500 shadow-lg shadow-green-200' : 'bg-red-400 animate-pulse'}`}></div>
                         <span className="text-sm font-bold text-gray-700">
-                            {todayAttendance ? `Status: ${todayAttendance.status}` : 'Not Checked In'}
+                            {todayAttendance ? `Status: ${todayAttendance.status}` : 'Status: Not Marked'}
                         </span>
                     </div>
                 </div>
@@ -250,7 +301,7 @@ const ParentDashboard = () => {
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-purple-100 font-bold text-sm">
                                 <span className="px-3 py-1 bg-white/10 rounded-lg">{calculateAge(child.dob)}</span>
                                 <span className="px-3 py-1 bg-white/10 rounded-lg">{child.gender}</span>
-                                <span className="px-3 py-1 bg-white/10 rounded-lg">Staff: {child.assignedTeacher?.fullName || 'TBD'}</span>
+                                <span className="px-3 py-1 bg-white/10 rounded-lg">Staff: {child.assignedTeacher?.name || 'TBD'}</span>
                             </div>
                         </div>
                     </div>
@@ -281,21 +332,26 @@ const ParentDashboard = () => {
                                 strokeWidth="16"
                                 fill="transparent"
                                 strokeDasharray={Math.PI * 2 * 70}
-                                strokeDashoffset={(Math.PI * 2 * 70) * (1 - attendancePct / 100)}
+                                strokeDashoffset={(Math.PI * 2 * 70) * (1 - attendanceStats.percentage / 100)}
                                 className="text-purple-600 transition-all duration-1000 ease-out"
                                 strokeLinecap="round"
                             />
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-4xl font-black text-gray-900 tracking-tighter">{attendancePct}%</span>
+                            <span className="text-4xl font-black text-gray-900 tracking-tighter">{attendanceStats.percentage}%</span>
                             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Present</span>
                         </div>
+                    </div>
+                    <div className="text-center mb-4">
+                        <p className="text-sm font-bold text-gray-700">
+                            {attendanceStats.present} / {attendanceStats.total} Days Present
+                        </p>
                     </div>
                     <div className="w-full flex justify-between items-center pt-2">
                         <div className="text-left font-bold">
                             <p className="text-xs text-gray-400 uppercase">Today</p>
-                            <p className={`text-sm ${todayAttendance?.status === 'Present' ? 'text-green-600' : 'text-gray-600'}`}>
-                                {todayAttendance?.status || 'No Data'}
+                            <p className={`text-sm ${todayAttendance?.status === 'Present' ? 'text-green-600' : todayAttendance?.status === 'Absent' ? 'text-red-500' : 'text-gray-600'}`}>
+                                {todayAttendance?.status || 'Not Marked'}
                             </p>
                         </div>
                         <Calendar size={20} className="text-purple-200" />
@@ -317,8 +373,8 @@ const ParentDashboard = () => {
                                 <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100 relative overflow-hidden">
                                     <div className="relative z-10 text-center">
                                         <div className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 ${fees[0].status === 'Paid'
-                                                ? 'bg-green-100 text-green-700'
-                                                : 'bg-amber-100 text-amber-700'
+                                            ? 'bg-green-100 text-green-700'
+                                            : 'bg-amber-100 text-amber-700'
                                             }`}>
                                             {fees[0].status}
                                         </div>
@@ -420,10 +476,7 @@ const ParentDashboard = () => {
                     </div>
 
                     <div className="space-y-6 flex-1">
-                        {[
-                            { type: 'success', title: 'Daily check-in completed', time: '8:30 AM', desc: 'Arrived safely at the center.' },
-                            { type: 'alert', title: 'Medical form update', time: 'Yesterday', desc: 'Please review and sign the latest form.' }
-                        ].map((notif, idx) => (
+                        {dynamicAlerts.map((notif, idx) => (
                             <div key={idx} className="group cursor-pointer">
                                 <div className="flex items-start gap-4 p-5 bg-gray-50/50 rounded-3xl border border-gray-100/50 group-hover:border-purple-200 group-hover:bg-purple-50/30 transition-all duration-300">
                                     <div className={`mt-1 w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${notif.type === 'success' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
