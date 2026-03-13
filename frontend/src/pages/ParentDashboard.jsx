@@ -30,6 +30,8 @@ const ParentDashboard = () => {
     const [fees, setFees] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [showAllActivities, setShowAllActivities] = useState(false);
+    const [showAllAlerts, setShowAllAlerts] = useState(false);
 
     const fullName = localStorage.getItem('fullName') || 'Parent';
     const token = localStorage.getItem('token');
@@ -416,6 +418,29 @@ const ParentDashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Recent Activities Timeline */}
                 <div className="lg:col-span-2 bg-white rounded-[2.5rem] p-10 shadow-sm border border-gray-100">
+                    <style>
+                        {`
+                            .activity-container {
+                                overflow-y: auto;
+                                padding-right: 8px;
+                                transition: all 0.3s ease;
+                            }
+                            .activity-container::-webkit-scrollbar {
+                                width: 6px;
+                            }
+                            .activity-container::-webkit-scrollbar-track {
+                                background: #f1f1f1;
+                                border-radius: 10px;
+                            }
+                            .activity-container::-webkit-scrollbar-thumb {
+                                background: #c9c9c9;
+                                border-radius: 10px;
+                            }
+                            .activity-container::-webkit-scrollbar-thumb:hover {
+                                background: #b1b1b1;
+                            }
+                        `}
+                    </style>
                     <div className="flex items-center justify-between mb-10">
                         <h3 className="text-xl font-black text-gray-900 tracking-tight">Daily Highlights</h3>
                         <div className="flex items-center gap-4">
@@ -434,59 +459,73 @@ const ParentDashboard = () => {
                         </div>
                     </div>
 
-                    {activities.length > 0 ? (
-                        <div className="space-y-10 relative before:absolute before:inset-0 before:left-[1.35rem] before:w-0.5 before:bg-gray-100">
-                            {activities.map((activity, idx) => (
-                                <div key={idx} className="relative pl-14">
-                                    <div className="absolute left-0 top-1 w-11 h-11 bg-white border-2 border-purple-600 rounded-2xl flex items-center justify-center z-10 shadow-lg shadow-purple-600/10 text-purple-600">
-                                        {getActivityIcon(activity.title)}
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center justify-between mb-2">
-                                            <div className="flex flex-col">
-                                                <h4 className="font-black text-lg text-gray-900 tracking-tight leading-none">
-                                                    {activity.title} — <span className={activity.completed ? 'text-green-600' : 'text-amber-500'}>
-                                                        {activity.completed ? 'Completed' : 'Pending'}
-                                                    </span>
-                                                </h4>
-                                                <p className="text-xs font-bold text-gray-400 mt-1">
-                                                    by {activity.staffName}
-                                                </p>
+                    <div className="activity-container">
+                        {activities.length > 0 ? (
+                            <div className="space-y-10 relative before:absolute before:inset-0 before:left-[1.35rem] before:w-0.5 before:bg-gray-100">
+                                {(showAllActivities ? activities : activities.slice(0, 3)).map((activity, idx) => (
+                                    <div key={idx} className="relative pl-14">
+                                        <div className="absolute left-0 top-1 w-11 h-11 bg-white border-2 border-purple-600 rounded-2xl flex items-center justify-center z-10 shadow-lg shadow-purple-600/10 text-purple-600">
+                                            {getActivityIcon(activity.title)}
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center justify-between mb-2">
+                                                <div className="flex flex-col">
+                                                    <h4 className="font-black text-lg text-gray-900 tracking-tight leading-none">
+                                                        {activity.title} — <span className={activity.completed ? 'text-green-600' : 'text-amber-500'}>
+                                                            {activity.completed ? 'Completed' : 'Pending'}
+                                                        </span>
+                                                    </h4>
+                                                    <p className="text-xs font-bold text-gray-400 mt-1">
+                                                        by {activity.staffName}
+                                                    </p>
+                                                </div>
+                                                <div className="flex flex-col items-end gap-1.5">
+                                                    <div className="flex items-center gap-0.5">
+                                                        {[...Array(5)].map((_, i) => (
+                                                            <Star
+                                                                key={i}
+                                                                size={12}
+                                                                className={i < activity.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-200'}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-xs font-black text-gray-400 uppercase tracking-widest">
+                                                        <Clock size={12} />
+                                                        {new Date(activity.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="flex flex-col items-end gap-1.5">
-                                                <div className="flex items-center gap-0.5">
-                                                    {[...Array(5)].map((_, i) => (
-                                                        <Star
-                                                            key={i}
-                                                            size={12}
-                                                            className={i < activity.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-200'}
-                                                        />
-                                                    ))}
-                                                </div>
-                                                <div className="flex items-center gap-1.5 text-xs font-black text-gray-400 uppercase tracking-widest">
-                                                    <Clock size={12} />
-                                                    {new Date(activity.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </div>
+                                            <div className="bg-gray-50/50 p-5 rounded-3xl border border-gray-100/50 ring-1 ring-gray-900/5">
+                                                <p className="text-sm text-gray-600 font-medium leading-relaxed">{activity.description || "No notes provided for this activity."}</p>
                                             </div>
                                         </div>
-                                        <div className="bg-gray-50/50 p-5 rounded-3xl border border-gray-100/50 ring-1 ring-gray-900/5">
-                                            <p className="text-sm text-gray-600 font-medium leading-relaxed">{activity.description || "No notes provided for this activity."}</p>
-                                        </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="py-20 flex flex-col items-center justify-center text-center bg-gray-50/50 rounded-[2rem] border-2 border-dashed border-gray-100">
-                            <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center text-gray-200 mb-6 shadow-sm border border-gray-100">
-                                <Gamepad2 size={36} />
+                                ))}
                             </div>
-                            <h4 className="text-gray-900 font-black text-xl mb-2 tracking-tight">No activities yet</h4>
-                            <p className="text-sm text-gray-400 font-medium max-w-xs leading-relaxed">
-                                We'll keep you posted with meal times, naps, and playful moments as they happen.
-                            </p>
-                        </div>
-                    )}
+                        ) : (
+                            <div className="py-20 flex flex-col items-center justify-center text-center bg-gray-50/50 rounded-[2rem] border-2 border-dashed border-gray-100">
+                                <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center text-gray-200 mb-6 shadow-sm border border-gray-100">
+                                    <Gamepad2 size={36} />
+                                </div>
+                                <h4 className="text-gray-900 font-black text-xl mb-2 tracking-tight">No activities yet</h4>
+                                <p className="text-sm text-gray-400 font-medium max-w-xs leading-relaxed">
+                                    We'll keep you posted with meal times, naps, and playful moments as they happen.
+                                </p>
+                            </div>
+                        )}
+
+                        {activities.length > 3 && (
+                            <div className="mt-8 flex justify-center">
+                                <button
+                                    onClick={() => setShowAllActivities(!showAllActivities)}
+                                    className="px-6 py-2.5 bg-purple-50 text-purple-600 font-bold rounded-xl hover:bg-purple-100 transition-all text-sm flex items-center gap-2 border border-purple-100"
+                                >
+                                    {showAllActivities ? "Show Less" : "View All Activities"}
+                                    {showAllActivities ? <ArrowRight className="rotate-[-90deg]" size={16} /> : <ArrowRight className="rotate-[90deg]" size={16} />}
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Notifications Panel */}
@@ -500,7 +539,7 @@ const ParentDashboard = () => {
                     </div>
 
                     <div className="space-y-6 flex-1">
-                        {dynamicAlerts.map((notif, idx) => (
+                        {(showAllAlerts ? dynamicAlerts : dynamicAlerts.slice(0, 3)).map((notif, idx) => (
                             <div key={idx} className="group cursor-pointer">
                                 <div className="flex items-start gap-4 p-5 bg-gray-50/50 rounded-3xl border border-gray-100/50 group-hover:border-purple-200 group-hover:bg-purple-50/30 transition-all duration-300">
                                     <div className={`mt-1 w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${notif.type === 'success' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
@@ -519,12 +558,16 @@ const ParentDashboard = () => {
                         ))}
                     </div>
 
-                    <div className="mt-8">
-                        <button className="w-full py-4 bg-white border-2 border-gray-100 text-gray-700 font-black text-sm rounded-2xl hover:bg-gray-50 hover:border-gray-200 transition-all flex items-center justify-center gap-2">
-                            View All History
-                            <ExternalLink size={16} />
+                    {dynamicAlerts.length > 3 && (
+                        <button
+                            onClick={() => setShowAllAlerts(!showAllAlerts)}
+                            className="mt-6 w-full py-3 bg-gray-50 text-gray-600 font-bold text-xs rounded-xl hover:bg-gray-100 transition-all flex items-center justify-center gap-2 border border-gray-100"
+                        >
+                            {showAllAlerts ? "Show Less" : "View All Alerts"}
+                            {showAllAlerts ? <ArrowRight className="rotate-[-90deg]" size={14} /> : <ArrowRight className="rotate-[90deg]" size={14} />}
                         </button>
-                    </div>
+                    )}
+
                 </div>
             </div>
         </div>
