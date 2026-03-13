@@ -47,23 +47,44 @@ const getChildAttendance = async (req, res) => {
     }
 };
 
-// @desc    Get child activities (Today's only)
-// @route   GET /api/parent/activities/child/:id
-// @access  Private/Parent
 const getChildActivities = async (req, res) => {
     try {
-        const startOfDay = new Date();
-        startOfDay.setHours(0, 0, 0, 0);
+        const ChildDailyActivity = require("../models/ChildDailyActivity");
 
-        const endOfDay = new Date();
-        endOfDay.setHours(23, 59, 59, 999);
+        // Use normalized date logic consistent with staffController
+        const getNormalizedDate = (dateParam) => {
+            const d = dateParam ? new Date(dateParam) : new Date();
+            const dateStr = new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'Asia/Kolkata',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            }).format(d);
+            return new Date(`${dateStr}T00:00:00.000Z`);
+        };
 
-        const activities = await Activity.find({
-            child: req.params.id,
-            timestamp: { $gte: startOfDay, $lte: endOfDay }
-        }).sort({ timestamp: -1 });
+        const queryDate = getNormalizedDate();
 
-        res.status(200).json({ success: true, data: activities });
+        const dailyLog = await ChildDailyActivity.findOne({
+            childId: req.params.id,
+            date: queryDate
+        }).populate("recordedBy", "name");
+
+        // Format the data for the frontend
+        if (!dailyLog) {
+            return res.status(200).json({ success: true, data: [] });
+        }
+
+        const formattedActivities = dailyLog.activities.map(act => ({
+            title: act.activityName,
+            description: act.notes,
+            completed: act.completed,
+            rating: act.rating,
+            staffName: dailyLog.recordedBy?.name || "Staff",
+            timestamp: dailyLog.updatedAt // Use updatedAt as the time logged
+        }));
+
+        res.status(200).json({ success: true, data: formattedActivities });
     } catch (error) {
         console.error(error);
         res.status(500).json({ success: false, message: "Server error" });

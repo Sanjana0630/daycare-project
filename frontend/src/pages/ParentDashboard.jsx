@@ -18,7 +18,8 @@ import {
     Moon,
     Gamepad2,
     ExternalLink,
-    ArrowRight
+    ArrowRight,
+    Star
 } from 'lucide-react';
 import { BASE_URL } from '../config';
 
@@ -79,6 +80,9 @@ const ParentDashboard = () => {
 
         if (token) {
             fetchParentData();
+            // Polling for updates every 30 seconds
+            const interval = setInterval(fetchParentData, 30000);
+            return () => clearInterval(interval);
         }
     }, [token, role, navigate]);
 
@@ -439,14 +443,34 @@ const ParentDashboard = () => {
                                     </div>
                                     <div>
                                         <div className="flex items-center justify-between mb-2">
-                                            <h4 className="font-black text-lg text-gray-900 tracking-tight leading-none">{activity.title}</h4>
-                                            <div className="flex items-center gap-1.5 text-xs font-black text-gray-400 uppercase tracking-widest">
-                                                <Clock size={12} />
-                                                {new Date(activity.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            <div className="flex flex-col">
+                                                <h4 className="font-black text-lg text-gray-900 tracking-tight leading-none">
+                                                    {activity.title} — <span className={activity.completed ? 'text-green-600' : 'text-amber-500'}>
+                                                        {activity.completed ? 'Completed' : 'Pending'}
+                                                    </span>
+                                                </h4>
+                                                <p className="text-xs font-bold text-gray-400 mt-1">
+                                                    by {activity.staffName}
+                                                </p>
+                                            </div>
+                                            <div className="flex flex-col items-end gap-1.5">
+                                                <div className="flex items-center gap-0.5">
+                                                    {[...Array(5)].map((_, i) => (
+                                                        <Star
+                                                            key={i}
+                                                            size={12}
+                                                            className={i < activity.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-200'}
+                                                        />
+                                                    ))}
+                                                </div>
+                                                <div className="flex items-center gap-1.5 text-xs font-black text-gray-400 uppercase tracking-widest">
+                                                    <Clock size={12} />
+                                                    {new Date(activity.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="bg-gray-50/50 p-5 rounded-3xl border border-gray-100/50 ring-1 ring-gray-900/5">
-                                            <p className="text-sm text-gray-600 font-medium leading-relaxed">{activity.description}</p>
+                                            <p className="text-sm text-gray-600 font-medium leading-relaxed">{activity.description || "No notes provided for this activity."}</p>
                                         </div>
                                     </div>
                                 </div>
