@@ -13,6 +13,7 @@ import StaffApproval from './pages/StaffApproval';
 import EditStaff from './pages/EditStaff';
 import StaffAttendance from './pages/StaffAttendance';
 import ChildrenAttendance from './pages/ChildrenAttendance';
+import MyChild from './pages/MyChild';
 import MyChildren from './pages/MyChildren';
 import StaffMarkAttendance from './pages/StaffMarkAttendance';
 import StaffActivities from './pages/StaffActivities';
@@ -121,7 +122,7 @@ function App() {
 
                   {/* Parent Specific Routes */}
                   <Route path="/parent/dashboard" element={<RoleBasedRoute allowedRoles={["parent"]}><ParentDashboard /></RoleBasedRoute>} />
-                  <Route path="/parent/child" element={<RoleBasedRoute allowedRoles={["parent"]}><Placeholder title="My Child Details" /></RoleBasedRoute>} />
+                  <Route path="/parent/child" element={<RoleBasedRoute allowedRoles={["parent"]}><MyChild /></RoleBasedRoute>} />
                   <Route path="/parent/attendance" element={<RoleBasedRoute allowedRoles={["parent"]}><Placeholder title="Attendance History" /></RoleBasedRoute>} />
                   <Route path="/parent/activities" element={<RoleBasedRoute allowedRoles={["parent"]}><Placeholder title="Daily Activities" /></RoleBasedRoute>} />
                   <Route path="/parent/fees" element={<RoleBasedRoute allowedRoles={["parent"]}><Placeholder title="Fee Records" /></RoleBasedRoute>} />
