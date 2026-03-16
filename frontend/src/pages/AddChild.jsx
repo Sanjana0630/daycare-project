@@ -352,6 +352,17 @@ const AddChild = () => {
                                 </div>
                             </div>
                         </div>
+                        <div className="space-y-1.5 flex-1">
+                            <label className="text-sm font-medium text-gray-700 block">Child Photo</label>
+                            <div className="relative">
+                                <input
+                                    type="file"
+                                    name="childPhoto"
+                                    accept="image/png, image/jpeg, image/jpg"
+                                    className="w-full pl-4 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-100 focus:border-purple-400 transition-all outline-none"
+                                />
+                            </div>
+                        </div>
                         <InputField
                             label="Gender"
                             name="gender"
