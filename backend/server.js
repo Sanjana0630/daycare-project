@@ -16,11 +16,6 @@ const app = express();
 
 const cors = require("cors");
 
-app.use((req, res, next) => {
-  console.log(`>>> [${new Date().toISOString()}] ${req.method} ${req.originalUrl || req.url}`);
-  next();
-});
-
 app.use(cors({
   origin: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],

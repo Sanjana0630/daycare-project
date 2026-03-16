@@ -26,9 +26,7 @@ const getNormalizedDate = (dateParam) => {
 // @access  Public
 const registerStaff = async (req, res) => {
     try {
-        console.log('Received staff registration request:', req.body);
         const staff = await Staff.create(req.body);
-        console.log('Staff member created successfully:', staff._id);
         res.status(201).json({
             success: true,
             data: staff,
@@ -46,7 +44,6 @@ const registerStaff = async (req, res) => {
 const getStaffMembers = async (req, res) => {
     try {
         const staff = await Staff.find({});
-        console.log(`--- BACKEND: Fetched ${staff.length} staff records from database ---`);
         res.status(200).json({
             success: true,
             count: staff.length,

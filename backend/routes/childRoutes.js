@@ -13,10 +13,6 @@ const Child = require("../models/Child");
 
 router.post("/add-child", upload.single("photo"), async (req, res) => {
     try {
-        console.log("--- DEBUG: /add-child request received ---");
-        console.log("req.file:", req.file);
-        console.log("req.body:", req.body);
-
         const child = new Child({
             ...req.body,
             photo: req.file ? `/uploads/${req.file.filename}` : ""

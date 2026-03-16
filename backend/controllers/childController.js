@@ -12,9 +12,6 @@ const registerChild = async (req, res) => {
         if (data.parent === "") data.parent = null;
 
         // Add photo path if file is uploaded
-        console.log("--- DEBUG: registerChild ---");
-        console.log("req.file:", req.file);
-        console.log("req.body:", req.body);
         if (req.file) {
             data.photo = `/uploads/${req.file.filename}`;
         }
@@ -76,10 +73,6 @@ const updateChild = async (req, res) => {
         if (data.assignedTeacher === "") data.assignedTeacher = null;
         if (data.assignedCaretaker === "") data.assignedCaretaker = null;
         if (data.parent === "") data.parent = null;
-
-        console.log("--- DEBUG: updateChild ---");
-        console.log("req.file:", req.file);
-        console.log("req.body:", req.body);
 
         // Add photo path if file is uploaded
         if (req.file) {

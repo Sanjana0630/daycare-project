@@ -23,7 +23,6 @@ const getNormalizedDate = (dateParam) => {
 const getStaffUsers = async (req, res) => {
     try {
         const staff = await Staff.find({}).lean();
-        console.log(`--- ADMIN: Fetched ${staff.length} staff profiles from Staff collection ---`);
         res.status(200).json({
             success: true,
             count: staff.length,
@@ -172,7 +171,6 @@ const getActiveStaff = async (req, res) => {
             const profile = profiles.find(p => p.email.toLowerCase().trim() === userEmail);
 
             if (!profile) {
-                console.log(`--- ADMIN: Merge failed for ${user.email} - no profile object found`);
                 return { ...user };
             }
 
