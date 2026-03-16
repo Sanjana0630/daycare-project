@@ -116,6 +116,7 @@ const AddChild = () => {
         assignedTeacher: '',
         assignedCaretaker: '',
         parent: '',
+        childPhoto: null,
     });
 
     const [parents, setParents] = useState([]);
@@ -159,6 +160,11 @@ const AddChild = () => {
                 checkAgeValidation(value);
             }
         }
+    };
+
+    const handleFileChange = (e) => {
+        const { name, files } = e.target;
+        setFormData({ ...formData, [name]: files[0] });
     };
 
     const checkAgeValidation = (dobString) => {
@@ -359,6 +365,7 @@ const AddChild = () => {
                                     type="file"
                                     name="childPhoto"
                                     accept="image/png, image/jpeg, image/jpg"
+                                    onChange={handleFileChange}
                                     className="w-full pl-4 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-100 focus:border-purple-400 transition-all outline-none"
                                 />
                             </div>
@@ -403,7 +410,7 @@ const AddChild = () => {
                             icon={Calendar}
                             required
                             readOnly
-                            value={formData.formData?.admissionDate || new Date().toISOString().split('T')[0]}
+                            value={formData.admissionDate}
                             onChange={handleChange}
                         />
                     </div>
