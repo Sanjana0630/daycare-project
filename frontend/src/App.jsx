@@ -21,6 +21,7 @@ import StaffProfile from './pages/StaffProfile';
 import Reports from './pages/Reports';
 import EditChild from './pages/EditChild';
 import ChildProgress from './pages/ChildProgress';
+import ParentAttendance from './pages/ParentAttendance';
 
 // Security Guards
 const ProtectedRoute = ({ children }) => {
@@ -123,7 +124,7 @@ function App() {
                   {/* Parent Specific Routes */}
                   <Route path="/parent/dashboard" element={<RoleBasedRoute allowedRoles={["parent"]}><ParentDashboard /></RoleBasedRoute>} />
                   <Route path="/parent/child" element={<RoleBasedRoute allowedRoles={["parent"]}><MyChild /></RoleBasedRoute>} />
-                  <Route path="/parent/attendance" element={<RoleBasedRoute allowedRoles={["parent"]}><Placeholder title="Attendance History" /></RoleBasedRoute>} />
+                  <Route path="/parent/attendance" element={<RoleBasedRoute allowedRoles={["parent"]}><ParentAttendance /></RoleBasedRoute>} />
                   <Route path="/parent/activities" element={<RoleBasedRoute allowedRoles={["parent"]}><Placeholder title="Daily Activities" /></RoleBasedRoute>} />
                   <Route path="/parent/fees" element={<RoleBasedRoute allowedRoles={["parent"]}><Placeholder title="Fee Records" /></RoleBasedRoute>} />
                   <Route path="/parent/notifications" element={<RoleBasedRoute allowedRoles={["parent"]}><Placeholder title="Notifications" /></RoleBasedRoute>} />
