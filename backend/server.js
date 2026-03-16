@@ -16,12 +16,18 @@ const app = express();
 
 const cors = require("cors");
 
+app.use((req, res, next) => {
+  console.log(`>>> [${new Date().toISOString()}] ${req.method} ${req.originalUrl || req.url}`);
+  next();
+});
+
 app.use(cors({
   origin: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 app.use(express.json());
+app.use("/uploads", express.static("uploads"));
 
 app.get("/", (req, res) => {
   res.send("Daycare server is running 🚀");

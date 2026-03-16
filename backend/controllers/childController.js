@@ -11,6 +11,14 @@ const registerChild = async (req, res) => {
         if (data.assignedCaretaker === "") data.assignedCaretaker = null;
         if (data.parent === "") data.parent = null;
 
+        // Add photo path if file is uploaded
+        console.log("--- DEBUG: registerChild ---");
+        console.log("req.file:", req.file);
+        console.log("req.body:", req.body);
+        if (req.file) {
+            data.photo = `/uploads/${req.file.filename}`;
+        }
+
         const child = await Child.create(data);
         res.status(201).json({
             success: true,
@@ -69,13 +77,22 @@ const updateChild = async (req, res) => {
         if (data.assignedCaretaker === "") data.assignedCaretaker = null;
         if (data.parent === "") data.parent = null;
 
+        console.log("--- DEBUG: updateChild ---");
+        console.log("req.file:", req.file);
+        console.log("req.body:", req.body);
+
+        // Add photo path if file is uploaded
+        if (req.file) {
+            data.photo = `/uploads/${req.file.filename}`;
+        }
+
         let child = await Child.findById(req.params.id);
 
         if (!child) {
             return res.status(404).json({ success: false, message: "Child not found" });
         }
 
-        child = await Child.findByIdAndUpdate(req.params.id, req.body, {
+        child = await Child.findByIdAndUpdate(req.params.id, data, {
             new: true,
             runValidators: true,
         });

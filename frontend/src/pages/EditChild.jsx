@@ -11,7 +11,8 @@ import {
     Users,
     ArrowLeft,
     Save,
-    X
+    X,
+    Camera
 } from 'lucide-react';
 import { BASE_URL } from '../config';
 import AlertModal from '../components/AlertModal';
@@ -119,7 +120,9 @@ const EditChild = () => {
         assignedTeacher: '',
         assignedCaretaker: '',
         parent: '',
+        photo: null,
     });
+    const [existingPhoto, setExistingPhoto] = useState('');
 
     useEffect(() => {
         const fetchInitialData = async () => {
@@ -152,8 +155,12 @@ const EditChild = () => {
                         admissionDate: child.admissionDate ? new Date(child.admissionDate).toISOString().split('T')[0] : '',
                         assignedTeacher: child.assignedTeacher?._id || child.assignedTeacher || '',
                         assignedCaretaker: child.assignedCaretaker?._id || child.assignedCaretaker || '',
-                        parent: child.parent?._id || child.parent || ''
+                        parent: child.parent?._id || child.parent || '',
+                        photo: null // Reset file input to null
                     });
+                    if (child.photo) {
+                        setExistingPhoto(child.photo);
+                    }
                     if (child.dob) calculateAge(child.dob);
                 }
             } catch (error) {
@@ -178,6 +185,11 @@ const EditChild = () => {
                 checkAgeValidation(value);
             }
         }
+    };
+
+    const handleFileChange = (e) => {
+        const { name, files } = e.target;
+        setFormData({ ...formData, [name]: files[0] });
     };
 
     const checkAgeValidation = (dobString) => {
@@ -262,19 +274,25 @@ const EditChild = () => {
 
         try {
             // Clean optional relationship fields: convert "" to null
-            const cleanedData = {
-                ...formData,
-                assignedTeacher: formData.assignedTeacher || null,
-                assignedCaretaker: formData.assignedCaretaker || null,
-                parent: formData.parent || null
-            };
+            const formDataToSubmit = new FormData();
+
+            // Append all fields to FormData
+            Object.keys(formData).forEach(key => {
+                if (key === 'photo') {
+                    if (formData[key]) {
+                        formDataToSubmit.append('photo', formData[key]);
+                    }
+                } else {
+                    const value = formData[key] === "" ? null : formData[key];
+                    if (value !== null) {
+                        formDataToSubmit.append(key, value);
+                    }
+                }
+            });
 
             const response = await fetch(`${BASE_URL}/api/children/${id}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(cleanedData),
+                body: formDataToSubmit,
             });
 
             const data = await response.json();
@@ -414,6 +432,38 @@ const EditChild = () => {
                             readOnly
                             value={formData.admissionDate}
                         />
+                        <div className="space-y-1.5 flex-1">
+                            <label className="text-sm font-medium text-gray-700 block text-center">Child Photo</label>
+                            <div className="flex flex-col items-center gap-4">
+                                {existingPhoto && !formData.photo && (
+                                    <div className="relative group">
+                                        <img 
+                                            src={`${BASE_URL}${existingPhoto}`} 
+                                            alt="Child" 
+                                            className="w-24 h-24 rounded-2xl object-cover border-2 border-purple-100 shadow-sm"
+                                        />
+                                        <div className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <Camera size={20} className="text-white" />
+                                        </div>
+                                    </div>
+                                )}
+                                {formData.photo && (
+                                    <div className="text-sm text-purple-600 font-medium bg-purple-50 px-3 py-1 rounded-full border border-purple-100 flex items-center gap-2">
+                                        <Camera size={14} />
+                                        {formData.photo.name}
+                                    </div>
+                                )}
+                                <div className="relative w-full">
+                                    <input
+                                        type="file"
+                                        name="photo"
+                                        accept="image/png, image/jpeg, image/jpg"
+                                        onChange={handleFileChange}
+                                        className="w-full pl-4 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-100 focus:border-purple-400 transition-all outline-none"
+                                    />
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

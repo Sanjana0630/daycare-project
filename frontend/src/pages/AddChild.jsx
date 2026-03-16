@@ -116,7 +116,8 @@ const AddChild = () => {
         assignedTeacher: '',
         assignedCaretaker: '',
         parent: '',
-        childPhoto: null,
+        parent: '',
+        photo: null,
     });
 
     const [parents, setParents] = useState([]);
@@ -250,19 +251,26 @@ const AddChild = () => {
 
         try {
             // Clean optional relationship fields: convert "" to null
-            const cleanedData = {
-                ...formData,
-                assignedTeacher: formData.assignedTeacher || null,
-                assignedCaretaker: formData.assignedCaretaker || null,
-                parent: formData.parent || null
-            };
+            const formDataToSubmit = new FormData();
+            
+            // Append all fields to FormData
+            Object.keys(formData).forEach(key => {
+                if (key === 'photo') {
+                    if (formData[key]) {
+                        formDataToSubmit.append('photo', formData[key]);
+                    }
+                } else {
+                    const value = formData[key] === "" ? null : formData[key];
+                    if (value !== null) {
+                        formDataToSubmit.append(key, value);
+                    }
+                }
+            });
 
-            const response = await fetch(`${BASE_URL}/api/children`, {
+            const response = await fetch(`${BASE_URL}/api/children/add-child`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(cleanedData),
+                // Browser will automatically set Content-Type to multipart/form-data with boundary
+                body: formDataToSubmit,
             });
 
             const data = await response.json();
@@ -363,7 +371,7 @@ const AddChild = () => {
                             <div className="relative">
                                 <input
                                     type="file"
-                                    name="childPhoto"
+                                    name="photo"
                                     accept="image/png, image/jpeg, image/jpg"
                                     onChange={handleFileChange}
                                     className="w-full pl-4 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-100 focus:border-purple-400 transition-all outline-none"

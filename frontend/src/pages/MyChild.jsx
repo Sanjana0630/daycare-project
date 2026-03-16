@@ -81,8 +81,18 @@ const MyChild = () => {
             <div className="bg-gradient-to-tr from-purple-700 to-indigo-700 rounded-3xl p-8 shadow-lg text-white mb-[30px] relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
                 <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
-                    <div className="w-32 h-32 bg-white/20 backdrop-blur-md rounded-[2rem] flex items-center justify-center text-5xl font-black shadow-inner border border-white/20 shrink-0">
-                        {childData.childName.charAt(0)}
+                    <div className="shrink-0">
+                        {childData.photo ? (
+                            <img 
+                                src={`${import.meta.env.VITE_API_URL || 'http://localhost:5005'}${childData.photo}`} 
+                                alt={childData.childName} 
+                                className="w-32 h-32 rounded-[2rem] object-cover border-4 border-white/20 shadow-xl"
+                            />
+                        ) : (
+                            <div className="w-32 h-32 bg-white/20 backdrop-blur-md rounded-[2rem] flex items-center justify-center text-5xl font-black shadow-inner border border-white/20">
+                                {childData.childName.charAt(0)}
+                            </div>
+                        )}
                     </div>
                     <div className="flex-1 text-center md:text-left">
                         <h2 className="text-3xl md:text-4xl font-black mb-5 tracking-tight">{childData.childName}</h2>

@@ -98,8 +98,16 @@ const MyChildren = () => {
                                     <tr key={child._id} className="group hover:bg-gray-50/50 transition-all duration-300">
                                         <td className="px-8 py-5">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-14 h-14 bg-gradient-to-tr from-purple-100 to-indigo-100 rounded-2xl flex items-center justify-center text-purple-700 font-bold text-xl shadow-inner group-hover:scale-110 transition-transform">
-                                                    {child.childName[0].toUpperCase()}
+                                                <div className="w-14 h-14 bg-gradient-to-tr from-purple-100 to-indigo-100 rounded-2xl flex items-center justify-center text-purple-700 font-bold text-xl shadow-inner group-hover:scale-110 transition-transform overflow-hidden">
+                                                    {child.photo ? (
+                                                        <img 
+                                                            src={`${import.meta.env.VITE_API_URL || 'http://localhost:5005'}${child.photo}`} 
+                                                            alt={child.childName} 
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        child.childName[0].toUpperCase()
+                                                    )}
                                                 </div>
                                                 <div>
                                                     <div className="font-black text-gray-900 text-lg leading-tight">{child.childName}</div>
@@ -158,8 +166,16 @@ const MyChildren = () => {
                             <div className="absolute top-0 right-0 w-24 h-24 bg-purple-50 -mr-8 -mt-8 rounded-full opacity-50 group-hover:scale-150 transition-transform"></div>
 
                             <div className="relative z-10 flex flex-col items-center text-center">
-                                <div className="w-20 h-20 bg-gradient-to-tr from-purple-100 to-indigo-100 rounded-3xl flex items-center justify-center text-purple-700 font-black text-3xl shadow-md mb-4 group-hover:scale-110 transition-transform">
-                                    {child.childName[0].toUpperCase()}
+                                <div className="w-20 h-20 bg-gradient-to-tr from-purple-100 to-indigo-100 rounded-3xl flex items-center justify-center text-purple-700 font-black text-3xl shadow-md mb-4 group-hover:scale-110 transition-transform overflow-hidden">
+                                    {child.photo ? (
+                                        <img 
+                                            src={`${import.meta.env.VITE_API_URL || 'http://localhost:5005'}${child.photo}`} 
+                                            alt={child.childName} 
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        child.childName[0].toUpperCase()
+                                    )}
                                 </div>
                                 <h3 className="text-xl font-black text-gray-900 mb-1">{child.childName}</h3>
                                 <p className="text-gray-400 text-xs font-black uppercase tracking-wider mb-6">{child.gender} • {new Date().getFullYear() - new Date(child.dob).getFullYear()} Years</p>

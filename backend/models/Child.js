@@ -22,6 +22,10 @@ const childSchema = new mongoose.Schema({
         type: Date,
         required: true,
     },
+    photo: {
+        type: String,
+        default: "",
+    },
     parentName: {
         type: String,
         required: true,

@@ -182,9 +182,29 @@ const Children = () => {
                                     <tr key={child._id} className="hover:bg-purple-50/30 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold">
-                                                    {child.childName[0].toUpperCase()}
-                                                </div>
+                                                {child.photo ? (
+                                                    <img 
+                                                        src={`${BASE_URL}${child.photo}`} 
+                                                        alt={child.childName} 
+                                                        className="w-10 h-10 rounded-full object-cover border border-purple-100"
+                                                        onError={(e) => {
+                                                            e.target.onerror = null;
+                                                            e.target.src = ''; // Force fallback
+                                                            e.target.className = 'hidden';
+                                                            e.target.nextSibling.className = 'w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold';
+                                                        }}
+                                                    />
+                                                ) : null}
+                                                {!child.photo && (
+                                                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold">
+                                                        {child.childName[0].toUpperCase()}
+                                                    </div>
+                                                )}
+                                                {child.photo && (
+                                                    <div className="hidden">
+                                                        {child.childName[0].toUpperCase()}
+                                                    </div>
+                                                )}
                                                 <div>
                                                     <div className="font-bold text-gray-900">{child.childName}</div>
                                                     <div className="text-xs text-gray-400">ID: {child._id.slice(-6)}</div>
@@ -271,30 +291,53 @@ const Children = () => {
                             <h3 className="text-lg font-bold">Child Profile</h3>
                             <button onClick={() => setIsViewModalOpen(false)}><X size={20} /></button>
                         </div>
-                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-4">
-                                <h4 className="text-primary font-bold border-b pb-2 flex items-center gap-2"><User size={18} /> Basic Info</h4>
-                                <div className="space-y-2">
-                                    <p><span className="text-gray-400">Full Name:</span> <span className="font-medium">{selectedChild.childName}</span></p>
-                                    <p><span className="text-gray-400">D.O.B:</span> <span className="font-medium">{new Date(selectedChild.dob).toLocaleDateString()}</span></p>
-                                    <p><span className="text-gray-400">Gender:</span> <span className="font-medium">{selectedChild.gender}</span></p>
-                                    <p><span className="text-gray-400">Admission:</span> <span className="font-medium">{new Date(selectedChild.admissionDate).toLocaleDateString()}</span></p>
+                        <div className="p-6">
+                            <div className="flex flex-col md:flex-row gap-8">
+                                <div className="flex flex-col items-center gap-4">
+                                    {selectedChild.photo ? (
+                                        <img 
+                                            src={`${BASE_URL}${selectedChild.photo}`} 
+                                            alt={selectedChild.childName} 
+                                            className="w-32 h-32 rounded-3xl object-cover border-4 border-purple-50 shadow-md"
+                                        />
+                                    ) : (
+                                        <div className="w-32 h-32 bg-purple-100 rounded-3xl flex items-center justify-center text-purple-600 text-4xl font-bold">
+                                            {selectedChild.childName[0].toUpperCase()}
+                                        </div>
+                                    )}
+                                    <div className="text-center">
+                                        <h3 className="text-2xl font-bold text-gray-900">{selectedChild.childName}</h3>
+                                        <p className="text-sm text-gray-500">ID: {selectedChild._id.slice(-6)}</p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="space-y-4">
-                                <h4 className="text-primary font-bold border-b pb-2 flex items-center gap-2"><Phone size={18} /> Contact info</h4>
-                                <div className="space-y-2">
-                                    <p><span className="text-gray-400">Parent:</span> <span className="font-medium">{selectedChild.parentName}</span></p>
-                                    <p><span className="text-gray-400">Phone:</span> <span className="font-medium">{selectedChild.parentPhone}</span></p>
-                                    <p><span className="text-gray-400">Email:</span> <span className="font-medium">{selectedChild.parentEmail}</span></p>
-                                    <p><span className="text-gray-400">Emergency:</span> <span className="font-medium">{selectedChild.emergencyContactName} ({selectedChild.emergencyContactNumber})</span></p>
-                                </div>
-                            </div>
-                            <div className="md:col-span-2 space-y-4 bg-rose-50 p-4 rounded-2xl border border-rose-100">
-                                <h4 className="text-rose-600 font-bold flex items-center gap-2"><ShieldAlert size={18} /> Medical Notes</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <p><span className="text-rose-400">Allergies:</span> <span className="font-medium text-rose-700">{selectedChild.allergies || 'None'}</span></p>
-                                    <p><span className="text-rose-400">Conditions:</span> <span className="font-medium text-rose-700">{selectedChild.medicalConditions || 'None'}</span></p>
+                                <div className="flex-1 space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-4">
+                                            <h4 className="text-primary font-bold border-b pb-2 flex items-center gap-2"><User size={18} /> Basic Info</h4>
+                                            <div className="space-y-2">
+                                                <p><span className="text-gray-400">Full Name:</span> <span className="font-medium">{selectedChild.childName}</span></p>
+                                                <p><span className="text-gray-400">D.O.B:</span> <span className="font-medium">{new Date(selectedChild.dob).toLocaleDateString()}</span></p>
+                                                <p><span className="text-gray-400">Gender:</span> <span className="font-medium">{selectedChild.gender}</span></p>
+                                                <p><span className="text-gray-400">Admission:</span> <span className="font-medium">{new Date(selectedChild.admissionDate).toLocaleDateString()}</span></p>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-4">
+                                            <h4 className="text-primary font-bold border-b pb-2 flex items-center gap-2"><Phone size={18} /> Contact info</h4>
+                                            <div className="space-y-2">
+                                                <p><span className="text-gray-400">Parent:</span> <span className="font-medium">{selectedChild.parentName}</span></p>
+                                                <p><span className="text-gray-400">Phone:</span> <span className="font-medium">{selectedChild.parentPhone}</span></p>
+                                                <p><span className="text-gray-400">Email:</span> <span className="font-medium">{selectedChild.parentEmail}</span></p>
+                                                <p><span className="text-gray-400">Emergency:</span> <span className="font-medium">{selectedChild.emergencyContactName} ({selectedChild.emergencyContactNumber})</span></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="bg-rose-50 p-4 rounded-2xl border border-rose-100">
+                                        <h4 className="text-rose-600 font-bold flex items-center gap-2"><ShieldAlert size={18} /> Medical Notes</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                                            <p><span className="text-rose-400">Allergies:</span> <span className="font-medium text-rose-700">{selectedChild.allergies || 'None'}</span></p>
+                                            <p><span className="text-rose-400">Conditions:</span> <span className="font-medium text-rose-700">{selectedChild.medicalConditions || 'None'}</span></p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
