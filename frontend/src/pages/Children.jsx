@@ -182,29 +182,24 @@ const Children = () => {
                                     <tr key={child._id} className="hover:bg-purple-50/30 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                {child.photo ? (
-                                                    <img 
-                                                        src={`${BASE_URL}${child.photo}`} 
-                                                        alt={child.childName} 
-                                                        className="w-10 h-10 rounded-full object-cover border border-purple-100"
-                                                        onError={(e) => {
-                                                            e.target.onerror = null;
-                                                            e.target.src = ''; // Force fallback
-                                                            e.target.className = 'hidden';
-                                                            e.target.nextSibling.className = 'w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold';
-                                                        }}
-                                                    />
-                                                ) : null}
-                                                {!child.photo && (
-                                                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold">
-                                                        {child.childName[0].toUpperCase()}
-                                                    </div>
-                                                )}
-                                                {child.photo && (
-                                                    <div className="hidden">
-                                                        {child.childName[0].toUpperCase()}
-                                                    </div>
-                                                )}
+                                                <div className="relative group">
+                                                    {child.photo ? (
+                                                        <img
+                                                            src={`${BASE_URL}${child.photo}`}
+                                                            alt={child.childName}
+                                                            className="w-12 h-12 rounded-full object-cover object-center border-2 border-white shadow-sm hover:scale-105 transition duration-300"
+                                                            onError={(e) => {
+                                                                e.target.onerror = null;
+                                                                e.target.src = "";
+                                                                e.target.parentElement.innerHTML = `<div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 text-white flex items-center justify-center font-semibold shadow-sm">${child.childName[0].toUpperCase()}</div>`;
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 text-white flex items-center justify-center font-semibold shadow-sm hover:scale-105 transition duration-300">
+                                                            {child.childName.charAt(0).toUpperCase()}
+                                                        </div>
+                                                    )}
+                                                </div>
                                                 <div>
                                                     <div className="font-bold text-gray-900">{child.childName}</div>
                                                     <div className="text-xs text-gray-400">ID: {child._id.slice(-6)}</div>
