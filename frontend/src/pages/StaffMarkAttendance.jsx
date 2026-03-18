@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, CalendarCheck, Clock, CheckCircle2, XCircle, AlertCircle, Save, Calendar, User } from 'lucide-react';
+import { Search, CalendarCheck, CheckCircle2, XCircle, AlertCircle, Save, Calendar, User } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { BASE_URL } from '../config';
 
@@ -75,31 +75,6 @@ const StaffMarkAttendance = () => {
         fetchData();
     }, [date]);
 
-    // History state
-    const [history, setHistory] = useState([]);
-    const [historyLoading, setHistoryLoading] = useState(false);
-
-    useEffect(() => {
-        const fetchHistory = async () => {
-            setHistoryLoading(true);
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${BASE_URL}/api/staff/attendance-history`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await response.json();
-                if (data.success) {
-                    setHistory(data.data);
-                }
-            } catch (error) {
-                console.error("Error fetching history:", error);
-            } finally {
-                setHistoryLoading(false);
-            }
-        };
-        fetchHistory();
-    }, []);
-
     // Calculated Stats
     const stats = {
         total: children.length,
@@ -144,14 +119,6 @@ const StaffMarkAttendance = () => {
             const result = await response.json();
             if (result.success) {
                 toast.success(`Child attendance marked as ${attendance[childId].status}`);
-                // Opt: refreshing history upon save
-                const historyResponse = await fetch(`${BASE_URL}/api/staff/attendance-history`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const historyData = await historyResponse.json();
-                if (historyData.success) {
-                    setHistory(historyData.data);
-                }
             }
         } catch (error) {
             toast.error('Failed to save attendance. Please try again.');
@@ -405,63 +372,6 @@ const StaffMarkAttendance = () => {
                     </button>
                 </div>
             )}
-
-            {/* Attendance History */}
-            <div className="bg-white rounded-[3rem] border border-gray-100 shadow-2xl shadow-gray-200/50 p-8">
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <h3 className="text-2xl font-black text-gray-900">Attendance History</h3>
-                        <p className="text-gray-500 font-medium">Recent attendance logs for your assigned students</p>
-                    </div>
-                    <div className="p-3 bg-purple-50 text-purple-600 rounded-2xl">
-                        <Clock size={24} />
-                    </div>
-                </div>
-
-                {historyLoading ? (
-                    <div className="py-12 flex justify-center">
-                        <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
-                    </div>
-                ) : history.length === 0 ? (
-                    <div className="py-12 text-center text-gray-500 font-medium bg-gray-50 rounded-2xl border border-gray-100 border-dashed">
-                        No recent history records found.
-                    </div>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="bg-gray-50/50 border-b border-gray-100">
-                                    <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Child Name</th>
-                                    <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Date</th>
-                                    <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
-                                    <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Marked By</th>
-                                    <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">Marked Time</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-50">
-                                {history.map((record, idx) => {
-                                    const formattedRecordDate = new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric' }).format(new Date(record.date));
-                                    const formattedMarkedTime = record.markedAt ? new Date(record.markedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '--:--';
-
-                                    return (
-                                        <tr key={record._id || idx} className="hover:bg-purple-50/20 transition-colors">
-                                            <td className="px-6 py-4 font-black text-gray-900">{record.child?.childName || 'Unknown'}</td>
-                                            <td className="px-6 py-4 font-bold text-gray-600">{formattedRecordDate}</td>
-                                            <td className="px-6 py-4">
-                                                <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border ${record.status === 'Present' ? 'bg-green-50 text-green-700 border-green-200' : record.status === 'Absent' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
-                                                    {record.status}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 font-bold text-gray-600">{record.markedBy?.name || 'System'}</td>
-                                            <td className="px-6 py-4 text-right font-medium text-gray-500">{formattedMarkedTime}</td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </div>
         </div>
     );
 };
