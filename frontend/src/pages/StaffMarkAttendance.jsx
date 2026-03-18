@@ -55,8 +55,9 @@ const StaffMarkAttendance = () => {
                                 remarks: record.remarks || ''
                             };
                         } else {
+                            const today = getTodayString();
                             initialAttendance[child._id] = {
-                                status: 'Pending',
+                                status: date === today ? 'Pending' : 'Not Marked',
                                 checkIn: '09:00',
                                 checkOut: '',
                                 remarks: ''
@@ -269,7 +270,7 @@ const StaffMarkAttendance = () => {
                                                     <div className="font-black text-gray-900 text-xl leading-tight">{child.childName}</div>
                                                     <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Student ID: {child._id.slice(-6)}</div>
                                                 </div>
-                                                {attendance[child._id].status === 'Pending' && (
+                                                {attendance[child._id].status === 'Pending' && isToday && (
                                                     <div className="ml-2 px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-black uppercase tracking-widest rounded-full border border-amber-200">
                                                         Pending
                                                     </div>
@@ -277,30 +278,43 @@ const StaffMarkAttendance = () => {
                                             </div>
                                         </td>
                                         <td className="px-10 py-8">
-                                            <div className="flex items-center justify-center gap-3">
-                                                <button
-                                                    onClick={() => isToday && handleStatusChange(child._id, 'Present')}
-                                                    disabled={!isToday}
-                                                    className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-black transition-all duration-300 ${attendance[child._id].status === 'Present'
-                                                        ? 'bg-green-600 text-white shadow-lg shadow-green-100 scale-105'
-                                                        : 'bg-gray-50 text-gray-400 border border-transparent hover:bg-gray-100'
-                                                        } ${!isToday ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                >
-                                                    <CheckCircle2 size={16} />
-                                                    PRESENT
-                                                </button>
-                                                <button
-                                                    onClick={() => isToday && handleStatusChange(child._id, 'Absent')}
-                                                    disabled={!isToday}
-                                                    className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-black transition-all duration-300 ${attendance[child._id].status === 'Absent'
-                                                        ? 'bg-rose-600 text-white shadow-lg shadow-rose-100 scale-105'
-                                                        : 'bg-gray-50 text-gray-400 border border-transparent hover:bg-gray-100'
-                                                        } ${!isToday ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                >
-                                                    <XCircle size={16} />
-                                                    ABSENT
-                                                </button>
-                                            </div>
+                                            {isToday ? (
+                                                <div className="flex items-center justify-center gap-3">
+                                                    <button
+                                                        onClick={() => handleStatusChange(child._id, 'Present')}
+                                                        className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-black transition-all duration-300 ${attendance[child._id].status === 'Present'
+                                                            ? 'bg-green-600 text-white shadow-lg shadow-green-100 scale-105'
+                                                            : 'bg-gray-50 text-gray-400 border border-transparent hover:bg-gray-100'
+                                                            }`}
+                                                    >
+                                                        <CheckCircle2 size={16} />
+                                                        PRESENT
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleStatusChange(child._id, 'Absent')}
+                                                        className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-black transition-all duration-300 ${attendance[child._id].status === 'Absent'
+                                                            ? 'bg-rose-600 text-white shadow-lg shadow-rose-100 scale-105'
+                                                            : 'bg-gray-50 text-gray-400 border border-transparent hover:bg-gray-100'
+                                                            }`}
+                                                    >
+                                                        <XCircle size={16} />
+                                                        ABSENT
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center justify-center">
+                                                    <span className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border ${attendance[child._id].status === 'Present'
+                                                        ? 'bg-green-50 text-green-700 border-green-200'
+                                                        : attendance[child._id].status === 'Absent'
+                                                            ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                                            : attendance[child._id].status === 'Pending'
+                                                                ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                                                : 'bg-gray-100 text-gray-500 border-gray-200'
+                                                        }`}>
+                                                        {attendance[child._id].status}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </td>
                                         <td className="px-10 py-8">
                                             <div className="flex items-center gap-3 bg-gray-50/50 p-3 rounded-2xl border border-gray-100">
