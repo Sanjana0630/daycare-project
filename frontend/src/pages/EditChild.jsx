@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { BASE_URL } from '../config';
 import AlertModal from '../components/AlertModal';
+import CropModal from '../components/CropModal';
 
 const SectionTitle = ({ icon: Icon, title }) => (
     <div className="flex items-center gap-2 mb-6 pb-2 border-b border-gray-100">
@@ -123,6 +124,8 @@ const EditChild = () => {
         photo: null,
     });
     const [existingPhoto, setExistingPhoto] = useState('');
+    const [imageToCrop, setImageToCrop] = useState(null);
+    const [isCropModalOpen, setIsCropModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchInitialData = async () => {
@@ -188,8 +191,21 @@ const EditChild = () => {
     };
 
     const handleFileChange = (e) => {
-        const { name, files } = e.target;
-        setFormData({ ...formData, [name]: files[0] });
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                setImageToCrop(reader.result);
+                setIsCropModalOpen(true);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleCropComplete = (croppedFile) => {
+        setFormData({ ...formData, photo: croppedFile });
+        setIsCropModalOpen(false);
+        setImageToCrop(null);
     };
 
     const checkAgeValidation = (dobString) => {
@@ -325,6 +341,15 @@ const EditChild = () => {
                 onClose={() => setAlertModal({ ...alertModal, isOpen: false })}
                 message={alertModal.message}
             />
+            <CropModal
+                isOpen={isCropModalOpen}
+                image={imageToCrop}
+                onCropComplete={handleCropComplete}
+                onCancel={() => {
+                    setIsCropModalOpen(false);
+                    setImageToCrop(null);
+                }}
+            />
 
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -448,10 +473,21 @@ const EditChild = () => {
                                     </div>
                                 )}
                                 {formData.photo && (
-                                    <div className="text-sm text-purple-600 font-medium bg-purple-50 px-3 py-1 rounded-full border border-purple-100 flex items-center gap-2">
-                                        <Camera size={14} />
-                                        {formData.photo.name}
+                                    <div className="relative group">
+                                        <img 
+                                            src={URL.createObjectURL(formData.photo)} 
+                                            alt="Preview" 
+                                            className="w-24 h-24 rounded-2xl object-cover border-2 border-purple-100 shadow-sm"
+                                        />
+                                        <div className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <Camera size={20} className="text-white" />
+                                        </div>
                                     </div>
+                                )}
+                                {formData.photo && (
+                                    <p className="text-[10px] font-bold text-purple-600 uppercase tracking-widest bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
+                                        Cropped Image Selected
+                                    </p>
                                 )}
                                 <div className="relative w-full">
                                     <input

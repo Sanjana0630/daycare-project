@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { BASE_URL } from '../config';
 import AlertModal from '../components/AlertModal';
+import CropModal from '../components/CropModal';
+import { Camera } from 'lucide-react';
 
 const SectionTitle = ({ icon: Icon, title }) => (
     <div className="flex items-center gap-2 mb-6 pb-2 border-b border-gray-100">
@@ -120,6 +122,9 @@ const AddChild = () => {
         photo: null,
     });
 
+    const [imageToCrop, setImageToCrop] = useState(null);
+    const [isCropModalOpen, setIsCropModalOpen] = useState(false);
+
     const [parents, setParents] = useState([]);
 
     useEffect(() => {
@@ -164,8 +169,21 @@ const AddChild = () => {
     };
 
     const handleFileChange = (e) => {
-        const { name, files } = e.target;
-        setFormData({ ...formData, [name]: files[0] });
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                setImageToCrop(reader.result);
+                setIsCropModalOpen(true);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleCropComplete = (croppedFile) => {
+        setFormData({ ...formData, photo: croppedFile });
+        setIsCropModalOpen(false);
+        setImageToCrop(null);
     };
 
     const checkAgeValidation = (dobString) => {
@@ -297,6 +315,15 @@ const AddChild = () => {
                 onClose={() => setAlertModal({ ...alertModal, isOpen: false })}
                 message={alertModal.message}
             />
+            <CropModal
+                isOpen={isCropModalOpen}
+                image={imageToCrop}
+                onCropComplete={handleCropComplete}
+                onCancel={() => {
+                    setIsCropModalOpen(false);
+                    setImageToCrop(null);
+                }}
+            />
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>
@@ -367,15 +394,34 @@ const AddChild = () => {
                             </div>
                         </div>
                         <div className="space-y-1.5 flex-1">
-                            <label className="text-sm font-medium text-gray-700 block">Child Photo</label>
-                            <div className="relative">
-                                <input
-                                    type="file"
-                                    name="photo"
-                                    accept="image/png, image/jpeg, image/jpg"
-                                    onChange={handleFileChange}
-                                    className="w-full pl-4 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-100 focus:border-purple-400 transition-all outline-none"
-                                />
+                            <label className="text-sm font-medium text-gray-700 block text-center">Child Photo</label>
+                            <div className="flex flex-col items-center gap-4">
+                                {formData.photo && (
+                                    <div className="relative group">
+                                        <img 
+                                            src={URL.createObjectURL(formData.photo)} 
+                                            alt="Preview" 
+                                            className="w-24 h-24 rounded-2xl object-cover border-2 border-purple-100 shadow-sm"
+                                        />
+                                        <div className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <Camera size={20} className="text-white" />
+                                        </div>
+                                    </div>
+                                )}
+                                <div className="relative w-full">
+                                    <input
+                                        type="file"
+                                        name="photo"
+                                        accept="image/png, image/jpeg, image/jpg"
+                                        onChange={handleFileChange}
+                                        className="w-full pl-4 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-100 focus:border-purple-400 transition-all outline-none"
+                                    />
+                                </div>
+                                {formData.photo && (
+                                    <p className="text-[10px] font-bold text-purple-600 uppercase tracking-widest bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
+                                        Cropped Image Selected
+                                    </p>
+                                )}
                             </div>
                         </div>
                         <InputField
