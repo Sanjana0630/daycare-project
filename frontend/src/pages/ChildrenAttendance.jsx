@@ -48,14 +48,14 @@ const AttendanceHistoryModal = ({ isOpen, onClose, childName, history, loading }
                                                     ? 'bg-green-50 text-green-700 border-green-100'
                                                     : record.status === 'Absent'
                                                         ? 'bg-red-50 text-red-700 border-red-100'
-                                                        : 'bg-amber-50 text-amber-700 border-amber-100'
+                                                        : 'bg-gray-50 text-gray-500 border-gray-100'
                                                     }`}>
-                                                    <span className={`w-1.5 h-1.5 rounded-full ${record.status === 'Present' ? 'bg-green-500' : record.status === 'Absent' ? 'bg-red-500' : 'bg-amber-500'}`}></span>
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${record.status === 'Present' ? 'bg-green-500' : record.status === 'Absent' ? 'bg-red-500' : 'bg-gray-400'}`}></span>
                                                     {record.status}
                                                 </span>
                                             </td>
                                             <td className="py-4 px-2 text-sm text-gray-600 font-medium">
-                                                {record.markedBy?.name || 'System'}
+                                                {record.markedBy?.name || '-'}
                                             </td>
                                             <td className="py-4 px-2 text-sm text-gray-400 font-bold uppercase tracking-tighter">
                                                 {record.markedAt ? new Date(record.markedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
@@ -257,8 +257,21 @@ const ChildrenAttendance = () => {
                                     <tr key={child._id} className="hover:bg-purple-50/30 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold">
-                                                    {child.childName[0].toUpperCase()}
+                                                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center overflow-hidden text-purple-600 font-bold shadow-inner">
+                                                    {child.photo ? (
+                                                        <img
+                                                            src={`${BASE_URL}${child.photo}`}
+                                                            alt={child.childName}
+                                                            className="w-full h-full object-cover"
+                                                            onError={(e) => {
+                                                                e.target.onerror = null;
+                                                                e.target.src = "";
+                                                                e.target.parentElement.innerHTML = child.childName[0].toUpperCase();
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        child.childName[0].toUpperCase()
+                                                    )}
                                                 </div>
                                                 <div>
                                                     <div className="font-bold text-gray-900">{child.childName}</div>
@@ -273,7 +286,9 @@ const ChildrenAttendance = () => {
                                             {record ? (
                                                 <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${record.status === 'Present'
                                                     ? 'bg-green-50 text-green-700 border-green-100'
-                                                    : 'bg-red-50 text-red-700 border-red-100'
+                                                    : record.status === 'Absent'
+                                                        ? 'bg-red-50 text-red-700 border-red-100'
+                                                        : 'bg-gray-50 text-gray-500 border-gray-100'
                                                     }`}>
                                                     {record.status}
                                                 </span>
@@ -285,7 +300,7 @@ const ChildrenAttendance = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-sm text-gray-700">
-                                                {record?.markedBy?.name || (record ? 'System' : '--')}
+                                                {record?.markedBy?.name || '-'}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-right">

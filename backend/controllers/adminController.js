@@ -89,14 +89,28 @@ const getChildrenAttendance = async (req, res) => {
         const queryDate = new Date(date || new Date());
         queryDate.setHours(0, 0, 0, 0);
 
-        const attendance = await Attendance.find({
+        const rawAttendance = await Attendance.find({
             date: {
                 $gte: queryDate,
                 $lt: new Date(queryDate.getTime() + 24 * 60 * 60 * 1000)
             }
         })
-            .populate("child", "childName parentName parentPhone")
-            .populate("markedBy", "name");
+            .populate("child", "childName photo parentName parentPhone")
+            .populate("markedBy", "name")
+            .lean();
+
+        // Deduplicate: If multiple records exist for same child on this date, pick latest
+        const attendanceMap = new Map();
+        rawAttendance.forEach(record => {
+            const childId = record.child?._id?.toString() || record.child?.toString();
+            if (childId) {
+                if (!attendanceMap.has(childId) || new Date(record.createdAt) > new Date(attendanceMap.get(childId).createdAt)) {
+                    attendanceMap.set(childId, record);
+                }
+            }
+        });
+
+        const attendance = Array.from(attendanceMap.values());
 
         res.status(200).json({
             success: true,
@@ -262,14 +276,68 @@ const deleteStaff = async (req, res) => {
 // @access  Private/Admin
 const getChildAttendanceHistory = async (req, res) => {
     try {
-        const history = await Attendance.find({ child: req.params.childId })
+        const child = await Child.findById(req.params.childId);
+        if (!child) {
+            return res.status(404).json({ success: false, message: "Child not found" });
+        }
+
+        // Fetch actual records marked by staff
+        // Note: Filter out records where markedBy is null if they are considered "system" noise
+        const actualHistory = await Attendance.find({ child: req.params.childId })
             .populate("markedBy", "name")
-            .sort({ date: -1 });
+            .lean();
+
+        // Create a map to group by normalized date string (YYYY-MM-DD)
+        const historyMap = new Map();
+        actualHistory.forEach(record => {
+            if (record.date) {
+                const dateKey = new Date(record.date).toISOString().split('T')[0];
+                // Only keep records that were marked by a person (Requirement 6)
+                if (record.markedBy) {
+                    // If multiple records exist for same date, pick ONLY the LATEST record (Requirement 4)
+                    if (!historyMap.has(dateKey) || new Date(record.createdAt) > new Date(historyMap.get(dateKey).createdAt)) {
+                        historyMap.set(dateKey, record);
+                    }
+                }
+            }
+        });
+
+        // Generate dates from admission to today
+        const results = [];
+        const startDate = getNormalizedDate(child.admissionDate);
+        const today = getNormalizedDate();
+
+        let currentDate = new Date(today);
+        while (currentDate >= startDate) {
+            const dateStr = currentDate.toISOString().split('T')[0];
+            const existingRecord = historyMap.get(dateStr);
+
+            if (existingRecord) {
+                results.push({
+                    date: existingRecord.date,
+                    status: existingRecord.status,
+                    markedBy: existingRecord.markedBy,
+                    markedAt: existingRecord.markedAt,
+                    remarks: existingRecord.remarks || '-'
+                });
+            } else {
+                // Return a virtual "Not Marked" record
+                results.push({
+                    date: new Date(currentDate),
+                    status: "Not Marked",
+                    markedBy: null,
+                    markedAt: null,
+                    remarks: "-"
+                });
+            }
+            // Move to previous day
+            currentDate.setDate(currentDate.getDate() - 1);
+        }
 
         res.status(200).json({
             success: true,
-            count: history.length,
-            data: history,
+            count: results.length,
+            data: results,
         });
     } catch (error) {
         console.error(error);
@@ -282,9 +350,22 @@ const getChildAttendanceHistory = async (req, res) => {
 // @access  Private/Admin
 const getStaffAttendanceHistory = async (req, res) => {
     try {
-        const history = await StaffAttendance.find({ staff: req.params.staffId })
+        const rawHistory = await StaffAttendance.find({ staff: req.params.staffId })
             .populate("staff", "name fullName email")
-            .sort({ date: -1 });
+            .lean();
+
+        // Group by date to remove duplicates and pick latest
+        const historyMap = new Map();
+        rawHistory.forEach(record => {
+            if (record.date) {
+                const dateKey = new Date(record.date).toISOString().split('T')[0];
+                if (!historyMap.has(dateKey) || new Date(record.createdAt) > new Date(historyMap.get(dateKey).createdAt)) {
+                    historyMap.set(dateKey, record);
+                }
+            }
+        });
+
+        const history = Array.from(historyMap.values()).sort((a, b) => new Date(b.date) - new Date(a.date));
 
         res.status(200).json({
             success: true,
