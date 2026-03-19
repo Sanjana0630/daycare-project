@@ -53,15 +53,17 @@ const ParentAttendance = () => {
                     }
                 });
 
-                // Generate last 30 days or all days of current month up to today
+                // Generate records from admissionDate until today
                 const processedHistory = [];
                 const now = new Date();
                 const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
                 
-                // Show records from start of month until today
-                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                // Use admissionDate as the starting boundary
+                const admissionDate = childData.admissionDate ? new Date(childData.admissionDate) : new Date(now.getFullYear(), now.getMonth(), 1);
+                // Set admissionDate to midnight for comparison
+                const startBoundary = new Date(admissionDate.getFullYear(), admissionDate.getMonth(), admissionDate.getDate());
                 
-                for (let d = new Date(todayMidnight); d >= startOfMonth; d.setDate(d.getDate() - 1)) {
+                for (let d = new Date(todayMidnight); d >= startBoundary; d.setDate(d.getDate() - 1)) {
                     const dateKey = d.toISOString().split('T')[0];
                     if (dailyAttendance[dateKey]) {
                         processedHistory.push(dailyAttendance[dateKey]);
@@ -130,7 +132,7 @@ const ParentAttendance = () => {
                     </button>
                     <div>
                         <h2 className="text-2xl font-bold text-gray-900">Attendance History</h2>
-                        <p className="text-gray-500">Monthly attendance log for <strong>{child?.childName}</strong></p>
+                        <p className="text-gray-500">Full attendance log for <strong>{child?.childName}</strong></p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-gray-100 shadow-sm">
