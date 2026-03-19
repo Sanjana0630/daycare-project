@@ -42,7 +42,39 @@ const ParentAttendance = () => {
             const attendanceResult = await attendanceResponse.json();
             
             if (attendanceResult.success) {
-                setAttendance(attendanceResult.data);
+                // Process attendance data: Deduplicate by date and take latest markedAt
+                const rawData = attendanceResult.data;
+                const dailyAttendance = {};
+                
+                rawData.forEach(record => {
+                    const dateKey = new Date(record.date).toISOString().split('T')[0];
+                    if (!dailyAttendance[dateKey] || new Date(record.markedAt) > new Date(dailyAttendance[dateKey].markedAt)) {
+                        dailyAttendance[dateKey] = record;
+                    }
+                });
+
+                // Generate last 30 days or all days of current month up to today
+                const processedHistory = [];
+                const now = new Date();
+                const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                
+                // Show records from start of month until today
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                
+                for (let d = new Date(todayMidnight); d >= startOfMonth; d.setDate(d.getDate() - 1)) {
+                    const dateKey = d.toISOString().split('T')[0];
+                    if (dailyAttendance[dateKey]) {
+                        processedHistory.push(dailyAttendance[dateKey]);
+                    } else {
+                        processedHistory.push({
+                            date: new Date(d),
+                            status: 'Not Marked',
+                            isPlaceholder: true
+                        });
+                    }
+                }
+
+                setAttendance(processedHistory);
             } else {
                 setError('Failed to fetch attendance history.');
             }
@@ -126,8 +158,8 @@ const ParentAttendance = () => {
                 <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
                     <div className="text-xs font-black uppercase tracking-widest text-gray-400 mb-1">Attendance Rate</div>
                     <div className="text-3xl font-black text-purple-600">
-                        {attendance.length > 0 
-                            ? Math.round((attendance.filter(a => a.status === 'Present').length / attendance.length) * 100) 
+                        {attendance.filter(a => !a.isPlaceholder).length > 0 
+                            ? Math.round((attendance.filter(a => a.status === 'Present').length / attendance.filter(a => !a.isPlaceholder).length) * 100) 
                             : 0}%
                     </div>
                 </div>
@@ -155,11 +187,13 @@ const ParentAttendance = () => {
                                                     <Calendar size={18} />
                                                 </div>
                                                 <div className="font-black text-gray-900">
-                                                    {new Date(record.date).toLocaleDateString('en-US', { 
-                                                        weekday: 'short',
-                                                        month: 'short', 
-                                                        day: 'numeric' 
-                                                    })}
+                                                    {new Date(record.date).toDateString() === new Date().toDateString()
+                                                        ? 'Today'
+                                                        : new Date(record.date).toLocaleDateString('en-US', { 
+                                                            weekday: 'short',
+                                                            month: 'short', 
+                                                            day: 'numeric' 
+                                                        })}
                                                 </div>
                                             </div>
                                         </td>
@@ -167,9 +201,17 @@ const ParentAttendance = () => {
                                             <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
                                                 record.status === 'Present'
                                                     ? 'bg-green-50 text-green-700 border-green-100'
-                                                    : 'bg-rose-50 text-rose-700 border-rose-100'
+                                                    : record.status === 'Absent'
+                                                        ? 'bg-rose-50 text-rose-700 border-rose-100'
+                                                        : 'bg-gray-50 text-gray-400 border-gray-100'
                                             }`}>
-                                                <span className={`w-1.5 h-1.5 rounded-full ${record.status === 'Present' ? 'bg-green-500' : 'bg-rose-500'}`}></span>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${
+                                                    record.status === 'Present' 
+                                                        ? 'bg-green-500' 
+                                                        : record.status === 'Absent' 
+                                                            ? 'bg-rose-500' 
+                                                            : 'bg-gray-300'
+                                                }`}></span>
                                                 {record.status}
                                             </span>
                                         </td>
@@ -180,7 +222,7 @@ const ParentAttendance = () => {
                                         </td>
                                         <td className="px-8 py-5">
                                             <div className="text-sm font-medium text-gray-400 italic">
-                                                {record.remarks || 'No remarks'}
+                                                {record.remarks || (record.isPlaceholder ? 'Not marked yet' : 'No remarks')}
                                             </div>
                                         </td>
                                     </tr>
