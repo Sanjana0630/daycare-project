@@ -171,23 +171,29 @@ const EditStaff = () => {
     return (
         <div className="max-w-4xl mx-auto pb-12 animate-in fade-in duration-500">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-                <div>
+            <div className="text-center mb-10 space-y-3">
+                <div className="flex justify-center">
                     <button
                         onClick={() => navigate('/admin/staff')}
-                        className="flex items-center gap-2 text-gray-500 hover:text-blue-600 transition-colors mb-2 group"
+                        className="flex items-center gap-2 text-gray-400 hover:text-blue-600 transition-all group text-sm font-medium"
                     >
-                        <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+                        <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
                         Back to Staff List
                     </button>
-                    <h2 className="text-2xl font-bold text-gray-900">Edit Staff Profile</h2>
-                    <p className="text-gray-500">Update information for {formData.name}</p>
                 </div>
-
-                <div className="flex items-center gap-3">
+                <div className="space-y-1">
+                    <h2 className="text-3xl sm:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-600">
+                        Edit Staff Profile
+                    </h2>
+                    <p className="text-gray-500 text-sm sm:text-base max-w-md mx-auto">
+                        Update professional and personal information for {formData.name}.
+                    </p>
+                </div>
+                
+                <div className="flex items-center justify-center gap-3 pt-4">
                     <button
                         onClick={() => navigate('/admin/staff')}
-                        className="px-6 py-2.5 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all flex items-center gap-2"
+                        className="px-6 py-2.5 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all flex items-center gap-2 text-sm"
                     >
                         <X size={18} />
                         Cancel
@@ -195,7 +201,7 @@ const EditStaff = () => {
                     <button
                         onClick={handleSubmit}
                         disabled={saving}
-                        className="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all flex items-center gap-2 disabled:opacity-50"
+                        className="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all flex items-center gap-2 disabled:opacity-50 text-sm"
                     >
                         {saving ? 'Updating...' : (
                             <>
@@ -204,6 +210,9 @@ const EditStaff = () => {
                             </>
                         )}
                     </button>
+                </div>
+                <div className="flex justify-center pt-2">
+                    <div className="h-1 w-20 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full opacity-20"></div>
                 </div>
             </div>
 

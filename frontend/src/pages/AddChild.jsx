@@ -325,20 +325,26 @@ const AddChild = () => {
                 }}
             />
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-                <div>
+            <div className="text-center mb-10 space-y-3">
+                <div className="flex justify-center">
                     <button
                         onClick={() => navigate('/children')}
-                        className="flex items-center gap-2 text-gray-500 hover:text-purple-600 transition-colors mb-2 group"
+                        className="flex items-center gap-2 text-gray-400 hover:text-purple-600 transition-all group text-sm font-medium"
                     >
-                        <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+                        <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
                         Back to Children List
                     </button>
-                    <h2 className="text-2xl font-bold text-gray-900">Admission Form</h2>
-                    <p className="text-gray-500">Register a new child and their parent information.</p>
                 </div>
-
-                <div className="flex items-center gap-3">
+                <div className="space-y-1">
+                    <h2 className="text-3xl sm:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-purple-700 via-purple-600 to-indigo-600">
+                        Admission Form
+                    </h2>
+                    <p className="text-gray-500 text-sm sm:text-base max-w-md mx-auto">
+                        Register a new child and their parent information to get started.
+                    </p>
+                </div>
+                <div className="flex justify-center pt-2">
+                    <div className="h-1 w-20 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full opacity-20"></div>
                 </div>
             </div>
 
