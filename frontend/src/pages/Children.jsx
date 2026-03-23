@@ -141,7 +141,7 @@ const Children = () => {
                     className="bg-purple-600 text-white px-6 py-2.5 rounded-xl font-semibold shadow-lg shadow-purple-200 hover:bg-purple-700 transition-all flex items-center gap-2 active:scale-95"
                 >
                     <Plus size={20} />
-                    Add New Child
+                    Admission Form
                 </button>
             </div>
 

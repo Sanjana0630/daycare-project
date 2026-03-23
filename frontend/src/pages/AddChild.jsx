@@ -334,7 +334,7 @@ const AddChild = () => {
                         <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
                         Back to Children List
                     </button>
-                    <h2 className="text-2xl font-bold text-gray-900">Add New Child</h2>
+                    <h2 className="text-2xl font-bold text-gray-900">Admission Form</h2>
                     <p className="text-gray-500">Register a new child and their parent information.</p>
                 </div>
 
