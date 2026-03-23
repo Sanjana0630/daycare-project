@@ -171,16 +171,17 @@ const EditStaff = () => {
     return (
         <div className="max-w-4xl mx-auto pb-12 animate-in fade-in duration-500">
             {/* Header */}
+            <div className="mb-6">
+                <button
+                    onClick={() => navigate('/admin/staff')}
+                    className="flex items-center gap-2 text-gray-400 hover:text-blue-600 transition-all group text-sm font-medium"
+                >
+                    <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+                    Back to Staff List
+                </button>
+            </div>
+
             <div className="text-center mb-10 space-y-3">
-                <div className="flex justify-center">
-                    <button
-                        onClick={() => navigate('/admin/staff')}
-                        className="flex items-center gap-2 text-gray-400 hover:text-blue-600 transition-all group text-sm font-medium"
-                    >
-                        <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-                        Back to Staff List
-                    </button>
-                </div>
                 <div className="space-y-1">
                     <h2 className="text-3xl sm:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-600">
                         Edit Staff Profile

@@ -118,7 +118,6 @@ const AddChild = () => {
         assignedTeacher: '',
         assignedCaretaker: '',
         parent: '',
-        parent: '',
         photo: null,
     });
 
@@ -325,16 +324,17 @@ const AddChild = () => {
                 }}
             />
             {/* Header */}
+            <div className="mb-6">
+                <button
+                    onClick={() => navigate('/children')}
+                    className="flex items-center gap-2 text-gray-400 hover:text-purple-600 transition-all group text-sm font-medium"
+                >
+                    <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+                    Back to Children List
+                </button>
+            </div>
+
             <div className="text-center mb-10 space-y-3">
-                <div className="flex justify-center">
-                    <button
-                        onClick={() => navigate('/children')}
-                        className="flex items-center gap-2 text-gray-400 hover:text-purple-600 transition-all group text-sm font-medium"
-                    >
-                        <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-                        Back to Children List
-                    </button>
-                </div>
                 <div className="space-y-1">
                     <h2 className="text-3xl sm:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-purple-700 via-purple-600 to-indigo-600">
                         Admission Form
