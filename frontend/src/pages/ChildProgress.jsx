@@ -423,7 +423,7 @@ const ChildProgress = () => {
                                     {[
                                         { label: 'Total Tasks', value: stats.totalActivities, trend: 'Activities', icon: Activity, color: 'indigo' },
                                         { label: 'Performance', value: `${stats.avgRating}/5`, trend: 'Avg Rating', icon: Target, color: 'amber' },
-                                        { label: 'Completion', value: `${stats.completionRate}%`, trend: 'Success Rate', icon: Zap, color: 'emerald' }
+                                        { label: 'Incomplete', value: stats.totalActivities - stats.totalCompleted, trend: 'Unfinished', icon: XCircle, color: 'rose' }
                                     ].map((item, idx) => (
                                         <div key={idx} className="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm group hover:shadow-md transition-all">
                                             <div className="flex items-center justify-between mb-4">
@@ -804,7 +804,7 @@ const ChildProgress = () => {
                                 <p className="text-xl font-black text-slate-900">{stats.totalCompleted}</p>
                             </div>
                             <div className="p-4 border border-slate-200 rounded-xl text-center">
-                                <p className="text-[10px] font-black text-rose-500 uppercase mb-1">Pending</p>
+                                <p className="text-[10px] font-black text-rose-500 uppercase mb-1">Incomplete</p>
                                 <p className="text-xl font-black text-slate-900">{stats.totalActivities - stats.totalCompleted}</p>
                             </div>
                             <div className="p-4 border border-slate-200 rounded-xl text-center">
