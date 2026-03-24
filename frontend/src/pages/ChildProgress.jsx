@@ -672,7 +672,11 @@ const ChildProgress = () => {
                                                                             : 'bg-rose-50 text-rose-600 border-rose-100'
                                                                             }`}>
                                                                             {act.completed ? <CheckCircle2 size={12} strokeWidth={3} /> : <XCircle size={12} strokeWidth={3} />}
-                                                                            {act.completed ? 'DONE' : 'MISS'}
+                                                                            {act.completed 
+                                                                                ? 'DONE' 
+                                                                                : (new Date(log.date).setHours(0,0,0,0) < new Date().setHours(0,0,0,0) 
+                                                                                    ? 'INCOMPLETE' 
+                                                                                    : 'MISS')}
                                                                         </span>
                                                                     </td>
                                                                     <td className="px-6 py-6">
@@ -867,8 +871,12 @@ const ChildProgress = () => {
                                                     {act.activityName}
                                                 </td>
                                                 <td className="px-6 py-4 text-xs font-bold border-b border-slate-100 text-center">
-                                                    <span className={act.completed ? "text-emerald-600" : "text-rose-600"}>
-                                                        {act.completed ? 'Completed' : 'Pending'}
+                                                    <span className={act.completed ? "text-emerald-600" : (new Date(log.date).setHours(0,0,0,0) < new Date().setHours(0,0,0,0) ? "text-rose-600" : "text-amber-600")}>
+                                                        {act.completed 
+                                                            ? 'Completed' 
+                                                            : (new Date(log.date).setHours(0,0,0,0) < new Date().setHours(0,0,0,0) 
+                                                                ? 'Incomplete' 
+                                                                : 'Pending')}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 text-xs font-black text-slate-900 border-b border-slate-100 text-center">
