@@ -786,7 +786,7 @@ const ChildProgress = () => {
 
                 {/* Summary Section */}
                 {stats && (
-                    <div className="mb-10">
+                    <div className="mb-8">
                         <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-4 flex items-center gap-2">
                              Summary
                         </h3>
@@ -807,6 +807,37 @@ const ChildProgress = () => {
                                 <p className="text-[10px] font-black text-amber-500 uppercase mb-1">Avg Rating</p>
                                 <p className="text-xl font-black text-slate-900">{stats.avgRating}</p>
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Performance Visual (NEW) */}
+                {stats && stats.mainChartData.length > 0 && (
+                    <div className="mb-10 page-break-inside-avoid">
+                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-4">
+                            Performance Visual
+                        </h3>
+                        <div className="h-[300px] w-full border border-slate-100 rounded-2xl p-6 bg-slate-50/30 flex items-center justify-center">
+                            {/* Using fixed dimensions for print as ResponsiveContainer often fails in print preview */}
+                            {reportType === 'monthly' ? (
+                                <LineChart width={700} height={250} data={stats.mainChartData}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                    <XAxis dataKey="name" tick={{ fontSize: 9, fontWeight: 700 }} />
+                                    <YAxis domain={[0, 5]} tick={{ fontSize: 9, fontWeight: 700 }} />
+                                    <Line type="monotone" dataKey="rating" stroke="#6366f1" strokeWidth={3} dot={{ r: 4, fill: '#6366f1' }} animationDuration={0} />
+                                </LineChart>
+                            ) : (
+                                <BarChart width={700} height={250} data={stats.mainChartData}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                    <XAxis dataKey="name" tick={{ fontSize: 9, fontWeight: 700 }} />
+                                    <YAxis domain={[0, 5]} tick={{ fontSize: 9, fontWeight: 700 }} />
+                                    <Bar dataKey="rating" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={reportType === 'daily' ? 20 : 35} animationDuration={0}>
+                                        {stats.mainChartData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.rating >= 4 ? '#10b981' : entry.rating >= 2.5 ? '#3b82f6' : '#ef4444'} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            )}
                         </div>
                     </div>
                 )}
