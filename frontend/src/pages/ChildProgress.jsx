@@ -722,57 +722,145 @@ const ChildProgress = () => {
             </div>
 
             {/* Print Only Section */}
-            <div className="hidden print:block fixed inset-0 bg-white p-12 overflow-visible">
-                <div className="flex justify-between items-center mb-10 pb-6 border-b-2 border-slate-100">
+            <div className="hidden print:block fixed inset-0 bg-white p-10 overflow-visible z-[9999]">
+                {/* Custom Print Styles */}
+                <style>
+                    {`
+                    @media print {
+                        body * { visibility: hidden; }
+                        .print\\:block, .print\\:block * { visibility: visible; }
+                        .print\\:block { 
+                            position: absolute; 
+                            left: 0; 
+                            top: 0; 
+                            width: 100%; 
+                            padding: 0;
+                            margin: 0;
+                            background: white !important;
+                        }
+                        @page {
+                            margin: 2cm;
+                        }
+                    }
+                    `}
+                </style>
+
+                {/* Header Branding */}
+                <div className="flex justify-between items-start mb-8 border-b-2 border-slate-900 pb-4">
                     <div>
-                        <h1 className="text-4xl font-black text-slate-900">Child Progress Report</h1>
-                        <p className="text-slate-500 font-bold text-lg mt-1">{reportType.toUpperCase()} SUMMARY • {child?.childName}</p>
+                        <h1 className="text-3xl font-black text-slate-900 mb-1">Child Progress Report</h1>
+                        <p className="text-slate-600 font-bold text-sm uppercase tracking-widest">
+                            Time Range: <span className="text-indigo-600">{reportType}</span>
+                        </p>
                     </div>
                     <div className="text-right">
-                        <p className="text-slate-900 font-black text-2xl">Daycare Discovery</p>
-                        <p className="text-slate-500 font-bold">Generated on {new Date().toLocaleDateString()}</p>
+                        <p className="text-slate-900 font-black text-xl">Daycare Discovery</p>
+                        <p className="text-slate-500 font-bold text-xs uppercase">Generated on: {new Date().toLocaleDateString()}</p>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-10 mb-12">
-                    <div className="bg-slate-50 p-6 rounded-3xl">
-                        <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Child Information</h2>
-                        <p className="text-xl font-black text-slate-900 mb-2">{child?.childName}</p>
-                        <p className="text-slate-600 font-bold">Parent: {child?.parentName} ({child?.parentPhone})</p>
-                    </div>
-                    <div className="bg-slate-900 text-white p-6 rounded-3xl flex justify-between items-center">
-                        <div>
-                            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Global Success Rate</h2>
-                            <p className="text-4xl font-black">{stats?.completionRate || 0}%</p>
+                {/* Child & Parent Details */}
+                <div className="grid grid-cols-2 gap-8 mb-10">
+                    <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200">
+                        <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[2px] mb-3">Report Details</h2>
+                        <div className="space-y-2">
+                            <p className="text-lg font-black text-slate-900">{child?.childName}</p>
+                            <p className="text-sm font-bold text-slate-600">Parent: {child?.parentName}</p>
+                            <p className="text-sm font-bold text-slate-500 italic">Date Generated: {new Date().toLocaleString()}</p>
                         </div>
-                        <div className="text-right">
-                            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Avg Rating</h2>
-                            <p className="text-4xl font-black">{stats?.avgRating || 0}/5</p>
+                    </div>
+                    <div className="p-5 bg-slate-900 text-white rounded-2xl shadow-xl">
+                        <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[2px] mb-3">Performance Summary</h2>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase">Avg Rating</p>
+                                <p className="text-2xl font-black">{stats?.avgRating || 0}/5</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase">Success Rate</p>
+                                <p className="text-2xl font-black">{stats?.completionRate || 0}%</p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="border-2 border-slate-100 rounded-[32px] overflow-hidden">
-                    <table className="w-full text-left">
-                        <thead className="bg-slate-50">
-                            <tr>
-                                <th className="px-6 py-4 font-black text-slate-900">Date</th>
-                                <th className="px-6 py-4 font-black text-slate-900">Activity Name</th>
-                                <th className="px-6 py-4 font-black text-slate-900">Status</th>
-                                <th className="px-6 py-4 font-black text-slate-900">Rating</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {data.flatMap(log => log.activities.map((act, i) => (
-                                <tr key={i}>
-                                    <td className="px-6 py-4 text-slate-600 font-bold">{new Date(log.date).toLocaleDateString()}</td>
-                                    <td className="px-6 py-4 text-slate-900 font-black">{act.activityName}</td>
-                                    <td className="px-6 py-4 text-slate-600 font-bold">{act.completed ? 'Completed' : 'Pending'}</td>
-                                    <td className="px-6 py-4 text-slate-900 font-black">{act.rating}/5</td>
-                                </tr>
-                            )))}
-                        </tbody>
-                    </table>
+                {/* Summary Section */}
+                {stats && (
+                    <div className="mb-10">
+                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+                             Summary
+                        </h3>
+                        <div className="grid grid-cols-4 gap-4">
+                            <div className="p-4 border border-slate-200 rounded-xl text-center">
+                                <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Total</p>
+                                <p className="text-xl font-black text-slate-900">{stats.totalActivities}</p>
+                            </div>
+                            <div className="p-4 border border-slate-200 rounded-xl text-center">
+                                <p className="text-[10px] font-black text-emerald-500 uppercase mb-1">Completed</p>
+                                <p className="text-xl font-black text-slate-900">{stats.totalCompleted}</p>
+                            </div>
+                            <div className="p-4 border border-slate-200 rounded-xl text-center">
+                                <p className="text-[10px] font-black text-rose-500 uppercase mb-1">Pending</p>
+                                <p className="text-xl font-black text-slate-900">{stats.totalActivities - stats.totalCompleted}</p>
+                            </div>
+                            <div className="p-4 border border-slate-200 rounded-xl text-center">
+                                <p className="text-[10px] font-black text-amber-500 uppercase mb-1">Avg Rating</p>
+                                <p className="text-xl font-black text-slate-900">{stats.avgRating}</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Activity Table */}
+                <div className="mt-6">
+                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-4">Activity Table</h3>
+                    {data.length > 0 && data.some(log => log.activities && log.activities.length > 0) ? (
+                        <div className="border border-slate-200 rounded-2xl overflow-hidden">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-slate-100">
+                                        <th className="px-6 py-4 text-xs font-black text-slate-900 uppercase tracking-widest border-b border-slate-200">Date</th>
+                                        <th className="px-6 py-4 text-xs font-black text-slate-900 uppercase tracking-widest border-b border-slate-200">Activity Name</th>
+                                        <th className="px-6 py-4 text-xs font-black text-slate-900 uppercase tracking-widest border-b border-slate-200 text-center">Status</th>
+                                        <th className="px-6 py-4 text-xs font-black text-slate-900 uppercase tracking-widest border-b border-slate-200 text-center">Rating</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {data.flatMap(log => 
+                                        log.activities.map((act, i) => (
+                                            <tr key={`${log._id}-${i}`} className="even:bg-slate-50/50">
+                                                <td className="px-6 py-4 text-xs font-bold text-slate-700 border-b border-slate-100">
+                                                    {new Date(log.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                </td>
+                                                <td className="px-6 py-4 text-xs font-black text-slate-900 border-b border-slate-100">
+                                                    {act.activityName}
+                                                </td>
+                                                <td className="px-6 py-4 text-xs font-bold border-b border-slate-100 text-center">
+                                                    <span className={act.completed ? "text-emerald-600" : "text-rose-600"}>
+                                                        {act.completed ? 'Completed' : 'Pending'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-xs font-black text-slate-900 border-b border-slate-100 text-center">
+                                                    {act.rating}/5
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <div className="p-10 border-2 border-dashed border-slate-200 rounded-3xl text-center">
+                            <p className="text-slate-500 font-bold">No activity data available for selected period</p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Footer Branding */}
+                <div className="mt-12 pt-8 border-t border-slate-100 text-center">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        End of Report • Daycare Discovery System
+                    </p>
                 </div>
             </div>
         </div>
