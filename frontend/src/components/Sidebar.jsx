@@ -61,6 +61,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         { name: 'My Children', icon: Users, path: '/staff/my-children' },
         { name: 'My Class Attendance', icon: CalendarCheck, path: '/staff/attendance' },
         { name: 'Activities', icon: Activity, path: '/staff/activities' },
+        { name: 'Reports', icon: BarChart3, path: '/staff/reports' },
         { name: 'Notifications', icon: Bell, path: '/staff/notifications' },
         { name: 'Settings', icon: Settings, path: '/staff/settings' },
     ];
