@@ -501,6 +501,15 @@ const ParentDashboard = () => {
                                         </div>
                                     </div>
                                 ))}
+                                <div className="mt-8 pt-6 border-t border-gray-100">
+                                    <button 
+                                        onClick={() => navigate('/parent/activities')}
+                                        className="w-full py-4 bg-purple-50 text-purple-700 font-black rounded-2xl hover:bg-purple-100 transition-all flex items-center justify-center gap-2"
+                                    >
+                                        View Full Progress Report
+                                        <ArrowRight size={20} />
+                                    </button>
+                                </div>
                             </div>
                         ) : (
                             <div className="py-20 flex flex-col items-center justify-center text-center bg-gray-50/50 rounded-[2rem] border-2 border-dashed border-gray-100">
@@ -511,18 +520,6 @@ const ParentDashboard = () => {
                                 <p className="text-sm text-gray-400 font-medium max-w-xs leading-relaxed">
                                     We'll keep you posted with meal times, naps, and playful moments as they happen.
                                 </p>
-                            </div>
-                        )}
-
-                        {activities.length > 3 && (
-                            <div className="mt-8 flex justify-center">
-                                <button
-                                    onClick={() => setShowAllActivities(!showAllActivities)}
-                                    className="px-6 py-2.5 bg-purple-50 text-purple-600 font-bold rounded-xl hover:bg-purple-100 transition-all text-sm flex items-center gap-2 border border-purple-100"
-                                >
-                                    {showAllActivities ? "Show Less" : "View All Activities"}
-                                    {showAllActivities ? <ArrowRight className="rotate-[-90deg]" size={16} /> : <ArrowRight className="rotate-[90deg]" size={16} />}
-                                </button>
                             </div>
                         )}
                     </div>

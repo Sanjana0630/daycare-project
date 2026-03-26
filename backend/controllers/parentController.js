@@ -86,6 +86,92 @@ const getChildActivities = async (req, res) => {
     }
 };
 
+// @desc    Get activities for parent's child (Direct specific format)
+// @route   GET /api/parent/activities/parent
+// @access  Private/Parent
+const getParentActivitiesDirect = async (req, res) => {
+    try {
+        const ChildDailyActivity = require("../models/ChildDailyActivity");
+        const Child = require("../models/Child");
+
+        // 1. Find the child linked to this parent
+        let child = await Child.findOne({ parent: req.user._id });
+        if (!child) {
+            child = await Child.findOne({ parentEmail: req.user.email });
+        }
+
+        if (!child) {
+            return res.status(200).json({ success: true, data: null, message: "No child linked to your account" });
+        }
+
+        // 2. Fetch activities
+        const { filter } = req.query; // today or week
+        
+        // Use normalized date logic consistent with staffController
+        const getNormalizedDate = (dateParam) => {
+            const d = dateParam ? new Date(dateParam) : new Date();
+            const dateStr = new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'Asia/Kolkata',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            }).format(d);
+            return new Date(`${dateStr}T00:00:00.000Z`);
+        };
+
+        let activitiesData = [];
+
+        if (filter === 'week') {
+            const today = getNormalizedDate();
+            const sevenDaysAgo = new Date(today);
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+            const logs = await ChildDailyActivity.find({
+                childId: child._id,
+                date: { $gte: sevenDaysAgo, $lte: today }
+            }).sort({ date: -1 }).populate("recordedBy", "name");
+
+            logs.forEach(log => {
+                log.activities.forEach(act => {
+                    activitiesData.push({
+                        name: act.activityName,
+                        status: act.completed ? "Completed" : "Pending",
+                        rating: act.rating,
+                        date: log.date,
+                        notes: act.notes
+                    });
+                });
+            });
+        } else {
+            // Default Today
+            const queryDate = getNormalizedDate();
+            const dailyLog = await ChildDailyActivity.findOne({
+                childId: child._id,
+                date: queryDate
+            }).populate("recordedBy", "name");
+
+            if (dailyLog) {
+                activitiesData = dailyLog.activities.map(act => ({
+                    name: act.activityName,
+                    status: act.completed ? "Completed" : "Pending",
+                    rating: act.rating,
+                    date: dailyLog.date,
+                    notes: act.notes
+                }));
+            }
+        }
+
+        res.status(200).json({
+            success: true,
+            childName: child.childName,
+            activities: activitiesData
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
 // @desc    Get child fees
 // @route   GET /api/parent/fees/child/:id
 // @access  Private/Parent
@@ -104,4 +190,5 @@ module.exports = {
     getChildAttendance,
     getChildActivities,
     getChildFees,
+    getParentActivitiesDirect,
 };
