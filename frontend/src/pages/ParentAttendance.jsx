@@ -46,8 +46,17 @@ const ParentAttendance = () => {
                 const rawData = attendanceResult.data;
                 const dailyAttendance = {};
                 
+                /** 
+                 * @description Fix for "Today" and historical attendance shifts.
+                 * Use local-safe date key generation to avoid timezone mismatch with ISO strings.
+                 */
+                const getDateKey = (dateInput) => {
+                    const d = new Date(dateInput);
+                    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                };
+
                 rawData.forEach(record => {
-                    const dateKey = new Date(record.date).toISOString().split('T')[0];
+                    const dateKey = getDateKey(record.date);
                     if (!dailyAttendance[dateKey] || new Date(record.markedAt) > new Date(dailyAttendance[dateKey].markedAt)) {
                         dailyAttendance[dateKey] = record;
                     }
@@ -64,7 +73,7 @@ const ParentAttendance = () => {
                 const startBoundary = new Date(admissionDate.getFullYear(), admissionDate.getMonth(), admissionDate.getDate());
                 
                 for (let d = new Date(todayMidnight); d >= startBoundary; d.setDate(d.getDate() - 1)) {
-                    const dateKey = d.toISOString().split('T')[0];
+                    const dateKey = getDateKey(d);
                     if (dailyAttendance[dateKey]) {
                         processedHistory.push(dailyAttendance[dateKey]);
                     } else {
