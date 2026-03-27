@@ -169,45 +169,46 @@ const ParentAttendance = () => {
                         <ChevronLeft size={24} />
                     </button>
                     <div>
-                        <h2 className="text-2xl font-bold text-gray-900">Attendance History</h2>
-                        <p className="text-gray-500 text-sm">Reviewing logs for <strong>{child?.childName}</strong></p>
+                        <h2 className="text-3xl font-black text-gray-900 tracking-tight">Attendance History</h2>
+                        <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-1">Reviewing logs for <span className="text-purple-600">{child?.childName}</span></p>
                     </div>
                 </div>
-                {/* Redesigned Month/Year Picker */}
-                <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm transition-all hover:border-purple-200">
-                    <div className="hidden sm:flex p-2 bg-purple-50 text-purple-600 rounded-xl">
-                        <Calendar size={18} />
+                
+                {/* Premium "WOW" Month/Year Picker */}
+                <div className="bg-white/80 backdrop-blur-lg p-1.5 rounded-[2.5rem] border border-gray-100 shadow-2xl shadow-purple-500/5 flex items-center gap-2 transition-all hover:shadow-purple-500/10 hover:border-purple-200/50 group/picker">
+                    <div className="hidden sm:flex p-3 bg-gradient-to-tr from-purple-600 to-indigo-600 text-white rounded-[2rem] shadow-lg shadow-purple-200 transition-transform group-hover/picker:scale-105 duration-500">
+                        <Calendar size={20} />
                     </div>
                     
-                    <div className="flex items-center gap-4">
-                        {/* Month Selector */}
-                        <div className="relative group">
+                    <div className="flex items-center bg-gray-50/50 rounded-[2rem] px-5 py-2 border border-transparent transition-all group-hover/picker:bg-white group-hover/picker:border-purple-100">
+                        {/* Month Selector Token */}
+                        <div className="relative group/month">
                             <select 
                                 value={selectedMonth}
                                 onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                                className="appearance-none bg-transparent pr-8 py-1.5 pl-2 text-sm font-black text-gray-900 cursor-pointer outline-none transition-colors group-hover:text-purple-600"
+                                className="appearance-none bg-transparent pr-7 text-sm font-black text-gray-900 cursor-pointer outline-none transition-colors hover:text-purple-600"
                             >
                                 {months.map((m, i) => (
                                     <option key={i} value={i} disabled={selectedYear === currentYear && i > now.getMonth()}>{m}</option>
                                 ))}
                             </select>
-                            <ChevronDown size={14} className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-purple-600 pointer-events-none transition-colors" />
+                            <ChevronDown size={14} className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 group-hover/month:text-purple-600 pointer-events-none transition-all group-hover/month:translate-y-[-40%]" />
                         </div>
 
-                        <div className="w-[1px] h-4 bg-gray-100"></div>
+                        <div className="w-[1px] h-4 bg-gray-200 mx-4"></div>
 
-                        {/* Year Selector */}
-                        <div className="relative group">
+                        {/* Year Selector Token */}
+                        <div className="relative group/year">
                             <select 
                                 value={selectedYear}
                                 onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                className="appearance-none bg-transparent pr-8 py-1.5 pl-2 text-sm font-black text-gray-900 cursor-pointer outline-none transition-colors group-hover:text-purple-600"
+                                className="appearance-none bg-transparent pr-7 text-sm font-black text-gray-900 cursor-pointer outline-none transition-colors hover:text-purple-600"
                             >
                                 {years.map(y => (
                                     <option key={y} value={y}>{y}</option>
                                 ))}
                             </select>
-                            <ChevronDown size={14} className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-purple-600 pointer-events-none transition-colors" />
+                            <ChevronDown size={14} className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 group-hover/year:text-purple-600 pointer-events-none transition-all group-hover/year:translate-y-[-40%]" />
                         </div>
                     </div>
                 </div>
