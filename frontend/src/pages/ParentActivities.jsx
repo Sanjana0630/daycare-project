@@ -124,8 +124,21 @@ const ParentActivities = () => {
                     <Gamepad2 size={240} />
                 </div>
                 <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
-                    <div className="w-24 h-24 bg-white/20 backdrop-blur-xl rounded-[2.5rem] flex items-center justify-center text-4xl font-black border border-white/20 shadow-2xl">
-                        {child.childName.charAt(0)}
+                    <div className="w-24 h-24 bg-white/20 backdrop-blur-xl rounded-[2.5rem] flex items-center justify-center text-4xl font-black border border-white/20 shadow-2xl overflow-hidden">
+                        {child.photo ? (
+                            <img 
+                                src={`${BASE_URL}${child.photo}`} 
+                                alt={child.childName} 
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.style.display = 'none';
+                                    e.target.parentElement.innerHTML = `<span class="text-4xl font-black">${child.childName.charAt(0)}</span>`;
+                                }}
+                            />
+                        ) : (
+                            child.childName.charAt(0)
+                        )}
                     </div>
                     <div className="text-center md:text-left">
                         <h2 className="text-4xl font-black mb-2 tracking-tight">{child.childName}</h2>
