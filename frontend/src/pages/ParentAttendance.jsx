@@ -3,6 +3,10 @@ import { Calendar, User, History, AlertCircle, ChevronLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom';
 
 const ParentAttendance = () => {
+    const now = new Date();
+    const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
+    const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+    
     const [child, setChild] = useState(null);
     const [attendance, setAttendance] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -13,7 +17,7 @@ const ParentAttendance = () => {
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [selectedMonth, selectedYear]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -47,8 +51,7 @@ const ParentAttendance = () => {
                 const dailyAttendance = {};
                 
                 /** 
-                 * @description Fix for "Today" and historical attendance shifts.
-                 * Use local-safe date key generation to avoid timezone mismatch with ISO strings.
+                 * @description Local-safe date key generation to avoid timezone mismatch.
                  */
                 const getDateKey = (dateInput) => {
                     const d = new Date(dateInput);
@@ -62,17 +65,31 @@ const ParentAttendance = () => {
                     }
                 });
 
-                // Generate records from admissionDate until today
+                // Generate records for the SELECTED month
                 const processedHistory = [];
-                const now = new Date();
-                const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
                 
-                // Use admissionDate as the starting boundary
-                const admissionDate = childData.admissionDate ? new Date(childData.admissionDate) : new Date(now.getFullYear(), now.getMonth(), 1);
-                // Set admissionDate to midnight for comparison
-                const startBoundary = new Date(admissionDate.getFullYear(), admissionDate.getMonth(), admissionDate.getDate());
+                // Determine loop boundaries for the selected month
+                const lastDayItem = new Date(selectedYear, selectedMonth + 1, 0);
+                const firstDayItem = new Date(selectedYear, selectedMonth, 1);
                 
-                for (let d = new Date(todayMidnight); d >= startBoundary; d.setDate(d.getDate() - 1)) {
+                // Start boundary: child admission date or 1st of month
+                const admissionDateRaw = childData.admissionDate ? new Date(childData.admissionDate) : firstDayItem;
+                const admissionMid = new Date(admissionDateRaw.getFullYear(), admissionDateRaw.getMonth(), admissionDateRaw.getDate());
+                const loopStart = firstDayItem > admissionMid ? firstDayItem : admissionMid;
+
+                // End boundary: last day of month or today (if current month)
+                const todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                let loopEnd = lastDayItem;
+                if (selectedYear === now.getFullYear() && selectedMonth === now.getMonth()) {
+                    loopEnd = todayMid;
+                } else if (new Date(selectedYear, selectedMonth) > now) {
+                    // Future month selected
+                    setAttendance([]);
+                    setLoading(false);
+                    return;
+                }
+
+                for (let d = new Date(loopEnd); d >= loopStart; d.setDate(d.getDate() - 1)) {
                     const dateKey = getDateKey(d);
                     if (dailyAttendance[dateKey]) {
                         processedHistory.push(dailyAttendance[dateKey]);
@@ -97,7 +114,19 @@ const ParentAttendance = () => {
         }
     };
 
-    if (loading) {
+    const months = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+
+    const years = [];
+    const currentYear = now.getFullYear();
+    const admissionYear = child?.admissionDate ? new Date(child.admissionDate).getFullYear() : currentYear - 1;
+    for (let y = currentYear; y >= admissionYear; y--) {
+        years.push(y);
+    }
+
+    if (loading && !child) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
                 <div className="flex flex-col items-center gap-4">
@@ -141,14 +170,33 @@ const ParentAttendance = () => {
                     </button>
                     <div>
                         <h2 className="text-2xl font-bold text-gray-900">Attendance History</h2>
-                        <p className="text-gray-500">Full attendance log for <strong>{child?.childName}</strong></p>
+                        <p className="text-gray-500 text-sm">Reviewing logs for <strong>{child?.childName}</strong></p>
                     </div>
                 </div>
-                <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-gray-100 shadow-sm">
-                    <Calendar size={18} className="text-purple-500" />
-                    <span className="text-sm font-bold text-gray-700">
-                        {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                    </span>
+                <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-2xl border border-gray-100 shadow-sm">
+                    <div className="p-2 bg-purple-50 text-purple-600 rounded-xl">
+                        <Calendar size={18} />
+                    </div>
+                    <div className="flex items-center">
+                        <select 
+                            value={selectedMonth}
+                            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                            className="bg-transparent border-none outline-none text-sm font-black text-gray-900 cursor-pointer pr-2"
+                        >
+                            {months.map((m, i) => (
+                                <option key={i} value={i} disabled={selectedYear === currentYear && i > now.getMonth()}>{m}</option>
+                            ))}
+                        </select>
+                        <select 
+                            value={selectedYear}
+                            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                            className="bg-transparent border-none outline-none text-sm font-black text-gray-900 cursor-pointer"
+                        >
+                            {years.map(y => (
+                                <option key={y} value={y}>{y}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
             </div>
 
