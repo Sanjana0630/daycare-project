@@ -215,21 +215,27 @@ const ParentAttendance = () => {
             </div>
 
             {/* Attendance Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-                    <div className="text-xs font-black uppercase tracking-widest text-gray-400 mb-1">Total Present</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
+                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-2">Total Present</div>
                     <div className="text-3xl font-black text-green-600">
                         {attendance.filter(a => a.status === 'Present').length}
                     </div>
                 </div>
-                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-                    <div className="text-xs font-black uppercase tracking-widest text-gray-400 mb-1">Total Absent</div>
+                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
+                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-2">Total Absent</div>
                     <div className="text-3xl font-black text-rose-600">
                         {attendance.filter(a => a.status === 'Absent').length}
                     </div>
                 </div>
-                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-                    <div className="text-xs font-black uppercase tracking-widest text-gray-400 mb-1">Attendance Rate</div>
+                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
+                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-2">Not Marked</div>
+                    <div className="text-3xl font-black text-gray-400">
+                        {attendance.filter(a => a.status === 'Not Marked').length}
+                    </div>
+                </div>
+                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
+                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-2">Attendance Rate</div>
                     <div className="text-3xl font-black text-purple-600">
                         {attendance.filter(a => !a.isPlaceholder).length > 0 
                             ? Math.round((attendance.filter(a => a.status === 'Present').length / attendance.filter(a => !a.isPlaceholder).length) * 100) 
