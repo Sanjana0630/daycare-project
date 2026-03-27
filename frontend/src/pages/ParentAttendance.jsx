@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, User, History, AlertCircle, ChevronLeft } from 'lucide-react';
+import { Calendar, User, History, AlertCircle, ChevronLeft, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const ParentAttendance = () => {
@@ -173,29 +173,42 @@ const ParentAttendance = () => {
                         <p className="text-gray-500 text-sm">Reviewing logs for <strong>{child?.childName}</strong></p>
                     </div>
                 </div>
-                <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-2xl border border-gray-100 shadow-sm">
-                    <div className="p-2 bg-purple-50 text-purple-600 rounded-xl">
+                {/* Redesigned Month/Year Picker */}
+                <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm transition-all hover:border-purple-200">
+                    <div className="hidden sm:flex p-2 bg-purple-50 text-purple-600 rounded-xl">
                         <Calendar size={18} />
                     </div>
-                    <div className="flex items-center">
-                        <select 
-                            value={selectedMonth}
-                            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                            className="bg-transparent border-none outline-none text-sm font-black text-gray-900 cursor-pointer pr-2"
-                        >
-                            {months.map((m, i) => (
-                                <option key={i} value={i} disabled={selectedYear === currentYear && i > now.getMonth()}>{m}</option>
-                            ))}
-                        </select>
-                        <select 
-                            value={selectedYear}
-                            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                            className="bg-transparent border-none outline-none text-sm font-black text-gray-900 cursor-pointer"
-                        >
-                            {years.map(y => (
-                                <option key={y} value={y}>{y}</option>
-                            ))}
-                        </select>
+                    
+                    <div className="flex items-center gap-4">
+                        {/* Month Selector */}
+                        <div className="relative group">
+                            <select 
+                                value={selectedMonth}
+                                onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                                className="appearance-none bg-transparent pr-8 py-1.5 pl-2 text-sm font-black text-gray-900 cursor-pointer outline-none transition-colors group-hover:text-purple-600"
+                            >
+                                {months.map((m, i) => (
+                                    <option key={i} value={i} disabled={selectedYear === currentYear && i > now.getMonth()}>{m}</option>
+                                ))}
+                            </select>
+                            <ChevronDown size={14} className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-purple-600 pointer-events-none transition-colors" />
+                        </div>
+
+                        <div className="w-[1px] h-4 bg-gray-100"></div>
+
+                        {/* Year Selector */}
+                        <div className="relative group">
+                            <select 
+                                value={selectedYear}
+                                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                                className="appearance-none bg-transparent pr-8 py-1.5 pl-2 text-sm font-black text-gray-900 cursor-pointer outline-none transition-colors group-hover:text-purple-600"
+                            >
+                                {years.map(y => (
+                                    <option key={y} value={y}>{y}</option>
+                                ))}
+                            </select>
+                            <ChevronDown size={14} className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-purple-600 pointer-events-none transition-colors" />
+                        </div>
                     </div>
                 </div>
             </div>
