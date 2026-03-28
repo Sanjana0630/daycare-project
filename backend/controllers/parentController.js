@@ -4,6 +4,7 @@ const Activity = require("../models/Activity");
 const Fee = require("../models/Fee");
 const FeeStructure = require("../models/FeeStructure");
 const Payment = require("../models/Payment");
+const { calculateFee } = require("../utils/feeCalculator");
 
 // @desc    Get linked child for parent
 // @route   GET /api/parent/child
@@ -205,13 +206,24 @@ const getParentFeeStatus = async (req, res) => {
         const numericMonth = currentDate.getMonth() + 1;
         const numericYear = currentDate.getFullYear();
 
-        // Expectation
+        // Expected base block
         const feeStructure = await FeeStructure.findOne({ class: child.class });
-        const expectedFee = feeStructure ? (feeStructure.monthlyFee + feeStructure.extraCharges) : 0;
+        const baseFee = feeStructure ? (feeStructure.monthlyFee + feeStructure.extraCharges) : 0;
 
         // Current Month Payments
         const payments = await Payment.find({ child: child._id, month: numericMonth, year: numericYear }).sort({ date: -1 });
         const paidAmount = payments.reduce((sum, p) => sum + p.amount, 0);
+
+        // Determine effective evaluation date for late fees (stop accumulating if paid)
+        let lastPaymentDate = null;
+        if (payments.length > 0) {
+            lastPaymentDate = new Date(Math.max(...payments.map(p => new Date(p.date))));
+        }
+        
+        const evalDate = (paidAmount >= baseFee && lastPaymentDate) ? lastPaymentDate : null;
+
+        const feeInfo = calculateFee(child, baseFee, numericYear, numericMonth, evalDate);
+        const expectedFee = feeInfo.totalAmount;
         
         // Status Resolve
         let pendingAmount = expectedFee - paidAmount;
@@ -220,11 +232,9 @@ const getParentFeeStatus = async (req, res) => {
         if (expectedFee > 0 && paidAmount >= expectedFee) {
             status = 'Paid';
             pendingAmount = 0;
-        } else if (expectedFee > 0 && paidAmount > 0) {
-             status = 'Pending';
         }
 
-        if (status === 'Pending' && expectedFee > 0 && currentDate.getDate() > 5) {
+        if (status === 'Pending' && expectedFee > 0 && currentDate > feeInfo.graceEnd) {
             status = 'Overdue';
         }
 
@@ -239,6 +249,9 @@ const getParentFeeStatus = async (req, res) => {
                 month: numericMonth,
                 year: numericYear,
                 expectedFee,
+                baseFee: feeInfo.baseFee,
+                lateFee: feeInfo.lateFee,
+                dueDate: feeInfo.dueDate,
                 paidAmount,
                 pendingAmount: pendingAmount > 0 ? pendingAmount : 0,
                 status,

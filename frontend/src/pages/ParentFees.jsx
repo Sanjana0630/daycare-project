@@ -109,7 +109,7 @@ const ParentFees = () => {
         );
     }
 
-    const { childName, month, year, expectedFee, paidAmount, pendingAmount, status, recentPayments } = feeData;
+    const { childName, month, year, expectedFee, baseFee, lateFee, dueDate, paidAmount, pendingAmount, status, recentPayments } = feeData;
     const progress = generateProgressBar(paidAmount, expectedFee);
     const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long' });
 
@@ -142,18 +142,24 @@ const ParentFees = () => {
                             {monthName} {year}
                         </p>
 
-                        <div className="flex gap-8 mb-6">
+                        <div className="flex flex-wrap gap-8 mb-6">
                             <div>
-                                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Total Due</p>
-                                <p className="text-xl font-black text-gray-800">₹{expectedFee}</p>
+                                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Base Fee</p>
+                                <p className="text-xl font-black text-gray-800">₹{baseFee}</p>
                             </div>
+                            {lateFee > 0 && (
+                                <div>
+                                    <p className="text-xs text-red-400 font-bold uppercase tracking-wider mb-1">Late Fee</p>
+                                    <p className="text-xl font-black text-red-600">₹{lateFee}</p>
+                                </div>
+                            )}
                             <div>
                                 <p className="text-xs text-emerald-400 font-bold uppercase tracking-wider mb-1">Paid</p>
                                 <p className="text-xl font-black text-emerald-600">₹{paidAmount}</p>
                             </div>
                             {pendingAmount > 0 && (
                                 <div>
-                                    <p className="text-xs text-amber-400 font-bold uppercase tracking-wider mb-1">Pending</p>
+                                    <p className="text-xs text-amber-400 font-bold uppercase tracking-wider mb-1">Pending Total</p>
                                     <p className="text-xl font-black text-amber-600">₹{pendingAmount}</p>
                                 </div>
                             )}
@@ -176,7 +182,7 @@ const ParentFees = () => {
                                 </button>
                                 <div className="text-xs font-semibold text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg flex items-center gap-2 w-full md:w-auto justify-center md:justify-start">
                                     <i className="fa-solid fa-triangle-exclamation"></i>
-                                    Your fee is due on the 5th
+                                    Due on {dueDate ? new Date(dueDate).toLocaleDateString() : 'the 5th'}
                                 </div>
                             </>
                         ) : (

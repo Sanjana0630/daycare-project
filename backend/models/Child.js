@@ -52,6 +52,14 @@ const childSchema = new mongoose.Schema({
     medicalConditions: {
         type: String,
     },
+    monthlyFee: {
+        type: Number,
+        default: 0,
+    },
+    lastPaymentDate: {
+        type: Date,
+        default: null,
+    },
     class: {
         type: String,
         required: true,

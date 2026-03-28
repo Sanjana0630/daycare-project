@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import SetFeeStructureModal from '../components/SetFeeStructureModal';
 import AddPaymentModal from '../components/AddPaymentModal';
+import FeeDetailsModal from '../components/FeeDetailsModal';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5005';
 const API_URL = `${API_BASE_URL}/api`;
@@ -28,6 +29,7 @@ const Fees = () => {
     // Modals
     const [isFeeStructureModalOpen, setFeeStructureModalOpen] = useState(false);
     const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
+    const [isDetailsModalOpen, setDetailsModalOpen] = useState(false);
     const [selectedChild, setSelectedChild] = useState(null);
 
     const fetchFeesData = async () => {
@@ -305,13 +307,23 @@ const Fees = () => {
                                         
                                         <div className="flex gap-4 sm:border-r border-gray-100 sm:pr-4">
                                             <div>
-                                                <p className="text-xs text-gray-400 font-semibold mb-0.5">Total</p>
-                                                <p className="text-sm font-bold text-gray-700">₹{child.expectedFee}</p>
+                                                <p className="text-xs text-gray-400 font-semibold mb-0.5">Due Date</p>
+                                                <p className="text-sm font-bold text-gray-700">{new Date(child.dueDate).toLocaleDateString()}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-400 font-semibold mb-0.5">Total Payable</p>
+                                                <p className="text-sm font-bold text-gray-700 tooltip-trigger" title={`Base: ₹${child.baseFee}`}>₹{child.expectedFee}</p>
                                             </div>
                                             <div>
                                                 <p className="text-xs text-gray-400 font-semibold mb-0.5">Paid</p>
                                                 <p className="text-sm font-bold text-emerald-600">₹{child.paidAmount}</p>
                                             </div>
+                                            {child.lateFee > 0 && (
+                                                <div>
+                                                    <p className="text-xs text-red-400 font-semibold mb-0.5">Late Fee</p>
+                                                    <p className="text-sm font-bold text-red-600">₹{child.lateFee}</p>
+                                                </div>
+                                            )}
                                             <div>
                                                 <p className="text-xs text-gray-400 font-semibold mb-0.5">Pending</p>
                                                 <p className="text-sm font-bold text-amber-600">₹{child.pendingAmount}</p>
@@ -327,24 +339,14 @@ const Fees = () => {
                                                 {child.status}
                                             </span>
 
-                                            {child.status !== 'Paid' && child.expectedFee > 0 && (
-                                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button 
-                                                        onClick={() => { setSelectedChild(child); setPaymentModalOpen(true); }}
-                                                        className="h-8 w-8 bg-emerald-100 text-emerald-600 rounded-lg hover:bg-emerald-200 transition-colors flex items-center justify-center tooltip-trigger"
-                                                        title="Mark as Paid"
-                                                    >
-                                                        <i className="fa-solid fa-check"></i>
-                                                    </button>
-                                                    <button 
-                                                        onClick={() => handleSendReminder(child._id)}
-                                                        className="h-8 w-8 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 transition-colors flex items-center justify-center"
-                                                        title="Send Reminder"
-                                                    >
-                                                        <i className="fa-solid fa-bell"></i>
-                                                    </button>
-                                                </div>
-                                            )}
+                                            <div className="flex items-center gap-2">
+                                                <button 
+                                                    onClick={() => { setSelectedChild(child); setDetailsModalOpen(true); }}
+                                                    className="px-4 py-1.5 text-xs font-bold rounded-lg border-2 border-purple-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300 transition-colors bg-white shadow-sm"
+                                                >
+                                                    View Details
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -405,6 +407,12 @@ const Fees = () => {
                 onClose={() => setPaymentModalOpen(false)}
                 child={selectedChild}
                 onSubmit={handleRecordPayment}
+            />
+
+            <FeeDetailsModal
+                isOpen={isDetailsModalOpen}
+                onClose={() => setDetailsModalOpen(false)}
+                child={selectedChild}
             />
         </div>
     );

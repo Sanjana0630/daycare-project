@@ -22,6 +22,15 @@ const paymentSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
+    lateFee: {
+        type: Number,
+        default: 0,
+    },
+    status: {
+        type: String,
+        enum: ["Paid", "Pending"],
+        default: "Paid",
+    },
     mode: {
         type: String,
         enum: ["Cash", "UPI", "Card"],

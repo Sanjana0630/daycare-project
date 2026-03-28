@@ -1,6 +1,7 @@
 const FeeStructure = require("../models/FeeStructure");
 const Payment = require("../models/Payment");
 const Child = require("../models/Child");
+const { calculateFee } = require("../utils/feeCalculator");
 
 // Set or Update Fee Structure for a Class
 const setFeeStructure = async (req, res) => {
@@ -66,12 +67,25 @@ const getFeesDashboard = async (req, res) => {
         let overdueCount = 0;
 
         children.forEach(child => {
-            const expectedFee = feesByClass[child.class] || 0;
-            totalExpected += expectedFee;
-
+            const baseFee = feesByClass[child.class] || 0;
+            
             // Find payments for this child for the given month
             const childPayments = payments.filter(p => p.child.toString() === child._id.toString());
             const paidAmount = childPayments.reduce((sum, p) => sum + p.amount, 0);
+
+            // Determine if there is a payment date to prevent endless late fee accumulation for paid fees
+            let lastPaymentDate = null;
+            if (childPayments.length > 0) {
+                // Get the latest payment date for this term
+                lastPaymentDate = new Date(Math.max(...childPayments.map(p => new Date(p.date))));
+            }
+            
+            // Only stop simulating late fees if the base block is fully paid
+            // For safety, we just cap evaluation to the last payment date IF paidAmount >= baseFee
+            const evalDate = (paidAmount >= baseFee && lastPaymentDate) ? lastPaymentDate : null;
+
+            const feeInfo = calculateFee(child, baseFee, numericYear, numericMonth, evalDate);
+            const expectedFee = feeInfo.totalAmount;
             
             let status = 'Pending';
             let pendingAmount = expectedFee - paidAmount;
@@ -79,21 +93,18 @@ const getFeesDashboard = async (req, res) => {
             if (expectedFee > 0 && paidAmount >= expectedFee) {
                 status = 'Paid';
                 pendingAmount = 0;
-            } else if (expectedFee > 0 && paidAmount > 0) {
-                 status = 'Pending'; // Partial payment essentially
             }
 
-            // Check if overdue (basic check: if current date is past the 5th of the month and not paid)
-            const currentDate = new Date();
-            // Allow overdue logic only if we are querying the current month or past months
+            // Check if overdue
+            const today = new Date();
             if (status === 'Pending' && expectedFee > 0) {
-                if (currentDate.getFullYear() > numericYear || 
-                   (currentDate.getFullYear() === numericYear && currentDate.getMonth() + 1 > numericMonth) ||
-                   (currentDate.getFullYear() === numericYear && currentDate.getMonth() + 1 === numericMonth && currentDate.getDate() > 5)) {
+                if (today > feeInfo.graceEnd) {
                     status = 'Overdue';
                     overdueCount++;
                 }
             }
+
+            totalExpected += expectedFee;
 
             childStatusList.push({
                 _id: child._id,
@@ -102,6 +113,12 @@ const getFeesDashboard = async (req, res) => {
                 class: child.class,
                 parentName: child.parent ? child.parent.fullName : child.parentName,
                 parentEmail: child.parent ? child.parent.email : child.parentEmail,
+                admissionDate: child.admissionDate,
+                baseFee: feeInfo.baseFee,
+                lateFee: feeInfo.lateFee,
+                dueDate: feeInfo.dueDate,
+                graceEnd: feeInfo.graceEnd,
+                lastPaymentDate,
                 expectedFee,
                 paidAmount,
                 pendingAmount,
