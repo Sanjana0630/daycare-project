@@ -278,76 +278,55 @@ const Fees = () => {
                     ) : (
                         <div className="space-y-4">
                             {filteredChildren.map(child => (
-                                <div key={child._id} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center group">
-                                    
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-14 h-14 rounded-full bg-gray-100 overflow-hidden border-2 border-white shadow-sm flex-shrink-0">
+                                <div key={child._id} className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition border border-gray-50">
+                                    {/* LEFT: Profile, Name, Class/Parent */}
+                                    <div className="flex items-center gap-3 min-w-[200px]">
+                                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm flex-shrink-0 bg-gray-100">
                                             {child.photo ? (
                                                 <img src={`${API_URL.replace('/api', '')}${child.photo}`} alt={child.childName} className="w-full h-full object-cover" />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-xl text-gray-400 font-bold bg-gradient-to-br from-gray-50 to-gray-200">
+                                                <div className="w-full h-full flex items-center justify-center text-lg text-gray-400 font-bold bg-gradient-to-br from-gray-50 to-gray-200">
                                                     {child.childName.charAt(0)}
                                                 </div>
                                             )}
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-gray-900">{child.childName}</h3>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <span className="text-xs font-semibold px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md">
-                                                    Class: {child.class}
-                                                </span>
-                                                <span className="text-xs text-gray-500 flex items-center gap-1">
-                                                    <i className="fa-solid fa-user-tie text-gray-400"></i> {child.parentName}
-                                                </span>
-                                            </div>
+                                            <p className="font-bold text-gray-800 leading-tight">{child.childName}</p>
+                                            <p className="text-sm text-gray-500 font-medium">
+                                                {child.class} <span className="text-gray-300 mx-1">•</span> {child.parentName}
+                                            </p>
                                         </div>
                                     </div>
 
-                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto pl-18 sm:pl-0">
-                                        
-                                        <div className="flex gap-4 sm:border-r border-gray-100 sm:pr-4">
-                                            <div>
-                                                <p className="text-xs text-gray-400 font-semibold mb-0.5">Due Date</p>
-                                                <p className="text-sm font-bold text-gray-700">{new Date(child.dueDate).toLocaleDateString()}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-gray-400 font-semibold mb-0.5">Total Payable</p>
-                                                <p className="text-sm font-bold text-gray-700 tooltip-trigger" title={`Base: ₹${child.baseFee}`}>₹{child.expectedFee}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-gray-400 font-semibold mb-0.5">Paid</p>
-                                                <p className="text-sm font-bold text-emerald-600">₹{child.paidAmount}</p>
-                                            </div>
-                                            {child.lateFee > 0 && (
-                                                <div>
-                                                    <p className="text-xs text-red-400 font-semibold mb-0.5">Late Fee</p>
-                                                    <p className="text-sm font-bold text-red-600">₹{child.lateFee}</p>
-                                                </div>
-                                            )}
-                                            <div>
-                                                <p className="text-xs text-gray-400 font-semibold mb-0.5">Pending</p>
-                                                <p className="text-sm font-bold text-amber-600">₹{child.pendingAmount}</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-3">
-                                            <span className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wider
-                                                ${child.status === 'Paid' ? 'bg-emerald-50 text-emerald-600' : 
-                                                  child.status === 'Pending' ? 'bg-amber-50 text-amber-600' :
-                                                  'bg-red-50 text-red-600'}
-                                            `}>
-                                                {child.status}
+                                    {/* CENTER: Due Date */}
+                                    <div className="hidden md:block text-center flex-1 text-gray-600">
+                                        <p className="text-sm font-medium whitespace-nowrap">
+                                            Due: <span className="font-bold text-gray-900 ml-1">
+                                                {child.dueDate ? new Date(child.dueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
                                             </span>
+                                        </p>
+                                    </div>
 
-                                            <div className="flex items-center gap-2">
-                                                <button 
-                                                    onClick={() => { setSelectedChild(child); setDetailsModalOpen(true); }}
-                                                    className="px-4 py-1.5 text-xs font-bold rounded-lg border-2 border-purple-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300 transition-colors bg-white shadow-sm"
-                                                >
-                                                    View Details
-                                                </button>
-                                            </div>
+                                    {/* RIGHT: Amount, Status, View Details */}
+                                    <div className="flex items-center gap-6">
+                                        <div className="text-right">
+                                            <p className="text-lg font-black text-gray-900 leading-none">₹{child.expectedFee.toLocaleString()}</p>
                                         </div>
+
+                                        <span className={`px-3 py-1 text-[10px] font-black rounded-full uppercase tracking-widest border
+                                            ${child.status === 'Paid' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
+                                              child.status === 'Pending' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                              'bg-red-50 text-red-600 border-red-100'}
+                                        `}>
+                                            {child.status}
+                                        </span>
+
+                                        <button 
+                                            onClick={() => { setSelectedChild(child); setDetailsModalOpen(true); }}
+                                            className="px-4 py-1.5 text-xs font-bold rounded-lg border border-purple-500 text-purple-600 hover:bg-purple-50 transition-colors bg-white whitespace-nowrap"
+                                        >
+                                            View Details
+                                        </button>
                                     </div>
                                 </div>
                             ))}
