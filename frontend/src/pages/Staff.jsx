@@ -38,7 +38,7 @@ const Staff = () => {
 
     const role = localStorage.getItem('role') || '';
     const isAdmin = role.toLowerCase() === 'admin';
-    const classOptions = ['Infant Care', 'Toddler', 'Nursery', 'Junior KG', 'Senior KG', 'After School Care'];
+    const classOptions = ['Infant Care', 'Toddler Group', 'Play Group', 'Nursery', 'Junior KG', 'Senior KG', 'After School Care'];
 
     useEffect(() => {
         fetchStaff();

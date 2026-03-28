@@ -139,15 +139,22 @@ const getStaffChildren = async (req, res) => {
             return res.status(404).json({ success: false, message: "Staff record not found" });
         }
 
-        const Child = require("../models/Child");
-        const children = await Child.find({
-            $or: [
-                { assignedTeacher: staffMember._id },
-                { assignedCaretaker: staffMember._id }
-            ]
-        });
+        if (!staffMember.assignedClass || staffMember.assignedClass === "Unassigned") {
+            return res.status(200).json({ success: true, count: 0, data: [], message: "No class assigned to you" });
+        }
 
-        res.status(200).json({ success: true, count: children.length, data: children });
+        const Child = require("../models/Child");
+        const children = await Child.find({ class: staffMember.assignedClass });
+
+        console.log("Staff Class:", staffMember.assignedClass);
+        console.log("Child Classes:", children.map(c => c.class));
+
+        res.status(200).json({ 
+            success: true, 
+            count: children.length, 
+            data: children,
+            assignedClass: staffMember.assignedClass 
+        });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

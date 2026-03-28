@@ -6,6 +6,8 @@ const MyChildren = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState('list'); // 'grid' or 'list'
+    const [assignedClass, setAssignedClass] = useState('');
+    const [message, setMessage] = useState('');
 
     useEffect(() => {
         const fetchChildren = async () => {
@@ -17,7 +19,9 @@ const MyChildren = () => {
                 });
                 const result = await response.json();
                 if (result.success) {
-                    setChildren(result.data);
+                    setChildren(result.data || []);
+                    if (result.assignedClass) setAssignedClass(result.assignedClass);
+                    if (result.message) setMessage(result.message);
                 }
             } catch (error) {
                 console.error('Error fetching children:', error);
@@ -49,7 +53,14 @@ const MyChildren = () => {
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
-                    <h1 className="text-3xl font-black text-gray-900 mb-2">My Children</h1>
+                    <h1 className="text-3xl font-black text-gray-900 mb-2 flex items-center gap-3">
+                        My Children 
+                        {assignedClass && assignedClass !== 'Unassigned' && (
+                            <span className="text-sm font-bold bg-purple-100 text-purple-700 px-3 py-1 rounded-lg">
+                                My Class: {assignedClass}
+                            </span>
+                        )}
+                    </h1>
                     <p className="text-gray-500 font-medium">Managing {children.length} total assigned children</p>
                 </div>
 
@@ -81,7 +92,23 @@ const MyChildren = () => {
                 </div>
             </div>
 
-            {viewMode === 'list' ? (
+            {children.length === 0 ? (
+                <div className="flex items-center justify-center min-h-[40vh] bg-white rounded-3xl border border-gray-100 shadow-sm">
+                    <div className="text-center space-y-4">
+                        <div className="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center mx-auto">
+                            <Baby className="text-purple-400" size={32} />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900">
+                            {message || "No children assigned in your class"}
+                        </h3>
+                        <p className="text-gray-500 max-w-sm mx-auto">
+                            {assignedClass && assignedClass !== 'Unassigned' 
+                                ? `There are currently no children configured for ${assignedClass}.`
+                                : "Please contact your administrator to get assigned to a class."}
+                        </p>
+                    </div>
+                </div>
+            ) : viewMode === 'list' ? (
                 <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
