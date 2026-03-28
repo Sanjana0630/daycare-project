@@ -2,6 +2,8 @@ const Child = require("../models/Child");
 const Attendance = require("../models/Attendance");
 const Activity = require("../models/Activity");
 const Fee = require("../models/Fee");
+const FeeStructure = require("../models/FeeStructure");
+const Payment = require("../models/Payment");
 
 // @desc    Get linked child for parent
 // @route   GET /api/parent/child
@@ -185,10 +187,116 @@ const getChildFees = async (req, res) => {
     }
 };
 
+// @desc    Get child fee status (New Architecture)
+// @route   GET /api/parent/fees/status
+// @access  Private/Parent
+const getParentFeeStatus = async (req, res) => {
+    try {
+        let child = await Child.findOne({ parent: req.user._id });
+        if (!child) {
+            child = await Child.findOne({ parentEmail: req.user.email });
+        }
+
+        if (!child) {
+            return res.status(200).json({ success: true, data: null, message: "No linked child found." });
+        }
+
+        const currentDate = new Date();
+        const numericMonth = currentDate.getMonth() + 1;
+        const numericYear = currentDate.getFullYear();
+
+        // Expectation
+        const feeStructure = await FeeStructure.findOne({ class: child.class });
+        const expectedFee = feeStructure ? (feeStructure.monthlyFee + feeStructure.extraCharges) : 0;
+
+        // Current Month Payments
+        const payments = await Payment.find({ child: child._id, month: numericMonth, year: numericYear }).sort({ date: -1 });
+        const paidAmount = payments.reduce((sum, p) => sum + p.amount, 0);
+        
+        // Status Resolve
+        let pendingAmount = expectedFee - paidAmount;
+        let status = 'Pending';
+        
+        if (expectedFee > 0 && paidAmount >= expectedFee) {
+            status = 'Paid';
+            pendingAmount = 0;
+        } else if (expectedFee > 0 && paidAmount > 0) {
+             status = 'Pending';
+        }
+
+        if (status === 'Pending' && expectedFee > 0 && currentDate.getDate() > 5) {
+            status = 'Overdue';
+        }
+
+        // Recent Payments (Last 5 overall)
+        const recentPayments = await Payment.find({ child: child._id }).sort({ date: -1 }).limit(5);
+
+        res.status(200).json({
+            success: true,
+            data: {
+                childName: child.childName,
+                class: child.class,
+                month: numericMonth,
+                year: numericYear,
+                expectedFee,
+                paidAmount,
+                pendingAmount: pendingAmount > 0 ? pendingAmount : 0,
+                status,
+                recentPayments
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
+// @desc    Record parent fee payment
+// @route   POST /api/parent/fees/pay
+// @access  Private/Parent
+const recordParentPayment = async (req, res) => {
+    try {
+        const { amount, mode } = req.body;
+
+        let child = await Child.findOne({ parent: req.user._id });
+        if (!child) {
+            child = await Child.findOne({ parentEmail: req.user.email });
+        }
+
+        if (!child) {
+            return res.status(404).json({ success: false, message: "No linked child found." });
+        }
+
+        const numericAmount = parseFloat(amount);
+        if (isNaN(numericAmount) || numericAmount <= 0) {
+            return res.status(400).json({ success: false, message: "Valid amount is required" });
+        }
+
+        const currentDate = new Date();
+        
+        const newPayment = await Payment.create({
+            child: child._id,
+            amount: numericAmount,
+            date: currentDate,
+            month: currentDate.getMonth() + 1,
+            year: currentDate.getFullYear(),
+            mode
+        });
+
+        res.status(201).json({ success: true, message: "Payment recorded successfully", data: newPayment });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
 module.exports = {
     getChildForParent,
     getChildAttendance,
     getChildActivities,
     getChildFees,
     getParentActivitiesDirect,
+    getParentFeeStatus,
+    recordParentPayment
 };

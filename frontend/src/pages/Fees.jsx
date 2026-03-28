@@ -5,7 +5,8 @@ import jsPDF from 'jspdf';
 import SetFeeStructureModal from '../components/SetFeeStructureModal';
 import AddPaymentModal from '../components/AddPaymentModal';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5005';
+const API_URL = `${API_BASE_URL}/api`;
 
 const Fees = () => {
     const [summary, setSummary] = useState({
