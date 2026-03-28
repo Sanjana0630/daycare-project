@@ -100,6 +100,7 @@ const AddChild = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [age, setAge] = useState('');
+    const [assignedClass, setAssignedClass] = useState('');
     const [alertModal, setAlertModal] = useState({ isOpen: false, message: '' });
 
     const [formData, setFormData] = useState({
@@ -237,8 +238,19 @@ const AddChild = () => {
             } else {
                 setAge(`${months} month${months !== 1 ? 's' : ''}`);
             }
+
+            if (years === 0 && months >= 1) setAssignedClass("Infant Care");
+            else if (years >= 1 && years < 2) setAssignedClass("Toddler Group");
+            else if (years >= 2 && years < 3) setAssignedClass("Play Group");
+            else if (years >= 3 && years < 4) setAssignedClass("Nursery");
+            else if (years >= 4 && years < 5) setAssignedClass("Junior KG");
+            else if (years >= 5 && years < 6) setAssignedClass("Senior KG");
+            else if (years >= 6 && years <= 10) setAssignedClass("After School Care");
+            else setAssignedClass("Not Eligible");
+
         } else {
             setAge('');
+            setAssignedClass('');
         }
     };
 
@@ -388,13 +400,23 @@ const AddChild = () => {
                                 max={new Date().toISOString().split('T')[0]}
                             />
                             <div className="space-y-1.5 flex-1">
-                                <label className="text-sm font-medium text-gray-700 block">Calculated Age</label>
+                                <label className="text-sm font-medium text-gray-700 block">Age & Class</label>
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                                         <Calendar size={18} />
                                     </div>
-                                    <div className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-600 font-medium">
-                                        {age || 'Enter DOB'}
+                                    <div className="w-full pl-10 pr-4 py-2.5 flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl text-gray-600 font-medium">
+                                        <span>{age || 'Enter DOB'}</span>
+                                        {assignedClass && assignedClass !== "Not Eligible" && (
+                                            <span className="px-2 py-0.5 text-xs font-bold rounded-md bg-purple-100 text-purple-700">
+                                                {assignedClass}
+                                            </span>
+                                        )}
+                                        {assignedClass === "Not Eligible" && (
+                                            <span className="px-2 py-0.5 text-xs font-bold rounded-md bg-red-100 text-red-700">
+                                                Not Eligible
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
