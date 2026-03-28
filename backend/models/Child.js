@@ -52,6 +52,11 @@ const childSchema = new mongoose.Schema({
     medicalConditions: {
         type: String,
     },
+    class: {
+        type: String,
+        required: true,
+        default: "Unassigned", // To avoid breaking existing records
+    },
     assignedTeacher: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Staff",

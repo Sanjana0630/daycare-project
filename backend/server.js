@@ -7,6 +7,7 @@ const staffRoutes = require("./routes/staffRoutes");
 const parentRoutes = require("./routes/parentRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const reportRoutes = require("./routes/reportRoutes");
+const feeRoutes = require("./routes/feeRoutes");
 
 dotenv.config();
 
@@ -34,6 +35,7 @@ app.use("/api/staff", staffRoutes);
 app.use("/api/parent", parentRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/fees", feeRoutes);
 
 // Database Connection
 connectDB();
