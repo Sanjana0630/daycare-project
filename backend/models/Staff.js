@@ -49,6 +49,10 @@ const staffSchema = new mongoose.Schema({
         enum: ["Active", "Inactive", "Pending", "Rejected"],
         default: "Pending",
     },
+    assignedClass: {
+        type: String,
+        default: null,
+    },
 }, { timestamps: true });
 
 const Staff = mongoose.model("Staff", staffSchema);

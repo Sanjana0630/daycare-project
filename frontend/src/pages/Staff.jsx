@@ -188,8 +188,8 @@ const Staff = () => {
                                     <td className="px-6 py-4 text-sm text-gray-700 capitalize">
                                         {member.role || 'N/A'}
                                     </td>
-                                    <td className="px-6 py-4 text-sm text-gray-700">
-                                        {member.assignedClass ? <span className="font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded-lg">[ {member.assignedClass} ]</span> : 'Unassigned'}
+                                    <td className="px-6 py-4 text-sm text-gray-700 whitespace-nowrap">
+                                        {member.assignedClass ? <span className="font-medium text-purple-700 bg-purple-50 border border-purple-100 px-3 py-1 rounded-full">{member.assignedClass}</span> : <span className="text-gray-400 italic">Unassigned</span>}
                                     </td>
                                     <td className="px-6 py-4 text-sm text-gray-700">
                                         {member.experience || '0'} Years
