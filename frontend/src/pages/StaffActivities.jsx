@@ -14,7 +14,7 @@ const DEFAULT_ACTIVITIES = [
 
 const StarRating = ({ rating, onRate, disabled }) => {
     return (
-        <div className="flex items-center gap-1">
+        <div className={`flex items-center gap-1 ${disabled ? 'opacity-50' : ''}`}>
             {[1, 2, 3, 4, 5].map((star) => (
                 <button
                     key={star}
@@ -263,7 +263,16 @@ const StaffActivities = () => {
                                                 </td>
                                                 <td className="py-5 text-center">
                                                     <button
-                                                        onClick={() => handleActivityChange(index, 'completed', !activity.completed)}
+                                                        onClick={() => {
+                                                            const newCompleted = !activity.completed;
+                                                            const updated = [...activities];
+                                                            updated[index] = { 
+                                                                ...updated[index], 
+                                                                completed: newCompleted, 
+                                                                rating: newCompleted ? updated[index].rating : 0 
+                                                            };
+                                                            setActivities(updated);
+                                                        }}
                                                         className={`transition-all ${activity.completed ? 'text-green-500 scale-110' : 'text-gray-200 hover:text-gray-300'}`}
                                                     >
                                                         {activity.completed ? <CheckCircle2 size={24} /> : <XCircle size={24} />}
@@ -272,6 +281,7 @@ const StaffActivities = () => {
                                                 <td className="py-5">
                                                     <StarRating
                                                         rating={activity.rating}
+                                                        disabled={!activity.completed}
                                                         onRate={(val) => handleActivityChange(index, 'rating', val)}
                                                     />
                                                 </td>
