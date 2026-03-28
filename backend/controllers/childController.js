@@ -1,4 +1,5 @@
 const Child = require("../models/Child");
+const Staff = require("../models/Staff");
 
 function calculateAge(dob) {
     const today = new Date();
@@ -50,6 +51,10 @@ const registerChild = async (req, res) => {
             return res.status(400).json({ success: false, message: "Daycare supports children from 1 month to 10 years" });
         }
         data.class = assignedClass;
+
+        // Auto-assign teacher based on class
+        const teacher = await Staff.findOne({ role: "Teacher", assignedClass });
+        data.assignedTeacher = teacher ? teacher._id : null;
 
         // Add photo path if file is uploaded
         if (req.file) {
@@ -114,24 +119,32 @@ const updateChild = async (req, res) => {
         if (data.assignedCaretaker === "") data.assignedCaretaker = null;
         if (data.parent === "") data.parent = null;
 
+        let child = await Child.findById(req.params.id);
+
+        if (!child) {
+            return res.status(404).json({ success: false, message: "Child not found" });
+        }
+
         // Age Validation & Class Auto-Assignment
+        let targetClass = child.class;
         if (data.dob) {
             const assignedClass = getClassFromAge(data.dob);
             if (assignedClass === "Not Eligible") {
                 return res.status(400).json({ success: false, message: "Daycare supports children from 1 month to 10 years" });
             }
             data.class = assignedClass;
+            targetClass = assignedClass;
+        }
+
+        // Auto-assign teacher based on class whenever updating
+        if (targetClass) {
+            const teacher = await Staff.findOne({ role: "Teacher", assignedClass: targetClass });
+            data.assignedTeacher = teacher ? teacher._id : null;
         }
 
         // Add photo path if file is uploaded
         if (req.file) {
             data.photo = `/uploads/${req.file.filename}`;
-        }
-
-        let child = await Child.findById(req.params.id);
-
-        if (!child) {
-            return res.status(404).json({ success: false, message: "Child not found" });
         }
 
         child = await Child.findByIdAndUpdate(req.params.id, data, {
