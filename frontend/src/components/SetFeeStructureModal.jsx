@@ -44,15 +44,22 @@ const SetFeeStructureModal = ({ isOpen, onClose, onSubmit }) => {
                             <i className="fa-solid fa-chalkboard-user text-purple-500 w-4"></i>
                             Class / Age Group
                         </label>
-                        <input
-                            type="text"
+                        <select
                             name="class"
                             value={formData.class}
                             onChange={handleChange}
                             required
-                            placeholder="e.g. Toddler, LKG, Nursery"
                             className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all text-sm font-medium"
-                        />
+                        >
+                            <option value="" disabled hidden>Select Class</option>
+                            <option value="Infant Care">Infant Care</option>
+                            <option value="Toddler Group">Toddler Group</option>
+                            <option value="Play Group">Play Group</option>
+                            <option value="Nursery">Nursery</option>
+                            <option value="Junior KG">Junior KG</option>
+                            <option value="Senior KG">Senior KG</option>
+                            <option value="After School Care">After School Care</option>
+                        </select>
                     </div>
 
                     <div className="space-y-2">
