@@ -42,9 +42,13 @@ const MyChild = () => {
         let years = today.getFullYear() - dob.getFullYear();
         let months = today.getMonth() - dob.getMonth();
         
-        if (months < 0 || (months === 0 && today.getDate() < dob.getDate())) {
+        if (today.getDate() < dob.getDate()) {
+            months--;
+        }
+
+        if (months < 0) {
             years--;
-            months += 12; // Wait, 11 months + something if months < 0, but if it comes up to 12 months it should be 1 year. The previous logic works fine for display.
+            months += 12;
         }
         
         return `${years} Year${years !== 1 ? 's' : ''} ${months} Month${months !== 1 ? 's' : ''}`;
@@ -106,6 +110,9 @@ const MyChild = () => {
                             </span>
                             <span className="px-5 py-2 bg-white/10 backdrop-blur-sm rounded-xl border border-white/10 shadow-sm">
                                 Blood Group: {childData.bloodGroup}
+                            </span>
+                            <span className="px-5 py-2 bg-purple-500/20 text-purple-100 font-bold backdrop-blur-sm rounded-xl border border-purple-400/30 shadow-sm">
+                                Class: {childData.class || 'Pending'}
                             </span>
                         </div>
                         

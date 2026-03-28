@@ -249,7 +249,11 @@ const EditChild = () => {
         let years = today.getFullYear() - birthDate.getFullYear();
         let months = today.getMonth() - birthDate.getMonth();
 
-        if (months < 0 || (months === 0 && today.getDate() < birthDate.getDate())) {
+        if (today.getDate() < birthDate.getDate()) {
+            months--;
+        }
+
+        if (months < 0) {
             years--;
             months += 12;
         }

@@ -119,7 +119,10 @@ const Children = () => {
         const today = new Date();
         let years = today.getFullYear() - birthDate.getFullYear();
         let months = today.getMonth() - birthDate.getMonth();
-        if (months < 0 || (months === 0 && today.getDate() < birthDate.getDate())) {
+        if (today.getDate() < birthDate.getDate()) {
+            months--;
+        }
+        if (months < 0) {
             years--;
             months += 12;
         }
@@ -170,7 +173,7 @@ const Children = () => {
                         <thead>
                             <tr className="bg-gray-50 border-b border-gray-100">
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Child</th>
-                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Age/Gender</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Age/Class</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Parent Info</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Blood Group</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
@@ -208,7 +211,8 @@ const Children = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-gray-700">{calculateAge(child.dob)}</div>
-                                            <div className="text-xs text-gray-400">{child.gender}</div>
+                                            <div className="text-xs font-bold text-purple-600 mt-0.5">{child.class || 'Pending Class'}</div>
+                                            <div className="text-[10px] text-gray-400 uppercase tracking-wider">{child.gender}</div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-gray-700 font-medium">{child.parentName}</div>
@@ -312,6 +316,7 @@ const Children = () => {
                                             <div className="space-y-2">
                                                 <p><span className="text-gray-400">Full Name:</span> <span className="font-medium">{selectedChild.childName}</span></p>
                                                 <p><span className="text-gray-400">D.O.B:</span> <span className="font-medium">{new Date(selectedChild.dob).toLocaleDateString()}</span></p>
+                                                <p><span className="text-gray-400">Class:</span> <span className="font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-md">{selectedChild.class || 'Pending'}</span></p>
                                                 <p><span className="text-gray-400">Gender:</span> <span className="font-medium">{selectedChild.gender}</span></p>
                                                 <p><span className="text-gray-400">Admission:</span> <span className="font-medium">{new Date(selectedChild.admissionDate).toLocaleDateString()}</span></p>
                                             </div>

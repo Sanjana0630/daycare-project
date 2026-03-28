@@ -7,6 +7,10 @@ function calculateAge(dob) {
     let years = today.getFullYear() - birthDate.getFullYear();
     let months = today.getMonth() - birthDate.getMonth();
 
+    if (today.getDate() < birthDate.getDate()) {
+        months--;
+    }
+
     if (months < 0) {
         years--;
         months += 12;
