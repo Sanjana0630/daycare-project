@@ -272,6 +272,11 @@ const StaffDashboard = () => {
                     <p className="text-gray-500 font-medium flex items-center gap-2">
                         <Clock size={16} /> {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                     </p>
+                    {stats.assignedClass && (
+                        <div className="mt-4 inline-block px-4 py-2 bg-purple-50 border border-purple-100 rounded-xl text-purple-700 font-bold">
+                            Assigned Class: <span className="text-purple-900">[ {stats.assignedClass} ]</span>
+                        </div>
+                    )}
                 </div>
                 <div className="absolute right-0 top-0 w-64 h-full bg-gradient-to-l from-blue-50/50 to-transparent -z-0"></div>
             </div>

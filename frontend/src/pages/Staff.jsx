@@ -31,6 +31,12 @@ const Staff = () => {
     const [selectedMember, setSelectedMember] = useState(null);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isAssignClassModalOpen, setIsAssignClassModalOpen] = useState(false);
+    const [selectedClass, setSelectedClass] = useState('');
+
+    const role = localStorage.getItem('role') || '';
+    const isAdmin = role.toLowerCase() === 'admin';
+    const classOptions = ['Infant Care', 'Toddler', 'Nursery', 'Junior KG', 'Senior KG', 'After School Care'];
 
     useEffect(() => {
         fetchStaff();
@@ -77,6 +83,32 @@ const Staff = () => {
             }
         } catch (err) {
             alert('Delete failed');
+        }
+    };
+
+    const handleAssignClass = async () => {
+        if (!selectedClass) return alert('Please select a class');
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${BASE_URL}/api/staff/${selectedMember._id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ assignedClass: selectedClass })
+            });
+            const data = await response.json();
+            if (data.success) {
+                setStaff(staff.map(s => s._id === selectedMember._id ? { ...s, assignedClass: selectedClass } : s));
+                setIsAssignClassModalOpen(false);
+                setSelectedMember(null);
+                setSelectedClass('');
+            } else {
+                alert(data.message || 'Failed to assign class');
+            }
+        } catch (err) {
+            alert('Assign class failed');
         }
     };
 
@@ -128,6 +160,7 @@ const Staff = () => {
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Email</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Phone</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Role</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Class</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Experience</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
@@ -156,6 +189,9 @@ const Staff = () => {
                                         {member.role || 'N/A'}
                                     </td>
                                     <td className="px-6 py-4 text-sm text-gray-700">
+                                        {member.assignedClass ? <span className="font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded-lg">[ {member.assignedClass} ]</span> : 'Unassigned'}
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-gray-700">
                                         {member.experience || '0'} Years
                                     </td>
                                     <td className="px-6 py-4">
@@ -166,6 +202,14 @@ const Staff = () => {
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
+                                            {isAdmin && (
+                                                <button
+                                                    onClick={() => { setSelectedMember(member); setSelectedClass(member.assignedClass || ''); setIsAssignClassModalOpen(true); }}
+                                                    className="px-3 py-1 text-xs font-medium bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-lg transition-colors"
+                                                >
+                                                    Assign Class
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={() => { setSelectedMember(member); setIsViewModalOpen(true); }}
                                                 className="p-2 text-gray-400 hover:text-purple-600 hover:bg-white rounded-lg transition-all"
@@ -218,6 +262,7 @@ const Staff = () => {
                                 <h4 className="text-primary font-bold border-b pb-2 flex items-center gap-2"><Briefcase size={18} /> Professional Info</h4>
                                 <div className="space-y-2">
                                     <p><span className="text-gray-400 text-sm">Role:</span> <br /><span className="font-medium capitalize">{selectedMember.role || 'N/A'}</span></p>
+                                    <p><span className="text-gray-400 text-sm">Assigned Class:</span> <br /><span className="font-medium">{selectedMember.assignedClass || 'Unassigned'}</span></p>
                                     <p><span className="text-gray-400 text-sm">Qualification:</span> <br /><span className="font-medium">{selectedMember.qualification || 'N/A'}</span></p>
                                     <p><span className="text-gray-400 text-sm">Experience:</span> <br /><span className="font-medium">{selectedMember.experience || 'N/A'}</span></p>
                                     <p><span className="text-gray-400 text-sm">Joining Date:</span> <br /><span className="font-medium">{selectedMember.joiningDate && !isNaN(new Date(selectedMember.joiningDate)) ? new Date(selectedMember.joiningDate).toLocaleDateString() : 'N/A'}</span></p>
@@ -245,10 +290,40 @@ const Staff = () => {
                             <Trash2 size={32} />
                         </div>
                         <h3 className="text-xl font-bold text-gray-900 mb-2">Remove Staff?</h3>
-                        <p className="text-gray-500 mb-6">Are you sure you want to remove <span className="font-bold text-gray-900">{selectedMember.name}</span> from the system? This action cannot be undone.</p>
+                        <p className="text-gray-500 mb-6">Are you sure you want to remove <span className="font-bold text-gray-900">{selectedMember.name || selectedMember.fullName}</span> from the system? This action cannot be undone.</p>
                         <div className="flex items-center gap-3">
                             <button onClick={() => setIsDeleteModalOpen(false)} className="flex-1 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl active:scale-95 transition-all">Cancel</button>
                             <button onClick={handleDelete} className="flex-1 py-3 bg-red-600 text-white font-bold rounded-xl active:scale-95 transition-all shadow-lg shadow-red-100">Remove</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Assign Class Modal */}
+            {isAssignClassModalOpen && selectedMember && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
+                    <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 p-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-bold text-gray-900">Assign Class</h3>
+                            <button onClick={() => setIsAssignClassModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+                        </div>
+                        <p className="text-sm text-gray-500 mb-4">Assign a class to <span className="font-bold text-gray-900">{selectedMember.name || selectedMember.fullName}</span></p>
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Select Class</label>
+                            <select
+                                value={selectedClass}
+                                onChange={(e) => setSelectedClass(e.target.value)}
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-100 focus:border-purple-400 outline-none transition-all"
+                            >
+                                <option value="" disabled>Select a class...</option>
+                                {classOptions.map(cls => (
+                                    <option key={cls} value={cls}>{cls}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <button onClick={() => setIsAssignClassModalOpen(false)} className="flex-1 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl active:scale-95 transition-all">Cancel</button>
+                            <button onClick={handleAssignClass} className="flex-1 py-3 bg-purple-600 text-white font-bold rounded-xl active:scale-95 transition-all shadow-lg shadow-purple-200">Save</button>
                         </div>
                     </div>
                 </div>

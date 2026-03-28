@@ -99,6 +99,7 @@ const EditStaff = () => {
         experience: '',
         address: '',
         status: 'Active',
+        assignedClass: '',
     });
 
     useEffect(() => {
@@ -140,11 +141,12 @@ const EditStaff = () => {
         setSuccess('');
 
         try {
-            const apiUrl = import.meta.env.VITE_API_URL;
+            const token = localStorage.getItem('token');
             const response = await fetch(`${apiUrl}/api/staff/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify(formData),
             });
@@ -309,6 +311,23 @@ const EditStaff = () => {
                                 { label: 'Admin', value: 'Admin' },
                             ]}
                             value={formData.role}
+                            onChange={handleChange}
+                        />
+                        <InputField
+                            label="Assign Class"
+                            name="assignedClass"
+                            type="select"
+                            icon={GraduationCap}
+                            options={[
+                                { label: 'Infant Care', value: 'Infant Care' },
+                                { label: 'Toddler Group', value: 'Toddler Group' },
+                                { label: 'Play Group', value: 'Play Group' },
+                                { label: 'Nursery', value: 'Nursery' },
+                                { label: 'Junior KG', value: 'Junior KG' },
+                                { label: 'Senior KG', value: 'Senior KG' },
+                                { label: 'After School Care', value: 'After School Care' },
+                            ]}
+                            value={formData.assignedClass}
                             onChange={handleChange}
                         />
                         <InputField

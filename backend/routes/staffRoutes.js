@@ -45,7 +45,7 @@ router.post("/log-activity", protect, logChildDailyActivity);
 
 router.route("/:id")
     .get(getStaffById)
-    .put(updateStaff)
+    .put(protect, updateStaff)
     .delete(deleteStaff);
 
 module.exports = router;

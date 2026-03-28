@@ -84,6 +84,22 @@ const updateStaff = async (req, res) => {
             return res.status(404).json({ success: false, message: "Staff member not found" });
         }
 
+        if (req.body.assignedClass && req.body.assignedClass !== staff.assignedClass) {
+            if (!req.user || (req.user.role !== "Admin" && req.user.role !== "admin")) {
+                return res.status(403).json({ success: false, message: "Only admin can assign class" });
+            }
+
+            // Check if class already assigned to someone else
+            const existingStaff = await Staff.findOne({
+                assignedClass: req.body.assignedClass,
+                _id: { $ne: staff._id }
+            });
+
+            if (existingStaff) {
+                return res.status(400).json({ success: false, message: "This class already has a teacher" });
+            }
+        }
+
         staff = await Staff.findByIdAndUpdate(req.params.id, req.body, {
             new: true,
             runValidators: true,
@@ -491,6 +507,7 @@ const getStaffDashboardSummary = async (req, res) => {
                 pendingToday: pendingToday > 0 ? pendingToday : 0,
                 presentToday,
                 absentToday,
+                assignedClass: staff.assignedClass || null,
                 scheduleStats: {
                     total: defaultActivities.length + customActivities.length,
                     completed,
@@ -518,6 +535,11 @@ const getMyProfile = async (req, res) => {
 
 const updateMyProfile = async (req, res) => {
     try {
+        // Prevent staff from changing their assignedClass themselves
+        if (req.body.assignedClass) {
+            delete req.body.assignedClass;
+        }
+
         const staff = await Staff.findOneAndUpdate(
             { email: req.user.email },
             { ...req.body, email: req.user.email },
