@@ -142,6 +142,28 @@ const Fees = () => {
     };
 
     const filteredChildren = children.filter(child => {
+        // 1. GET SELECTED MONTH & YEAR
+        // selectedMonth is 1-indexed (1-12) in state
+        const month0Indexed = selectedMonth - 1;
+
+        // 2. GET CHILD ADMISSION DATE
+        const admissionDate = new Date(child.admissionDate);
+        const admissionMonth = admissionDate.getMonth();
+        const admissionYear = admissionDate.getFullYear();
+
+        // 3. GET CURRENT DATE
+        const today = new Date();
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+
+        // 4. VALIDATION LOGIC (MAIN FIX)
+        const isAfterAdmission = (selectedYear > admissionYear) || (selectedYear === admissionYear && month0Indexed >= admissionMonth);
+        const isBeforeFuture = (selectedYear < currentYear) || (selectedYear === currentYear && month0Indexed <= currentMonth);
+
+        // Show child ONLY if:
+        if (!(isAfterAdmission && isBeforeFuture)) return false;
+
+        // 5. APPLY STATUS FILTER (Existing logic)
         if (statusFilter === 'All') return true;
         return child.status === statusFilter;
     });
