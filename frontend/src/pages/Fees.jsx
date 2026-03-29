@@ -141,23 +141,7 @@ const Fees = () => {
         doc.save(`Receipt_${payment.child.childName}_${payment.month}_${payment.year}.pdf`);
     };
 
-    // Filter children who are admitted on or before the selected month
-    const admittedChildren = children.filter(child => {
-        const admissionDate = new Date(child.admissionDate);
-        const selected = new Date(selectedYear, selectedMonth, 0); // Last day of selected month
-        return admissionDate <= selected;
-    });
-
-    // Recalculate summary based on admitted children for consistency
-    const displaySummary = {
-        totalCollected: admittedChildren.reduce((sum, c) => sum + (c.paidAmount || 0), 0),
-        pendingFees: admittedChildren.reduce((sum, c) => sum + (c.pendingAmount || 0), 0),
-        paidThisMonth: admittedChildren.reduce((sum, c) => sum + (c.paidAmount || 0), 0),
-        overdueCount: admittedChildren.filter(c => c.status === 'Overdue').length
-    };
-
-    // Final list filtered by status
-    const filteredChildren = admittedChildren.filter(child => {
+    const filteredChildren = children.filter(child => {
         if (statusFilter === 'All') return true;
         return child.status === statusFilter;
     });
@@ -191,7 +175,7 @@ const Fees = () => {
                             <i className="fa-solid fa-wallet"></i>
                         </div>
                         <p className="text-sm font-semibold text-gray-500 mb-1">Total Collected</p>
-                        <h3 className="text-2xl font-black text-gray-900">₹{displaySummary.totalCollected.toLocaleString()}</h3>
+                        <h3 className="text-2xl font-black text-gray-900">₹{summary.totalCollected.toLocaleString()}</h3>
                     </div>
                  </div>
 
@@ -203,7 +187,7 @@ const Fees = () => {
                             <i className="fa-solid fa-clock"></i>
                         </div>
                         <p className="text-sm font-semibold text-gray-500 mb-1">Pending Fees</p>
-                        <h3 className="text-2xl font-black text-gray-900">₹{displaySummary.pendingFees.toLocaleString()}</h3>
+                        <h3 className="text-2xl font-black text-gray-900">₹{summary.pendingFees.toLocaleString()}</h3>
                     </div>
                  </div>
 
@@ -215,7 +199,7 @@ const Fees = () => {
                             <i className="fa-solid fa-calendar-check"></i>
                         </div>
                         <p className="text-sm font-semibold text-gray-500 mb-1">Paid This Month</p>
-                        <h3 className="text-2xl font-black text-gray-900">₹{displaySummary.paidThisMonth.toLocaleString()}</h3>
+                        <h3 className="text-2xl font-black text-gray-900">₹{summary.paidThisMonth.toLocaleString()}</h3>
                     </div>
                  </div>
 
@@ -227,7 +211,7 @@ const Fees = () => {
                             <i className="fa-solid fa-circle-exclamation"></i>
                         </div>
                         <p className="text-sm font-semibold text-gray-500 mb-1">Overdue Payments</p>
-                        <h3 className="text-2xl font-black text-gray-900">{displaySummary.overdueCount}</h3>
+                        <h3 className="text-2xl font-black text-gray-900">{summary.overdueCount}</h3>
                     </div>
                  </div>
             </div>
@@ -282,8 +266,8 @@ const Fees = () => {
                             <div className="w-20 h-20 bg-purple-50 text-purple-300 rounded-full flex items-center justify-center text-3xl mb-4">
                                 <i className="fa-solid fa-folder-open"></i>
                             </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">No students for selected month</h3>
-                            <p className="text-gray-500">No fee records found for the current filters.</p>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">No Fee Records Found</h3>
+                            <p className="text-gray-500">Start by setting fee structure or selecting a different month.</p>
                             <button
                                 onClick={() => setFeeStructureModalOpen(true)}
                                 className="mt-6 px-6 py-2.5 bg-purple-600 text-white font-bold rounded-xl shadow-md hover:bg-purple-700 transition"

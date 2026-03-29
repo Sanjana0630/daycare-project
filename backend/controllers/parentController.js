@@ -203,8 +203,8 @@ const getParentFeeStatus = async (req, res) => {
         }
 
         const currentDate = new Date();
-        const numericMonth = currentDate.getMonth() + 1;
-        const numericYear = currentDate.getFullYear();
+        const numericMonth = req.query.month ? parseInt(req.query.month) : (currentDate.getMonth() + 1);
+        const numericYear = req.query.year ? parseInt(req.query.year) : currentDate.getFullYear();
 
         // Expected base block
         const feeStructure = await FeeStructure.findOne({ class: child.class });
@@ -269,7 +269,7 @@ const getParentFeeStatus = async (req, res) => {
 // @access  Private/Parent
 const recordParentPayment = async (req, res) => {
     try {
-        const { amount, mode } = req.body;
+        const { amount, mode, month, year } = req.body;
 
         let child = await Child.findOne({ parent: req.user._id });
         if (!child) {
@@ -291,8 +291,8 @@ const recordParentPayment = async (req, res) => {
             child: child._id,
             amount: numericAmount,
             date: currentDate,
-            month: currentDate.getMonth() + 1,
-            year: currentDate.getFullYear(),
+            month: month ? parseInt(month) : (currentDate.getMonth() + 1),
+            year: year ? parseInt(year) : currentDate.getFullYear(),
             mode
         });
 

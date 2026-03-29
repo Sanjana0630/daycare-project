@@ -7,16 +7,25 @@ import ParentPaymentModal from '../components/ParentPaymentModal';
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5005';
 const API_URL = `${API_BASE_URL}/api`;
 
+const monthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+];
+
 const ParentFees = () => {
+    const today = new Date();
     const [feeData, setFeeData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
+    
+    const [selectedMonth, setSelectedMonth] = useState(today.getMonth() + 1);
+    const [selectedYear, setSelectedYear] = useState(today.getFullYear());
 
-    const fetchFeeStatus = async () => {
+    const fetchFeeStatus = async (month = selectedMonth, year = selectedYear) => {
         try {
             setLoading(true);
             const token = localStorage.getItem('token');
-            const res = await axios.get(`${API_URL}/parent/fees/status`, {
+            const res = await axios.get(`${API_URL}/parent/fees/status?month=${month}&year=${year}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
@@ -31,13 +40,18 @@ const ParentFees = () => {
     };
 
     useEffect(() => {
-        fetchFeeStatus();
-    }, []);
+        fetchFeeStatus(selectedMonth, selectedYear);
+    }, [selectedMonth, selectedYear]);
 
     const handleRecordPayment = async ({ amount, mode }) => {
          try {
             const token = localStorage.getItem('token');
-            const payload = { amount, mode };
+            const payload = { 
+                amount, 
+                mode,
+                month: selectedMonth,
+                year: selectedYear
+            };
             const res = await axios.post(`${API_URL}/parent/fees/pay`, payload, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -116,9 +130,32 @@ const ParentFees = () => {
     return (
         <div className="p-6 md:p-8 max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
             {/* Header Section */}
-             <div>
-                <h1 className="text-3xl font-black text-gray-900 tracking-tight">Fee Portal</h1>
-                <p className="text-gray-500 font-medium mt-1">Manage and track your child's fees securely</p>
+             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 className="text-3xl font-black text-gray-900 tracking-tight">Fee Portal</h1>
+                    <p className="text-gray-500 font-medium mt-1">Manage and track your child's fees securely</p>
+                </div>
+
+                <div className="flex items-center gap-2 bg-gray-50 p-1.5 rounded-xl border border-gray-100 shadow-sm">
+                    <select 
+                        value={selectedMonth}
+                        onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                        className="bg-white border-none text-sm font-bold text-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500/20 py-1.5 pl-3 pr-8 cursor-pointer"
+                    >
+                        {monthNames.map((name, index) => (
+                            <option key={index + 1} value={index + 1}>{name}</option>
+                        ))}
+                    </select>
+                    <select 
+                        value={selectedYear}
+                        onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                        className="bg-white border-none text-sm font-bold text-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500/20 py-1.5 pl-3 pr-8 cursor-pointer"
+                    >
+                        {[today.getFullYear() - 1, today.getFullYear(), today.getFullYear() + 1].map(y => (
+                            <option key={y} value={y}>{y}</option>
+                        ))}
+                    </select>
+                </div>
             </div>
 
             {/* Main Current Fee Card */}
@@ -184,11 +221,19 @@ const ParentFees = () => {
                                     <i className="fa-solid fa-triangle-exclamation"></i>
                                     Due on {dueDate ? new Date(dueDate).toLocaleDateString() : 'the 5th'}
                                 </div>
+                                <p className="text-sm text-red-500 mt-2 font-medium animate-pulse">
+                                    ⚠️ Your {monthNames[selectedMonth - 1]} fees is pending
+                                </p>
                             </>
                         ) : (
-                             <div className="flex items-center gap-2 text-emerald-600 font-bold bg-emerald-50 px-6 py-3 rounded-xl border border-emerald-100">
-                                <i className="fa-solid fa-circle-check text-xl"></i>
-                                Fully Paid
+                             <div className="flex flex-col items-center md:items-end gap-2">
+                                <div className="flex items-center gap-2 text-emerald-600 font-bold bg-emerald-50 px-6 py-3 rounded-xl border border-emerald-100">
+                                    <i className="fa-solid fa-circle-check text-xl"></i>
+                                    Fully Paid
+                                </div>
+                                <p className="text-sm text-green-500 mt-1 font-medium">
+                                    ✅ Your {monthNames[selectedMonth - 1]} fees is paid
+                                </p>
                              </div>
                         )}
                     </div>
