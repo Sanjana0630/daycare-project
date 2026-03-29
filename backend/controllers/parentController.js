@@ -246,6 +246,7 @@ const getParentFeeStatus = async (req, res) => {
             data: {
                 childName: child.childName,
                 class: child.class,
+                admissionDate: child.admissionDate,
                 month: numericMonth,
                 year: numericYear,
                 expectedFee,

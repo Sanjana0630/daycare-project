@@ -20,6 +20,7 @@ const ParentFees = () => {
     
     const [selectedMonth, setSelectedMonth] = useState(today.getMonth() + 1);
     const [selectedYear, setSelectedYear] = useState(today.getFullYear());
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
 
     const fetchFeeStatus = async (month = selectedMonth, year = selectedYear) => {
         try {
@@ -31,6 +32,35 @@ const ParentFees = () => {
 
             if (res.data.success) {
                 setFeeData(res.data.data);
+                
+                // One-time logic to set the correct display month based on admission due date
+                if (isInitialLoad && res.data.data.admissionDate) {
+                    const adminDate = new Date(res.data.data.admissionDate);
+                    const adminDay = adminDate.getDate();
+                    const currentMonth = today.getMonth(); // 0-indexed
+                    const currentYear = today.getFullYear();
+                    
+                    const nextMonthDueStartDate = new Date(currentYear, currentMonth + 1, adminDay);
+                    const showNextMonth = today >= nextMonthDueStartDate;
+
+                    let dMonth = currentMonth + 1; // 1-indexed
+                    let dYear = currentYear;
+
+                    if (showNextMonth) {
+                        dMonth += 1;
+                        if (dMonth > 12) {
+                            dMonth = 1;
+                            dYear += 1;
+                        }
+                    }
+                    
+                    // Only update if different from current guess
+                    if (dMonth !== month || dYear !== year) {
+                        setSelectedMonth(dMonth);
+                        setSelectedYear(dYear);
+                    }
+                    setIsInitialLoad(false);
+                }
             }
         } catch (error) {
              toast.error(error.response?.data?.message || 'Failed to fetch fee data');
@@ -123,9 +153,41 @@ const ParentFees = () => {
         );
     }
 
-    const { childName, month, year, expectedFee, baseFee, lateFee, dueDate, paidAmount, pendingAmount, status, recentPayments } = feeData;
+    const { childName, month, year, expectedFee, baseFee, lateFee, dueDate, paidAmount, pendingAmount, status, recentPayments, admissionDate } = feeData;
     const progress = generateProgressBar(paidAmount, expectedFee);
     const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long' });
+
+    // Calculate display boundaries
+    const adminDate = new Date(admissionDate);
+    const currentMonthIdx = today.getMonth();
+    const currentYearVal = today.getFullYear();
+    const nextMonthDueStartDate = new Date(currentYearVal, currentMonthIdx + 1, adminDate.getDate());
+    const showNextMonth = today >= nextMonthDueStartDate;
+
+    let maxDisplayMonth = currentMonthIdx + 1;
+    let maxDisplayYear = currentYearVal;
+    if (showNextMonth) {
+        maxDisplayMonth += 1;
+        if (maxDisplayMonth > 12) {
+            maxDisplayMonth = 1;
+            maxDisplayYear += 1;
+        }
+    }
+
+    const availableYears = [];
+    for (let y = adminDate.getFullYear(); y <= maxDisplayYear; y++) {
+        availableYears.push(y);
+    }
+
+    const getAvailableMonths = (yr) => {
+        const startM = (yr === adminDate.getFullYear()) ? adminDate.getMonth() + 1 : 1;
+        const endM = (yr === maxDisplayYear) ? maxDisplayMonth : 12;
+        const res = [];
+        for (let m = startM; m <= endM; m++) {
+            res.push({ val: m, name: monthNames[m - 1] });
+        }
+        return res;
+    };
 
     return (
         <div className="p-6 md:p-8 max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
@@ -142,8 +204,8 @@ const ParentFees = () => {
                         onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
                         className="bg-white border-none text-sm font-bold text-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500/20 py-1.5 pl-3 pr-8 cursor-pointer"
                     >
-                        {monthNames.map((name, index) => (
-                            <option key={index + 1} value={index + 1}>{name}</option>
+                        {getAvailableMonths(selectedYear).map((m) => (
+                            <option key={m.val} value={m.val}>{m.name}</option>
                         ))}
                     </select>
                     <select 
@@ -151,7 +213,7 @@ const ParentFees = () => {
                         onChange={(e) => setSelectedYear(parseInt(e.target.value))}
                         className="bg-white border-none text-sm font-bold text-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500/20 py-1.5 pl-3 pr-8 cursor-pointer"
                     >
-                        {[today.getFullYear() - 1, today.getFullYear(), today.getFullYear() + 1].map(y => (
+                        {availableYears.map(y => (
                             <option key={y} value={y}>{y}</option>
                         ))}
                     </select>
