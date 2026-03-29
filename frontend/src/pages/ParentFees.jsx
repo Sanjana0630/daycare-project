@@ -157,8 +157,11 @@ const ParentFees = () => {
     const progress = generateProgressBar(paidAmount, expectedFee);
     const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long' });
 
-    // Calculate display boundaries
-    const adminDate = new Date(admissionDate);
+    // Calculate display boundaries with safety fallbacks
+    const adminDate = (admissionDate && !isNaN(new Date(admissionDate).getTime()))
+        ? new Date(admissionDate)
+        : today; // Fallback to today if admission date is missing or invalid
+
     const currentMonthIdx = today.getMonth();
     const currentYearVal = today.getFullYear();
     const nextMonthDueStartDate = new Date(currentYearVal, currentMonthIdx + 1, adminDate.getDate());
@@ -175,8 +178,15 @@ const ParentFees = () => {
     }
 
     const availableYears = [];
-    for (let y = adminDate.getFullYear(); y <= maxDisplayYear; y++) {
+    const startYear = adminDate.getFullYear() || today.getFullYear();
+    for (let y = startYear; y <= maxDisplayYear; y++) {
         availableYears.push(y);
+    }
+    
+    // Ensure the currently selected year is always in the list to prevent empty select
+    if (!availableYears.includes(selectedYear)) {
+        availableYears.push(selectedYear);
+        availableYears.sort();
     }
 
     const getAvailableMonths = (yr) => {
