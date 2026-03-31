@@ -141,9 +141,35 @@ const Fees = () => {
         doc.save(`Receipt_${payment.child.childName}_${payment.month}_${payment.year}.pdf`);
     };
 
-    const filteredChildren = children.filter(child => {
+    const processedChildren = children.map(child => {
         // 1. GET SELECTED MONTH & YEAR
-        // selectedMonth is 1-indexed (1-12) in state
+        const month0Indexed = selectedMonth - 1;
+
+        // 2. GET CURRENT DATE
+        const today = new Date();
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+
+        // 3. CHECK FUTURE MONTH
+        const isFutureMonth = selectedYear > currentYear || (selectedYear === currentYear && month0Indexed > currentMonth);
+
+        if (isFutureMonth) {
+            return {
+                ...child,
+                expectedFee: 0,
+                paidAmount: 0,
+                pendingAmount: 0,
+                lateFee: 0,
+                status: "UPCOMING",
+                dueDate: null
+            };
+        }
+
+        return child; // normal data
+    });
+
+    const filteredChildren = processedChildren.filter(child => {
+        // 1. GET SELECTED MONTH & YEAR
         const month0Indexed = selectedMonth - 1;
 
         // 2. GET CHILD ADMISSION DATE
@@ -151,19 +177,13 @@ const Fees = () => {
         const admissionMonth = admissionDate.getMonth();
         const admissionYear = admissionDate.getFullYear();
 
-        // 3. GET CURRENT DATE
-        const today = new Date();
-        const currentMonth = today.getMonth();
-        const currentYear = today.getFullYear();
-
-        // 4. VALIDATION LOGIC (MAIN FIX)
+        // 3. VALIDATION LOGIC (Allowing future months)
         const isAfterAdmission = (selectedYear > admissionYear) || (selectedYear === admissionYear && month0Indexed >= admissionMonth);
-        const isBeforeFuture = (selectedYear < currentYear) || (selectedYear === currentYear && month0Indexed <= currentMonth);
 
-        // Show child ONLY if:
-        if (!(isAfterAdmission && isBeforeFuture)) return false;
+        // Show child ONLY if they were admitted on or before the selected month
+        if (!isAfterAdmission) return false;
 
-        // 5. APPLY STATUS FILTER (Existing logic)
+        // 4. APPLY STATUS FILTER (Existing logic)
         if (statusFilter === 'All') return true;
         return child.status === statusFilter;
     });
@@ -197,7 +217,7 @@ const Fees = () => {
                             <i className="fa-solid fa-wallet"></i>
                         </div>
                         <p className="text-sm font-semibold text-gray-500 mb-1">Total Collected</p>
-                        <h3 className="text-2xl font-black text-gray-900">₹{summary.totalCollected.toLocaleString()}</h3>
+                        <h3 className="text-2xl font-black text-gray-900">₹{(selectedYear > currentDate.getFullYear() || (selectedYear === currentDate.getFullYear() && selectedMonth > currentDate.getMonth() + 1)) ? 0 : summary.totalCollected.toLocaleString()}</h3>
                     </div>
                  </div>
 
@@ -209,7 +229,7 @@ const Fees = () => {
                             <i className="fa-solid fa-clock"></i>
                         </div>
                         <p className="text-sm font-semibold text-gray-500 mb-1">Pending Fees</p>
-                        <h3 className="text-2xl font-black text-gray-900">₹{summary.pendingFees.toLocaleString()}</h3>
+                        <h3 className="text-2xl font-black text-gray-900">₹{(selectedYear > currentDate.getFullYear() || (selectedYear === currentDate.getFullYear() && selectedMonth > currentDate.getMonth() + 1)) ? 0 : summary.pendingFees.toLocaleString()}</h3>
                     </div>
                  </div>
 
@@ -221,7 +241,7 @@ const Fees = () => {
                             <i className="fa-solid fa-calendar-check"></i>
                         </div>
                         <p className="text-sm font-semibold text-gray-500 mb-1">Paid This Month</p>
-                        <h3 className="text-2xl font-black text-gray-900">₹{summary.paidThisMonth.toLocaleString()}</h3>
+                        <h3 className="text-2xl font-black text-gray-900">₹{(selectedYear > currentDate.getFullYear() || (selectedYear === currentDate.getFullYear() && selectedMonth > currentDate.getMonth() + 1)) ? 0 : summary.paidThisMonth.toLocaleString()}</h3>
                     </div>
                  </div>
 
@@ -233,7 +253,7 @@ const Fees = () => {
                             <i className="fa-solid fa-circle-exclamation"></i>
                         </div>
                         <p className="text-sm font-semibold text-gray-500 mb-1">Overdue Payments</p>
-                        <h3 className="text-2xl font-black text-gray-900">{summary.overdueCount}</h3>
+                        <h3 className="text-2xl font-black text-gray-900">{(selectedYear > currentDate.getFullYear() || (selectedYear === currentDate.getFullYear() && selectedMonth > currentDate.getMonth() + 1)) ? 0 : summary.overdueCount}</h3>
                     </div>
                  </div>
             </div>
@@ -324,7 +344,7 @@ const Fees = () => {
                                     <div className="hidden md:block text-center flex-1 text-gray-600">
                                         <p className="text-sm font-medium whitespace-nowrap">
                                             Due: <span className="font-bold text-gray-900 ml-1">
-                                                {child.dueDate ? new Date(child.dueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
+                                                {child.dueDate ? new Date(child.dueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : (child.status === 'UPCOMING' ? 'Not Generated' : 'N/A')}
                                             </span>
                                         </p>
                                     </div>
@@ -338,14 +358,19 @@ const Fees = () => {
                                         <span className={`px-3 py-1 text-[10px] font-black rounded-full uppercase tracking-widest border
                                             ${child.status === 'Paid' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
                                               child.status === 'Pending' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                              child.status === 'UPCOMING' ? 'bg-gray-50 text-gray-400 border-gray-100' :
                                               'bg-red-50 text-red-600 border-red-100'}
                                         `}>
                                             {child.status}
                                         </span>
 
                                         <button 
+                                            disabled={child.status === 'UPCOMING'}
                                             onClick={() => { setSelectedChild(child); setDetailsModalOpen(true); }}
-                                            className="px-4 py-1.5 text-xs font-bold rounded-lg border border-purple-500 text-purple-600 hover:bg-purple-50 transition-colors bg-white whitespace-nowrap"
+                                            className={`px-4 py-1.5 text-xs font-bold rounded-lg border whitespace-nowrap transition-colors
+                                                ${child.status === 'UPCOMING' 
+                                                    ? 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed opacity-50' 
+                                                    : 'bg-white border-purple-500 text-purple-600 hover:bg-purple-50'}`}
                                         >
                                             View Details
                                         </button>
