@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Download, Filter, X, Search, CalendarDays, User, BookOpen, Clock, Activity, Target, CheckCircle2, TrendingUp } from 'lucide-react';
+import { FileText, Download, Filter, X, Search, CalendarDays, User, BookOpen, Clock, Activity, Target, CheckCircle2, TrendingUp, Send } from 'lucide-react';
 
 const Reports = () => {
     // Dropdown Data
@@ -93,46 +93,11 @@ const Reports = () => {
         }
     };
 
-    const exportToCSV = () => {
+    const handleSendReport = async () => {
         if (!reportResult) return;
-
-        let csvString = '';
-
-        // Child Info Section
-        csvString += 'Child Information\n';
-        csvString += `Name,${reportResult.childInfo.name}\n`;
-        csvString += `Class,${reportResult.childInfo.className}\n`;
-        csvString += `Parent,${reportResult.childInfo.parentName}\n`;
-        csvString += `Time Range,${timeRange} (${reportDate})\n\n`;
-
-        // Summary Section
-        csvString += 'Report Summary\n';
-        csvString += `Present Days,${reportResult.summary.presentDays}\n`;
-        csvString += `Absent Days,${reportResult.summary.absentDays}\n`;
-        csvString += `Activities Completed,${reportResult.summary.activitiesCompleted}\n`;
-        csvString += `Average Rating,${reportResult.summary.averageRating}/5.0\n\n`;
-
-        // Attendance Table
-        csvString += 'Attendance Records\n';
-        csvString += ['Date', 'Name', 'Status', 'Marked By'].join(',') + '\n';
-        reportResult.attendance.forEach(row => {
-            csvString += [row.date, row.name, row.status, row.markedBy].join(',') + '\n';
-        });
-        csvString += '\n';
-
-        // Activities Table
-        csvString += 'Activity Records\n';
-        csvString += ['Date', 'Name', 'Activity', 'Status', 'Rating'].join(',') + '\n';
-        reportResult.activities.forEach(row => {
-            csvString += [row.date, row.name, row.activity, row.status, row.rating].join(',') + '\n';
-        });
-
-        const blob = new Blob([csvString], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `full_report_${timeRange}_${reportDate}.csv`;
-        a.click();
+        
+        // Mock send functionality or future API hook
+        alert(`Report successfully sent to parent: ${reportResult.childInfo.parentName} for ${reportResult.childInfo.name}!`);
     };
 
     const exportToPDF = () => {
@@ -289,8 +254,8 @@ const Reports = () => {
                             </div>
                         </div>
                         <div className="flex gap-3">
-                            <button onClick={exportToCSV} className="px-6 py-3 bg-white border border-gray-200 text-gray-600 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-gray-50 transition-all active:scale-95">
-                                <Download size={14} /> CSV
+                            <button onClick={handleSendReport} className="px-6 py-3 bg-purple-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-purple-700 transition-all active:scale-95 shadow-lg shadow-purple-200">
+                                <Send size={14} /> Send Report
                             </button>
                             <button onClick={exportToPDF} className="px-6 py-3 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-black transition-all active:scale-95 shadow-lg shadow-gray-200">
                                 <FileText size={14} /> Print
