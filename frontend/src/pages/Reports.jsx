@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { FileText, Download, Filter, X, Search, CalendarDays } from 'lucide-react';
-import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
+import React, { useState, useEffect } from 'react';
+import { FileText, Download, Filter, X, Search, CalendarDays, User, BookOpen, Clock, Activity, Target, CheckCircle2, TrendingUp } from 'lucide-react';
 
 const Reports = () => {
     // Dropdown Data
@@ -8,7 +7,6 @@ const Reports = () => {
     
     // Filter States
     const [selectedChildId, setSelectedChildId] = useState('all');
-    const [reportType, setReportType] = useState('attendance');
     const [timeRange, setTimeRange] = useState('daily');
     const [reportDate, setReportDate] = useState(getInitialDate('daily'));
     const [searchQuery, setSearchQuery] = useState('');
@@ -16,7 +14,7 @@ const Reports = () => {
 
     // Result States
     const [loading, setLoading] = useState(false);
-    const [reportResult, setReportResult] = useState(null);
+    const [reportResult, setReportResult] = useState(null); // Will hold { childInfo, attendance, activities, summary }
     const [error, setError] = useState(null);
 
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005';
@@ -26,7 +24,6 @@ const Reports = () => {
         if (range === 'daily') {
             return d.toISOString().split('T')[0];
         } else if (range === 'weekly') {
-            // week string YYYY-Www
             const startDate = new Date(d.getFullYear(), 0, 1);
             const days = Math.floor((d - startDate) / (24 * 60 * 60 * 1000));
             const weekNumber = Math.ceil(days / 7);
@@ -45,19 +42,17 @@ const Reports = () => {
     // Clear report when filters change to force regeneration
     useEffect(() => {
         setReportResult(null);
-    }, [selectedChildId, reportType, timeRange, reportDate]);
+    }, [selectedChildId, timeRange, reportDate]);
 
     useEffect(() => {
         const fetchChildren = async () => {
             try {
                 const token = localStorage.getItem('token');
-                // Use the children endpoint
                 const res = await fetch(`${apiUrl}/api/children`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await res.json();
                 if (data.success || Array.isArray(data)) {
-                    // API might return array directly or embedded in success response
                     const list = Array.isArray(data) ? data : data.data || [];
                     setChildrenList(list);
                 }
@@ -77,17 +72,16 @@ const Reports = () => {
             const token = localStorage.getItem('token');
             const queryParams = new URLSearchParams({
                 childId: selectedChildId,
-                type: reportType,
                 range: timeRange,
                 date: reportDate
             });
 
-            const response = await fetch(`${apiUrl}/api/reports/generate?${queryParams}`, {
+            const response = await fetch(`${apiUrl}/api/reports/full?${queryParams}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const result = await response.json();
             if (result.success) {
-                setReportResult(result.data.records);
+                setReportResult(result.data);
             } else {
                 setError(result.message || 'Failed to generate report');
             }
@@ -100,29 +94,44 @@ const Reports = () => {
     };
 
     const exportToCSV = () => {
-        if (!reportResult || !reportResult.length) return;
+        if (!reportResult) return;
 
-        let headers = [];
-        let csvRows = [];
-        
-        if (reportType === 'attendance') {
-            headers = ['Name', 'Date', 'Status', 'Marked By'];
-            csvRows = reportResult.map(row => 
-                [row.name, row.date, row.status, row.markedBy].join(',')
-            );
-        } else {
-            headers = ['Name', 'Date', 'Activity', 'Status', 'Rating'];
-            csvRows = reportResult.map(row => 
-                [row.name, row.date, row.activity, row.status, row.rating].join(',')
-            );
-        }
+        let csvString = '';
 
-        const csvString = [headers.join(','), ...csvRows].join('\n');
+        // Child Info Section
+        csvString += 'Child Information\n';
+        csvString += `Name,${reportResult.childInfo.name}\n`;
+        csvString += `Class,${reportResult.childInfo.className}\n`;
+        csvString += `Parent,${reportResult.childInfo.parentName}\n`;
+        csvString += `Time Range,${timeRange} (${reportDate})\n\n`;
+
+        // Summary Section
+        csvString += 'Report Summary\n';
+        csvString += `Present Days,${reportResult.summary.presentDays}\n`;
+        csvString += `Absent Days,${reportResult.summary.absentDays}\n`;
+        csvString += `Activities Completed,${reportResult.summary.activitiesCompleted}\n`;
+        csvString += `Average Rating,${reportResult.summary.averageRating}/5.0\n\n`;
+
+        // Attendance Table
+        csvString += 'Attendance Records\n';
+        csvString += ['Date', 'Name', 'Status', 'Marked By'].join(',') + '\n';
+        reportResult.attendance.forEach(row => {
+            csvString += [row.date, row.name, row.status, row.markedBy].join(',') + '\n';
+        });
+        csvString += '\n';
+
+        // Activities Table
+        csvString += 'Activity Records\n';
+        csvString += ['Date', 'Name', 'Activity', 'Status', 'Rating'].join(',') + '\n';
+        reportResult.activities.forEach(row => {
+            csvString += [row.date, row.name, row.activity, row.status, row.rating].join(',') + '\n';
+        });
+
         const blob = new Blob([csvString], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `report_${reportType}_${timeRange}.csv`;
+        a.download = `full_report_${timeRange}_${reportDate}.csv`;
         a.click();
     };
 
@@ -140,55 +149,23 @@ const Reports = () => {
         return child ? child.childName : 'Unknown Child';
     };
 
-    const getChartData = () => {
-        if (!reportResult || !reportResult.length) return [];
-        
-        if (reportType === 'attendance') {
-            const counts = reportResult.reduce((acc, curr) => {
-                const status = (curr.status || '').toLowerCase();
-                if (status === 'present') acc.present++;
-                else if (status === 'absent') acc.absent++;
-                return acc;
-            }, { present: 0, absent: 0 });
-
-            return [
-                { name: 'Present', value: counts.present, color: '#10B981' },
-                { name: 'Absent', value: counts.absent, color: '#F43F5E' }
-            ];
-        } else {
-            // Activity report - group by activity and count completion status or average rating
-            const activityStats = reportResult.reduce((acc, curr) => {
-                if (!acc[curr.activity]) {
-                    acc[curr.activity] = { name: curr.activity, completedCount: 0, total: 0 };
-                }
-                if (curr.status.toLowerCase() === 'completed') {
-                    acc[curr.activity].completedCount++;
-                }
-                acc[curr.activity].total++;
-                return acc;
-            }, {});
-            
-            return Object.values(activityStats);
-        }
-    };
-
-    const chartData = useMemo(() => getChartData(), [reportResult, reportType]);
+    const isResultEmpty = !reportResult || (reportResult.attendance.length === 0 && reportResult.activities.length === 0);
 
     return (
         <div className="space-y-8 animate-in fade-in duration-700">
             {/* Filter Section */}
-            <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-8">
+            <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-8 print:hidden">
                 <div className="flex items-center gap-4 mb-2">
                     <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center">
                         <Filter size={24} />
                     </div>
                     <div>
-                        <h3 className="text-xl font-black text-gray-900">Dynamic Reports</h3>
-                        <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">Generate Custom Analytics</p>
+                        <h3 className="text-xl font-black text-gray-900">Report Generator</h3>
+                        <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">Generate Comprehensive Reports</p>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
                     {/* Child Selection (Searchable Dropdown) */}
                     <div className="space-y-2 relative">
                         <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Select Child</label>
@@ -234,19 +211,6 @@ const Reports = () => {
                         </div>
                     </div>
 
-                    {/* Report Type */}
-                    <div className="space-y-2">
-                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Report Type</label>
-                        <select
-                            value={reportType}
-                            onChange={(e) => setReportType(e.target.value)}
-                            className="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-700 focus:ring-2 focus:ring-purple-100 outline-none appearance-none cursor-pointer"
-                        >
-                            <option value="attendance">Attendance Report</option>
-                            <option value="activity">Activity Report</option>
-                        </select>
-                    </div>
-
                     {/* Time Range */}
                     <div className="space-y-2">
                         <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Time Range</label>
@@ -263,7 +227,7 @@ const Reports = () => {
 
                     {/* Date Picker */}
                     <div className="space-y-2">
-                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Select Date</label>
+                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Select Period</label>
                         <input
                             type={timeRange === 'daily' ? 'date' : timeRange === 'weekly' ? 'week' : 'month'}
                             value={reportDate}
@@ -273,7 +237,7 @@ const Reports = () => {
                     </div>
                 </div>
 
-                <div className="flex justify-end pt-4">
+                <div className="flex justify-end pt-4 border-t border-gray-100">
                     <button
                         onClick={handleGenerateReport}
                         disabled={loading}
@@ -284,209 +248,206 @@ const Reports = () => {
                         ) : (
                             <FileText size={18} />
                         )}
-                        Generate Report
+                        Generate Full Report
                     </button>
                 </div>
             </div>
 
-            {/* Generated Report View */}
-            {reportResult && (
-                <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-8 animate-in slide-in-from-bottom-8 duration-700">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="space-y-1">
-                            <h2 className="text-2xl font-black text-gray-900 capitalize flex items-center gap-3">
-                                {getSelectedChildName()} 
-                                <span className="px-3 py-1 bg-purple-100 text-purple-700 text-[10px] font-black rounded-full uppercase tracking-tighter">
-                                    {reportType}
-                                </span>
-                            </h2>
-                            <p className="text-sm text-gray-500 font-bold flex items-center gap-2">
-                                <CalendarDays size={16} />
-                                {timeRange} Report ({reportDate})
-                            </p>
-                        </div>
+            {/* ERROR DISPLAY */}
+            {error && (
+                <div className="p-4 bg-red-50 text-red-600 border border-red-100 rounded-2xl flex items-center justify-center font-bold mt-4">
+                    {error}
+                </div>
+            )}
 
+            {/* EMPTY STATE */}
+            {reportResult && isResultEmpty && (
+                <div className="bg-white p-12 rounded-[40px] border border-gray-100 shadow-sm text-center space-y-4 animate-in fade-in">
+                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto text-gray-300">
+                        <FileText size={32} />
+                    </div>
+                    <h3 className="text-xl font-black text-gray-900">No Records Found</h3>
+                    <p className="text-gray-500 font-medium max-w-sm mx-auto">
+                        We couldn't find any attendance or activity records for the selected child during this period.
+                    </p>
+                </div>
+            )}
+
+            {/* COMBINED FULL REPORT VIEW */}
+            {reportResult && !isResultEmpty && (
+                <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden animate-in slide-in-from-bottom-8 duration-700 report-container print:border-none print:shadow-none">
+                    
+                    {/* Header Controls (Hidden in Print) */}
+                    <div className="p-8 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gray-50/50 print:hidden">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center">
+                                <Target size={20} />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-black text-gray-900 tracking-tight">Report Results</h2>
+                                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">{timeRange} Summary</p>
+                            </div>
+                        </div>
                         <div className="flex gap-3">
-                            <button
-                                onClick={exportToCSV}
-                                className="px-6 py-3 bg-white border border-gray-200 text-gray-600 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-gray-50 transition-all active:scale-95"
-                            >
-                                <Download size={14} />
-                                CSV
+                            <button onClick={exportToCSV} className="px-6 py-3 bg-white border border-gray-200 text-gray-600 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-gray-50 transition-all active:scale-95">
+                                <Download size={14} /> CSV
                             </button>
-                            <button
-                                onClick={exportToPDF}
-                                className="px-6 py-3 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-black transition-all active:scale-95 shadow-lg shadow-gray-200"
-                            >
-                                <FileText size={14} />
-                                Print PDF
+                            <button onClick={exportToPDF} className="px-6 py-3 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-black transition-all active:scale-95 shadow-lg shadow-gray-200">
+                                <FileText size={14} /> Print
                             </button>
-                            <button
-                                onClick={() => setReportResult(null)}
-                                className="p-3 bg-white border border-gray-200 text-gray-400 rounded-2xl hover:text-red-500 hover:border-red-100 transition-all active:scale-95"
-                                title="Clear Report"
-                            >
+                            <button onClick={() => setReportResult(null)} className="p-3 bg-white border border-gray-200 text-gray-400 rounded-2xl hover:text-red-500 hover:border-red-100 transition-all active:scale-95" title="Clear Report">
                                 <X size={20} />
                             </button>
                         </div>
                     </div>
 
-                    {reportResult.length === 0 ? (
-                        <div className="py-20 flex flex-col items-center justify-center text-gray-400 font-medium space-y-4">
-                            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
-                                <FileText size={24} className="text-gray-300" />
-                            </div>
-                            <p>No data found for the selected criteria.</p>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            {/* Visual Summary */}
-                            <div className="lg:col-span-1 bg-gray-50/50 p-6 rounded-3xl border border-gray-100 flex flex-col justify-center items-center">
-                                <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-6 self-start w-full border-b border-gray-200 pb-2">
-                                    {reportType} Summary
-                                </h3>
-                                
-                                {reportType === 'attendance' ? (
-                                    <div className="w-full">
-                                        <div className="h-[200px] w-full">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <PieChart>
-                                                    <Pie
-                                                        data={chartData}
-                                                        cx="50%"
-                                                        cy="50%"
-                                                        innerRadius={50}
-                                                        outerRadius={80}
-                                                        paddingAngle={5}
-                                                        dataKey="value"
-                                                    >
-                                                        {chartData.map((entry, index) => (
-                                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                                        ))}
-                                                    </Pie>
-                                                    <RechartsTooltip 
-                                                        contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                                                    />
-                                                    <Legend />
-                                                </PieChart>
-                                            </ResponsiveContainer>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4 mt-6">
-                                            <div className="p-4 bg-white rounded-2xl border border-emerald-100 shadow-sm text-center">
-                                                <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Present</p>
-                                                <p className="text-2xl font-black text-emerald-900">{chartData[0]?.value || 0}</p>
-                                            </div>
-                                            <div className="p-4 bg-white rounded-2xl border border-rose-100 shadow-sm text-center">
-                                                <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Absent</p>
-                                                <p className="text-2xl font-black text-rose-900">{chartData[1]?.value || 0}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="w-full">
-                                         <div className="h-[250px] w-full">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 0, left: 10, bottom: 0 }}>
-                                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E5E7EB" />
-                                                    <XAxis type="number" hide />
-                                                    <YAxis 
-                                                        type="category" 
-                                                        dataKey="name" 
-                                                        axisLine={false} 
-                                                        tickLine={false}
-                                                        tick={{ fill: '#6B7280', fontSize: 10, fontWeight: 700 }}
-                                                        width={90}
-                                                    />
-                                                    <RechartsTooltip 
-                                                        cursor={{ fill: '#F3F4F6' }}
-                                                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                                    />
-                                                    <Bar dataKey="completedCount" name="Completed" fill="#8B5CF6" radius={[0, 4, 4, 0]} barSize={20} />
-                                                </BarChart>
-                                            </ResponsiveContainer>
-                                        </div>
-                                        <div className="mt-4 p-4 bg-white rounded-2xl border border-purple-100 text-center shadow-sm">
-                                            <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest mb-1">Total Activities</p>
-                                            <p className="text-2xl font-black text-purple-900">
-                                                {chartData.reduce((acc, curr) => acc + curr.total, 0)}
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Tabular Data */}
-                            <div className="lg:col-span-2 border border-gray-100 rounded-3xl overflow-hidden self-start">
-                                <div className="overflow-x-auto max-h-[400px]">
-                                    <table className="w-full text-left relative">
-                                        <thead className="bg-gray-50/90 backdrop-blur sticky top-0 z-10">
-                                            <tr>
-                                                <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Date</th>
-                                                {selectedChildId === 'all' && (
-                                                    <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Child Name</th>
-                                                )}
-                                                {reportType === 'attendance' ? (
-                                                    <>
-                                                        <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
-                                                        <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Marked By</th>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Activity</th>
-                                                        <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
-                                                        <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Rating</th>
-                                                    </>
-                                                )}
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-50">
-                                        {reportResult.map((row, i) => (
-                                            <tr key={i} className="hover:bg-purple-50/20 transition-colors">
-                                                <td className="px-6 py-4 text-sm text-gray-500 font-medium">{row.date}</td>
-                                                {selectedChildId === 'all' && (
-                                                    <td className="px-6 py-4 font-bold text-gray-900">{row.name}</td>
-                                                )}
-                                                
-                                                {reportType === 'attendance' ? (
-                                                    <>
-                                                        <td className="px-6 py-4">
-                                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${row.status.toLowerCase() === 'present' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
-                                                                {row.status}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-6 py-4 text-sm text-gray-600 font-medium">{row.markedBy}</td>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <td className="px-6 py-4 font-medium text-gray-700">{row.activity}</td>
-                                                        <td className="px-6 py-4">
-                                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${row.status.toLowerCase() === 'completed' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-yellow-50 text-yellow-700 border-yellow-100'}`}>
-                                                                {row.status}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-6 py-4">
-                                                            <div className="flex gap-1">
-                                                                {[...Array(5)].map((_, idx) => (
-                                                                    <span key={idx} className={`text-sm ${idx < row.rating ? 'text-amber-400' : 'text-gray-200'}`}>★</span>
-                                                                ))}
-                                                            </div>
-                                                        </td>
-                                                    </>
-                                                )}
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                    </table>
+                    {/* Report Content */}
+                    <div className="p-8 space-y-10 print:p-0">
+                        {/* Section 1: Child Info */}
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-black text-purple-600 uppercase tracking-widest border-b border-gray-100 pb-2 flex items-center gap-2">
+                                <User size={16} /> SECTION 1: CHILD INFO
+                            </h3>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-purple-50/30 rounded-3xl border border-purple-100">
+                                <div>
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Child Name</p>
+                                    <p className="font-bold text-gray-900 text-lg">{reportResult.childInfo.name}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Class</p>
+                                    <p className="font-bold text-gray-900 text-lg">{reportResult.childInfo.className}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Parent Name</p>
+                                    <p className="font-bold text-gray-900 text-lg">{reportResult.childInfo.parentName}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Selected Period</p>
+                                    <p className="font-bold text-gray-900 text-lg flex items-center gap-2">
+                                        <CalendarDays size={16} className="text-purple-400" />
+                                        {reportDate}
+                                    </p>
                                 </div>
                             </div>
                         </div>
-                    )}
-                </div>
-            )}
-            
-            {error && (
-                <div className="p-4 bg-red-50 text-red-600 border border-red-100 rounded-2xl flex items-center justify-center font-bold mt-4">
-                    {error}
+
+                        {/* Section 4: Summary Cards (Moved to top for visibility) */}
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-black text-amber-600 uppercase tracking-widest border-b border-gray-100 pb-2 flex items-center gap-2">
+                                <TrendingUp size={16} /> SECTION 2: HIGH-LEVEL SUMMARY
+                            </h3>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div className="p-6 bg-emerald-50 rounded-3xl border border-emerald-100 text-center">
+                                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-2">Total Present Days</p>
+                                    <p className="text-4xl font-black text-emerald-900">{reportResult.summary.presentDays}</p>
+                                </div>
+                                <div className="p-6 bg-rose-50 rounded-3xl border border-rose-100 text-center">
+                                    <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-2">Total Absent Days</p>
+                                    <p className="text-4xl font-black text-rose-900">{reportResult.summary.absentDays}</p>
+                                </div>
+                                <div className="p-6 bg-indigo-50 rounded-3xl border border-indigo-100 text-center">
+                                    <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-2">Activities Completed</p>
+                                    <p className="text-4xl font-black text-indigo-900">{reportResult.summary.activitiesCompleted}</p>
+                                </div>
+                                <div className="p-6 bg-blue-50 rounded-3xl border border-blue-100 text-center">
+                                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-2">Average Rating</p>
+                                    <div className="flex items-center justify-center gap-2">
+                                        <p className="text-4xl font-black text-blue-900">{reportResult.summary.averageRating}</p>
+                                        <span className="text-blue-400 text-2xl">★</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-4">
+                            {/* Section 2: Attendance Table */}
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-black text-emerald-600 uppercase tracking-widest border-b border-gray-100 pb-2 flex items-center gap-2">
+                                    <Clock size={16} /> SECTION 3: ATTENDANCE
+                                </h3>
+                                <div className="border border-gray-100 rounded-3xl overflow-hidden bg-gray-50/20">
+                                    <div className="overflow-x-auto max-h-[400px]">
+                                        <table className="w-full text-left relative">
+                                            <thead className="bg-gray-100/50 sticky top-0 backdrop-blur z-10">
+                                                <tr>
+                                                    <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Date</th>
+                                                    {selectedChildId === 'all' && <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Name</th>}
+                                                    <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Status</th>
+                                                    <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-right">Marked By</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-100">
+                                                {reportResult.attendance.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan="4" className="px-5 py-8 text-center text-gray-400 font-medium text-sm">No attendance records found.</td>
+                                                    </tr>
+                                                ) : reportResult.attendance.map((row, i) => (
+                                                    <tr key={`att-${i}`} className="hover:bg-white transition-colors">
+                                                        <td className="px-5 py-3 text-sm text-gray-600 font-medium whitespace-nowrap">{row.date}</td>
+                                                        {selectedChildId === 'all' && <td className="px-5 py-3 text-sm font-bold text-gray-900 whitespace-nowrap">{row.name}</td>}
+                                                        <td className="px-5 py-3">
+                                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${row.status.toLowerCase() === 'present' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
+                                                                {row.status}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-5 py-3 text-sm text-gray-500 text-right whitespace-nowrap">{row.markedBy}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Section 3: Activity Table */}
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-black text-indigo-600 uppercase tracking-widest border-b border-gray-100 pb-2 flex items-center gap-2">
+                                    <Activity size={16} /> SECTION 4: ACTIVITY
+                                </h3>
+                                <div className="border border-gray-100 rounded-3xl overflow-hidden bg-gray-50/20">
+                                    <div className="overflow-x-auto max-h-[400px]">
+                                        <table className="w-full text-left relative">
+                                            <thead className="bg-gray-100/50 sticky top-0 backdrop-blur z-10">
+                                                <tr>
+                                                    <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Date</th>
+                                                    {selectedChildId === 'all' && <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Name</th>}
+                                                    <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Activity</th>
+                                                    <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Status</th>
+                                                    <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-right">Rating</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-100">
+                                                {reportResult.activities.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan="5" className="px-5 py-8 text-center text-gray-400 font-medium text-sm">No activity records found.</td>
+                                                    </tr>
+                                                ) : reportResult.activities.map((row, i) => (
+                                                    <tr key={`act-${i}`} className="hover:bg-white transition-colors">
+                                                        <td className="px-5 py-3 text-sm text-gray-600 font-medium whitespace-nowrap">{row.date}</td>
+                                                        {selectedChildId === 'all' && <td className="px-5 py-3 text-sm font-bold text-gray-900 whitespace-nowrap">{row.name}</td>}
+                                                        <td className="px-5 py-3 text-sm text-gray-700 font-medium">{row.activity}</td>
+                                                        <td className="px-5 py-3">
+                                                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${row.status.toLowerCase() === 'completed' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' : 'bg-yellow-50 text-yellow-700 border-yellow-100'}`}>
+                                                                {row.status}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-5 py-3 text-right">
+                                                            <div className="flex gap-0.5 justify-end">
+                                                                {[...Array(5)].map((_, idx) => (
+                                                                    <span key={idx} className={`text-xs ${idx < row.rating ? 'text-amber-400' : 'text-gray-200'}`}>★</span>
+                                                                ))}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             )}
         </div>
