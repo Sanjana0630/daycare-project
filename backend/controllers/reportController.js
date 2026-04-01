@@ -1,9 +1,35 @@
+const mongoose = require("mongoose");
 const Attendance = require("../models/Attendance");
 const ScheduleActivity = require("../models/ScheduleActivity");
 const User = require("../models/User");
 const Staff = require("../models/Staff");
 const Child = require("../models/Child");
 const StaffAttendance = require("../models/StaffAttendance");
+const Report = require("../models/Report");
+
+// @desc    Get report by ID (Saved Report)
+// @route   GET /api/reports/:id
+// @access  Private
+const getReportById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const reportConfig = await Report.findById(id);
+
+        if (!reportConfig) {
+            return res.status(404).json({ success: false, message: "Report not found." });
+        }
+
+        // We can reuse the logic from generateFullReport by mocking the query params
+        req.query.childId = reportConfig.childId.toString();
+        req.query.range = reportConfig.range;
+        req.query.date = reportConfig.date;
+
+        return generateFullReport(req, res);
+    } catch (error) {
+        console.error("Error fetching saved report:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
 
 // @desc    Get child attendance report
 // @route   GET /api/reports/child-attendance
@@ -318,7 +344,8 @@ const generateFullReport = async (req, res) => {
                 childInfo = {
                     name: childData.childName,
                     className: childData.class || "Unassigned",
-                    parentName: childData.parentName || childData.parent?.name || "Unknown"
+                    parentName: childData.parentName || childData.parent?.name || "Unknown",
+                    parentId: childData.parent?._id || null
                 };
             }
         }
@@ -392,9 +419,34 @@ const generateFullReport = async (req, res) => {
 
         const avgRating = maxRatingCount > 0 ? (maxRatingSum / maxRatingCount).toFixed(1) : 0;
 
+        // Save the report configuration to return an ID for notifications
+        let savedReportId = null;
+        if (childId && childId !== 'all') {
+            try {
+                // Ensure IDs are valid before creating
+                const adminId = req.user._id;
+                
+                if (mongoose.Types.ObjectId.isValid(childId) && mongoose.Types.ObjectId.isValid(adminId)) {
+                    const newReport = await Report.create({
+                        childId: new mongoose.Types.ObjectId(childId),
+                        range,
+                        date,
+                        generatedBy: new mongoose.Types.ObjectId(adminId)
+                    });
+                    savedReportId = newReport._id;
+                } else {
+                    console.warn("Invalid ID(s) provided for report creation. Skipping DB save.", { childId, adminId });
+                }
+            } catch (saveErr) {
+                console.error("Failed to auto-save report config:", saveErr.message);
+                // We still return the report data so UI works, but notification won't have an ID
+            }
+        }
+
         res.status(200).json({
             success: true,
             data: {
+                reportId: savedReportId,
                 childInfo,
                 attendance: formattedAttendance,
                 activities: formattedActivities,
@@ -417,5 +469,6 @@ module.exports = {
     getStaffActivityReport,
     getAttendanceReport,
     generateDynamicReport,
-    generateFullReport
+    generateFullReport,
+    getReportById
 };

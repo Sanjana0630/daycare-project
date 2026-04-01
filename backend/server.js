@@ -8,6 +8,7 @@ const parentRoutes = require("./routes/parentRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const reportRoutes = require("./routes/reportRoutes");
 const feeRoutes = require("./routes/feeRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 
 dotenv.config();
 
@@ -36,6 +37,7 @@ app.use("/api/parent", parentRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/fees", feeRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Database Connection
 connectDB();

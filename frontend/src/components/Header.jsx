@@ -7,7 +7,34 @@ const Header = ({ onMenuClick }) => {
     const fullName = localStorage.getItem('fullName') || 'Administrator';
     const role = localStorage.getItem('role') || 'admin';
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
     const dropdownRef = useRef(null);
+
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005';
+
+    // Fetch unread notifications count if parent
+    useEffect(() => {
+        const fetchUnreadCount = async () => {
+            if (role !== 'parent') return;
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(`${apiUrl}/api/notifications/unread-count`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    setUnreadCount(data.count);
+                }
+            } catch (err) {
+                console.error('Error fetching unread count:', err);
+            }
+        };
+
+        fetchUnreadCount();
+        // Optional: set an interval to check for new notifications
+        const interval = setInterval(fetchUnreadCount, 30000); // every 30 seconds
+        return () => clearInterval(interval);
+    }, [role, apiUrl]);
 
     // Get first letter for avatar
     const avatarInitial = fullName.charAt(0).toUpperCase();
@@ -40,6 +67,14 @@ const Header = ({ onMenuClick }) => {
         navigate(profilePath);
     };
 
+    const handleNotificationClick = () => {
+        if (role === 'parent') {
+            navigate('/parent/notifications');
+        } else if (role === 'staff') {
+            navigate('/staff/notifications');
+        }
+    };
+
     return (
         <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-4 sm:px-8 sticky top-0 z-10">
             <div className="flex items-center gap-4 flex-1">
@@ -66,9 +101,16 @@ const Header = ({ onMenuClick }) => {
 
             {/* Right Actions */}
             <div className="flex items-center gap-4 sm:gap-6">
-                <button className="relative p-2 rounded-full hover:bg-gray-50 transition-colors text-gray-500 hover:text-gray-700">
+                <button 
+                    onClick={handleNotificationClick}
+                    className="relative p-2 rounded-full hover:bg-gray-50 transition-colors text-gray-500 hover:text-gray-700"
+                >
                     <Bell size={20} />
-                    <span className="absolute top-1.5 right-2 w-2 h-2 bg-red-400 rounded-full border-2 border-white"></span>
+                    {unreadCount > 0 && (
+                        <span className="absolute top-0.5 right-0.5 min-w-[20px] h-5 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full border-2 border-white flex items-center justify-center">
+                            {unreadCount}
+                        </span>
+                    )}
                 </button>
 
                 <div className="relative" ref={dropdownRef}>

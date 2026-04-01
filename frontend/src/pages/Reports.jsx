@@ -94,10 +94,49 @@ const Reports = () => {
     };
 
     const handleSendReport = async () => {
-        if (!reportResult) return;
+        if (!reportResult || selectedChildId === 'all') {
+            alert('Please select a specific child to send a report.');
+            return;
+        }
         
-        // Mock send functionality or future API hook
-        alert(`Report successfully sent to parent: ${reportResult.childInfo.parentName} for ${reportResult.childInfo.name}!`);
+        if (!reportResult.childInfo.parentId) {
+            alert('This child is not linked to any parent account.');
+            return;
+        }
+
+        if (!reportResult.reportId) {
+            alert('The report was generated but not saved to the database. This usually happens if your session has expired or is invalid. Please logout and login again.');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${apiUrl}/api/notifications/send-report`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    parentId: reportResult.childInfo.parentId,
+                    childId: selectedChildId,
+                    reportId: reportResult.reportId, // Using the ID returned from generation
+                    message: `Activity report for ${reportResult.childInfo.name} (${timeRange})`
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(`Report successfully sent to parent: ${reportResult.childInfo.parentName}!`);
+            } else {
+                alert(data.message || 'Failed to send report');
+            }
+        } catch (err) {
+            console.error('Error sending report:', err);
+            alert('An error occurred while sending the report.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const exportToPDF = () => {

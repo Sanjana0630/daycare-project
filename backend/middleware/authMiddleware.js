@@ -9,8 +9,8 @@ const protect = async (req, res, next) => {
             token = req.headers.authorization.split(" ")[1];
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-            if (decoded.id === "admin-id") {
-                req.user = { _id: "admin-id", role: "admin", fullName: "Administrator" };
+            if (decoded.id === "65f1a2b2c3d4e5f6a7b8c9d0") {
+                req.user = { _id: "65f1a2b2c3d4e5f6a7b8c9d0", role: "admin", fullName: "Administrator" };
             } else {
                 req.user = await User.findById(decoded.id).select("-password");
             }

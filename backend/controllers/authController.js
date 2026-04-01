@@ -20,12 +20,13 @@ const loginUser = async (req, res) => {
         const adminPassword = process.env.ADMIN_PASSWORD;
 
         if (email === adminEmail && password === adminPassword) {
+            const adminId = "65f1a2b2c3d4e5f6a7b8c9d0"; // Valid 24-char hex string
             return res.json({
-                _id: "admin-id",
+                _id: adminId,
                 fullName: "Administrator",
                 email: adminEmail,
                 role: "admin",
-                token: generateToken("admin-id"),
+                token: generateToken(adminId),
             });
         }
 
