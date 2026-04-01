@@ -1,159 +1,200 @@
 import React, { useState, useEffect } from 'react';
-import {
-    PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend,
-    BarChart, Bar, XAxis, YAxis, CartesianGrid
-} from 'recharts';
-import { BarChart3, PieChart as PieChartIcon, TrendingUp, Users, CheckCircle2, AlertCircle, FileText, Download, Calendar, ArrowRight, Filter, X } from 'lucide-react';
+import { FileText, Download, Filter, X, Search, CalendarDays } from 'lucide-react';
 
 const Reports = () => {
-    const [attendanceData, setAttendanceData] = useState([]);
-    const [activityData, setActivityData] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
+    // Dropdown Data
+    const [childrenList, setChildrenList] = useState([]);
+    
     // Filter States
-    const [reportType, setReportType] = useState('child');
+    const [selectedChildId, setSelectedChildId] = useState('all');
+    const [reportType, setReportType] = useState('attendance');
     const [timeRange, setTimeRange] = useState('daily');
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [reportDate, setReportDate] = useState(getInitialDate('daily'));
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showDropdown, setShowDropdown] = useState(false);
 
     // Result States
-    const [reportLoading, setReportLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [reportResult, setReportResult] = useState(null);
+    const [error, setError] = useState(null);
 
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005';
 
+    function getInitialDate(range) {
+        const d = new Date();
+        if (range === 'daily') {
+            return d.toISOString().split('T')[0];
+        } else if (range === 'weekly') {
+            // week string YYYY-Www
+            const startDate = new Date(d.getFullYear(), 0, 1);
+            const days = Math.floor((d - startDate) / (24 * 60 * 60 * 1000));
+            const weekNumber = Math.ceil(days / 7);
+            return `${d.getFullYear()}-W${weekNumber.toString().padStart(2, '0')}`;
+        } else if (range === 'monthly') {
+            return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+        }
+        return '';
+    }
+
+    // Update default date when range changes
     useEffect(() => {
-        const fetchDashboardSummary = async () => {
+        setReportDate(getInitialDate(timeRange));
+    }, [timeRange]);
+
+    useEffect(() => {
+        const fetchChildren = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const [attendanceRes, activityRes] = await Promise.all([
-                    fetch(`${apiUrl}/api/reports/child-attendance`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    }),
-                    fetch(`${apiUrl}/api/reports/staff-activity`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    })
-                ]);
-
-                const attendanceResult = await attendanceRes.json();
-                const activityResult = await activityRes.json();
-
-                if (attendanceResult.success) {
-                    const { present, absent } = attendanceResult.data;
-                    setAttendanceData([
-                        { name: 'Present', value: present, color: '#10B981' },
-                        { name: 'Absent', value: absent, color: '#F43F5E' }
-                    ]);
-                }
-
-                if (activityResult.success) {
-                    setActivityData(activityResult.data);
+                // Use the children endpoint
+                const res = await fetch(`${apiUrl}/api/children`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.success || Array.isArray(data)) {
+                    // API might return array directly or embedded in success response
+                    const list = Array.isArray(data) ? data : data.data || [];
+                    setChildrenList(list);
                 }
             } catch (err) {
-                console.error('Error fetching summaries:', err);
-                setError('Failed to load dashboard summaries.');
-            } finally {
-                setLoading(false);
+                console.error('Error fetching children:', err);
             }
         };
 
-        fetchDashboardSummary();
+        fetchChildren();
     }, [apiUrl]);
 
     const handleGenerateReport = async () => {
-        setReportLoading(true);
+        setLoading(true);
+        setError(null);
         setReportResult(null);
         try {
             const token = localStorage.getItem('token');
             const queryParams = new URLSearchParams({
+                childId: selectedChildId,
                 type: reportType,
                 range: timeRange,
-                date: selectedDate,
-                month: selectedMonth,
-                year: selectedYear
+                date: reportDate
             });
 
-            const response = await fetch(`${apiUrl}/api/reports/attendance?${queryParams}`, {
+            const response = await fetch(`${apiUrl}/api/reports/generate?${queryParams}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const result = await response.json();
             if (result.success) {
-                setReportResult(result.data);
+                setReportResult(result.data.records);
             } else {
-                alert(result.message || 'Failed to generate report');
+                setError(result.message || 'Failed to generate report');
             }
         } catch (err) {
             console.error('Error generating report:', err);
-            alert('An error occurred while generating the report.');
+            setError('An error occurred while generating the report.');
         } finally {
-            setReportLoading(false);
+            setLoading(false);
         }
     };
 
     const exportToCSV = () => {
-        if (!reportResult || !reportResult.records.length) return;
+        if (!reportResult || !reportResult.length) return;
 
-        const headers = ['Name', 'Date', 'Status', 'Marked By', 'Time', 'Remarks'];
-        const csvRows = [
-            headers.join(','),
-            ...reportResult.records.map(row =>
-                [row.name, row.date, row.status, row.markedBy, row.time, `"${row.remarks}"`].join(',')
-            )
-        ].join('\n');
+        let headers = [];
+        let csvRows = [];
+        
+        if (reportType === 'attendance') {
+            headers = ['Name', 'Date', 'Status', 'Marked By'];
+            csvRows = reportResult.map(row => 
+                [row.name, row.date, row.status, row.markedBy].join(',')
+            );
+        } else {
+            headers = ['Name', 'Date', 'Activity', 'Status', 'Rating'];
+            csvRows = reportResult.map(row => 
+                [row.name, row.date, row.activity, row.status, row.rating].join(',')
+            );
+        }
 
-        const blob = new Blob([csvRows], { type: 'text/csv' });
+        const csvString = [headers.join(','), ...csvRows].join('\n');
+        const blob = new Blob([csvString], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `attendance_report_${reportType}_${timeRange}.csv`;
+        a.download = `report_${reportType}_${timeRange}.csv`;
         a.click();
     };
 
     const exportToPDF = () => {
-        window.print(); // Simple PDF generation for now
+        window.print();
     };
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-[60vh]">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
-                    <p className="text-gray-500 font-medium animate-pulse">Generating analytical reports...</p>
-                </div>
-            </div>
-        );
-    }
+    const filteredChildren = childrenList.filter(child => 
+        child.childName?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
-    if (error) {
-        return (
-            <div className="flex items-center justify-center min-h-[60vh]">
-                <div className="text-center space-y-4">
-                    <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto">
-                        <AlertCircle size={32} />
-                    </div>
-                    <p className="text-gray-600 font-medium">{error}</p>
-                </div>
-            </div>
-        );
-    }
+    const getSelectedChildName = () => {
+        if (selectedChildId === 'all') return 'All Children';
+        const child = childrenList.find(c => c._id === selectedChildId);
+        return child ? child.childName : 'Unknown Child';
+    };
 
     return (
         <div className="space-y-8 animate-in fade-in duration-700">
-            {/* Filters Section */}
+            {/* Filter Section */}
             <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-8">
                 <div className="flex items-center gap-4 mb-2">
                     <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center">
                         <Filter size={24} />
                     </div>
                     <div>
-                        <h3 className="text-xl font-black text-gray-900">Advanced Filters</h3>
-                        <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">Generate Custom Reports</p>
+                        <h3 className="text-xl font-black text-gray-900">Dynamic Reports</h3>
+                        <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">Generate Custom Analytics</p>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
+                    {/* Child Selection (Searchable Dropdown) */}
+                    <div className="space-y-2 relative">
+                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Select Child</label>
+                        <div className="relative">
+                            <div 
+                                onClick={() => setShowDropdown(!showDropdown)}
+                                className="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-700 cursor-pointer flex justify-between items-center"
+                            >
+                                <span>{getSelectedChildName()}</span>
+                            </div>
+                            
+                            {showDropdown && (
+                                <div className="absolute z-10 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl max-h-60 overflow-y-auto">
+                                    <div className="p-3">
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                            <input 
+                                                type="text" 
+                                                placeholder="Search children..."
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                                className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm font-medium outline-none"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div 
+                                        onClick={() => { setSelectedChildId('all'); setShowDropdown(false); }}
+                                        className={`px-4 py-3 cursor-pointer hover:bg-purple-50 transition-colors font-bold ${selectedChildId === 'all' ? 'text-purple-600 bg-purple-50/50' : 'text-gray-700'}`}
+                                    >
+                                        All Children
+                                    </div>
+                                    {filteredChildren.map(child => (
+                                        <div 
+                                            key={child._id}
+                                            onClick={() => { setSelectedChildId(child._id); setShowDropdown(false); }}
+                                            className={`px-4 py-3 cursor-pointer hover:bg-purple-50 transition-colors font-bold ${selectedChildId === child._id ? 'text-purple-600 bg-purple-50/50' : 'text-gray-700'}`}
+                                        >
+                                            {child.childName}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Report Type */}
                     <div className="space-y-2">
                         <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Report Type</label>
                         <select
@@ -161,11 +202,12 @@ const Reports = () => {
                             onChange={(e) => setReportType(e.target.value)}
                             className="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-700 focus:ring-2 focus:ring-purple-100 outline-none appearance-none cursor-pointer"
                         >
-                            <option value="child">Child Attendance</option>
-                            <option value="staff">Staff Attendance</option>
+                            <option value="attendance">Attendance Report</option>
+                            <option value="activity">Activity Report</option>
                         </select>
                     </div>
 
+                    {/* Time Range */}
                     <div className="space-y-2">
                         <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Time Range</label>
                         <select
@@ -174,79 +216,56 @@ const Reports = () => {
                             className="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-700 focus:ring-2 focus:ring-purple-100 outline-none appearance-none cursor-pointer"
                         >
                             <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
                             <option value="monthly">Monthly</option>
-                            <option value="yearly">Yearly</option>
                         </select>
                     </div>
 
+                    {/* Date Picker */}
                     <div className="space-y-2">
-                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Select Period</label>
-                        {timeRange === 'daily' && (
-                            <input
-                                type="date"
-                                value={selectedDate}
-                                onChange={(e) => setSelectedDate(e.target.value)}
-                                className="w-full px-4 py-[14px] bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-700 outline-none"
-                            />
-                        )}
-                        {timeRange === 'monthly' && (
-                            <div className="flex gap-2">
-                                <select
-                                    value={selectedMonth}
-                                    onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                                    className="flex-1 px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-700 outline-none appearance-none"
-                                >
-                                    {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((m, i) => (
-                                        <option key={m} value={i}>{m}</option>
-                                    ))}
-                                </select>
-                                <input
-                                    type="number"
-                                    value={selectedYear}
-                                    onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                    className="w-24 px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-700 outline-none"
-                                />
-                            </div>
-                        )}
-                        {timeRange === 'yearly' && (
-                            <input
-                                type="number"
-                                value={selectedYear}
-                                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                className="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-700 outline-none"
-                            />
-                        )}
+                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Select Date</label>
+                        <input
+                            type={timeRange === 'daily' ? 'date' : timeRange === 'weekly' ? 'week' : 'month'}
+                            value={reportDate}
+                            onChange={(e) => setReportDate(e.target.value)}
+                            className="w-full px-4 py-[14px] bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-700 outline-none"
+                        />
                     </div>
+                </div>
 
-                    <div className="flex items-end">
-                        <button
-                            onClick={handleGenerateReport}
-                            disabled={reportLoading}
-                            className="w-full py-4 bg-gray-900 text-white font-black rounded-2xl uppercase tracking-widest hover:bg-black transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 shadow-xl shadow-gray-200"
-                        >
-                            {reportLoading ? (
-                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                            ) : (
-                                <FileText size={18} />
-                            )}
-                            Generate Report
-                        </button>
-                    </div>
+                <div className="flex justify-end pt-4">
+                    <button
+                        onClick={handleGenerateReport}
+                        disabled={loading}
+                        className="px-8 py-4 bg-gray-900 text-white font-black rounded-2xl uppercase tracking-widest hover:bg-black transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2 shadow-xl shadow-gray-200"
+                    >
+                        {loading ? (
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        ) : (
+                            <FileText size={18} />
+                        )}
+                        Generate Report
+                    </button>
                 </div>
             </div>
 
-            {/* Generated Report Results */}
+            {/* Generated Report View */}
             {reportResult && (
-                <div className="space-y-8 animate-in slide-in-from-bottom-8 duration-700">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <h2 className="text-2xl font-black text-gray-900 capitalize">
-                                {reportType} Attendance: {timeRange} Report
+                <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-8 animate-in slide-in-from-bottom-8 duration-700">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="space-y-1">
+                            <h2 className="text-2xl font-black text-gray-900 capitalize flex items-center gap-3">
+                                {getSelectedChildName()} 
+                                <span className="px-3 py-1 bg-purple-100 text-purple-700 text-[10px] font-black rounded-full uppercase tracking-tighter">
+                                    {reportType}
+                                </span>
                             </h2>
-                            <div className="px-3 py-1 bg-purple-100 text-purple-700 text-[10px] font-black rounded-full uppercase tracking-tighter">
-                                {reportResult.records.length} Records
-                            </div>
+                            <p className="text-sm text-gray-500 font-bold flex items-center gap-2">
+                                <CalendarDays size={16} />
+                                {timeRange} Report ({reportDate})
+                            </p>
                         </div>
+
                         <div className="flex gap-3">
                             <button
                                 onClick={exportToCSV}
@@ -260,7 +279,7 @@ const Reports = () => {
                                 className="px-6 py-3 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-black transition-all active:scale-95 shadow-lg shadow-gray-200"
                             >
                                 <FileText size={14} />
-                                PDF
+                                Print PDF
                             </button>
                             <button
                                 onClick={() => setReportResult(null)}
@@ -272,188 +291,84 @@ const Reports = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* summary Graph */}
-                        <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
-                            <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">Summary Chart</h3>
-                            <div className="h-[200px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie
-                                            data={[
-                                                { name: 'Present', value: reportResult.summary.present, color: '#10B981' },
-                                                { name: 'Absent', value: reportResult.summary.absent, color: '#F43F5E' }
-                                            ]}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={50}
-                                            outerRadius={80}
-                                            paddingAngle={5}
-                                            dataKey="value"
-                                        >
-                                            <Cell fill="#10B981" />
-                                            <Cell fill="#F43F5E" />
-                                        </Pie>
-                                        <Tooltip />
-                                    </PieChart>
-                                </ResponsiveContainer>
+                    {reportResult.length === 0 ? (
+                        <div className="py-20 flex flex-col items-center justify-center text-gray-400 font-medium space-y-4">
+                            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
+                                <FileText size={24} className="text-gray-300" />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="text-center p-4 bg-emerald-50 rounded-2xl">
-                                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Present</p>
-                                    <p className="text-xl font-black text-emerald-900">{reportResult.summary.present}</p>
-                                </div>
-                                <div className="text-center p-4 bg-rose-50 rounded-2xl">
-                                    <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest">Absent</p>
-                                    <p className="text-xl font-black text-rose-900">{reportResult.summary.absent}</p>
-                                </div>
-                            </div>
+                            <p>No data found for the selected criteria.</p>
                         </div>
-
-                        {/* results Table */}
-                        <div className="lg:col-span-2 bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                    ) : (
+                        <div className="border border-gray-100 rounded-3xl overflow-hidden">
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left">
                                     <thead className="bg-gray-50/50">
                                         <tr>
-                                            <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Name</th>
-                                            <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Date</th>
-                                            <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
-                                            <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Marked By</th>
-                                            <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Time</th>
+                                            <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Date</th>
+                                            {selectedChildId === 'all' && (
+                                                <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Child Name</th>
+                                            )}
+                                            {reportType === 'attendance' ? (
+                                                <>
+                                                    <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                                                    <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Marked By</th>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Activity</th>
+                                                    <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                                                    <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Rating</th>
+                                                </>
+                                            )}
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-50">
-                                        {reportResult.records.map((row, i) => (
+                                        {reportResult.map((row, i) => (
                                             <tr key={i} className="hover:bg-purple-50/20 transition-colors">
-                                                <td className="px-8 py-4 font-bold text-gray-900">{row.name}</td>
-                                                <td className="px-8 py-4 text-sm text-gray-500">{row.date}</td>
-                                                <td className="px-8 py-4">
-                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${row.status.toLowerCase() === 'present' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
-                                                        {row.status}
-                                                    </span>
-                                                </td>
-                                                <td className="px-8 py-4 text-sm text-gray-600 font-medium">{row.markedBy}</td>
-                                                <td className="px-8 py-4 text-right text-sm text-gray-400 font-bold tabular-nums">{row.time}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-500 font-medium">{row.date}</td>
+                                                {selectedChildId === 'all' && (
+                                                    <td className="px-6 py-4 font-bold text-gray-900">{row.name}</td>
+                                                )}
+                                                
+                                                {reportType === 'attendance' ? (
+                                                    <>
+                                                        <td className="px-6 py-4">
+                                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${row.status.toLowerCase() === 'present' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
+                                                                {row.status}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-sm text-gray-600 font-medium">{row.markedBy}</td>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <td className="px-6 py-4 font-medium text-gray-700">{row.activity}</td>
+                                                        <td className="px-6 py-4">
+                                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${row.status.toLowerCase() === 'completed' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-yellow-50 text-yellow-700 border-yellow-100'}`}>
+                                                                {row.status}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex gap-1">
+                                                                {[...Array(5)].map((_, idx) => (
+                                                                    <span key={idx} className={`text-sm ${idx < row.rating ? 'text-amber-400' : 'text-gray-200'}`}>★</span>
+                                                                ))}
+                                                            </div>
+                                                        </td>
+                                                    </>
+                                                )}
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
                             </div>
-                            {reportResult.records.length === 0 && (
-                                <div className="flex-1 flex items-center justify-center p-12 text-gray-400 font-medium italic">
-                                    No records found for the selected period.
-                                </div>
-                            )}
                         </div>
-                    </div>
+                    )}
                 </div>
             )}
-
-            {!reportResult && (
-                <div className="pt-8 border-t border-gray-100">
-                    <h2 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-3">
-                        <TrendingUp className="text-purple-600" />
-                        Dashboard Overview
-                    </h2>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {/* Child Attendance Chart */}
-                        <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center">
-                                    <PieChartIcon size={24} />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-black text-gray-900">Child Attendance</h3>
-                                    <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">Total Distribution</p>
-                                </div>
-                            </div>
-
-                            <div className="h-[300px] w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie
-                                            data={attendanceData}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={60}
-                                            outerRadius={100}
-                                            paddingAngle={5}
-                                            dataKey="value"
-                                        >
-                                            {attendanceData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={entry.color} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip
-                                            contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                                        />
-                                        <Legend verticalAlign="bottom" height={36} />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-50">
-                                <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
-                                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Present</p>
-                                    <p className="text-2xl font-black text-emerald-900">{attendanceData.find(d => d.name === 'Present')?.value || 0}</p>
-                                </div>
-                                <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100">
-                                    <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Absent</p>
-                                    <p className="text-2xl font-black text-rose-900">{attendanceData.find(d => d.name === 'Absent')?.value || 0}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Staff Activity Chart */}
-                        <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
-                                    <BarChart3 size={24} />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-black text-gray-900">Staff Productivity</h3>
-                                    <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">Completed Activities</p>
-                                </div>
-                            </div>
-
-                            <div className="h-[300px] w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={activityData}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
-                                        <XAxis
-                                            dataKey="name"
-                                            axisLine={false}
-                                            tickLine={false}
-                                            tick={{ fill: '#9CA3AF', fontSize: 12, fontWeight: 600 }}
-                                        />
-                                        <YAxis
-                                            axisLine={false}
-                                            tickLine={false}
-                                            tick={{ fill: '#9CA3AF', fontSize: 12, fontWeight: 600 }}
-                                        />
-                                        <Tooltip
-                                            cursor={{ fill: '#F9FAFB' }}
-                                            contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                                        />
-                                        <Bar dataKey="completedCount" fill="#6366F1" radius={[8, 8, 0, 0]} barSize={40} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-
-                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-indigo-600">
-                                        <CheckCircle2 size={20} />
-                                    </div>
-                                    <span className="text-sm font-bold text-gray-600">Total Activities Logged</span>
-                                </div>
-                                <span className="text-xl font-black text-gray-900">
-                                    {activityData.reduce((acc, curr) => acc + curr.completedCount, 0)}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
+            
+            {error && (
+                <div className="p-4 bg-red-50 text-red-600 border border-red-100 rounded-2xl flex items-center justify-center font-bold mt-4">
+                    {error}
                 </div>
             )}
         </div>

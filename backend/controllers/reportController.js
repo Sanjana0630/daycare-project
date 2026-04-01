@@ -143,8 +143,126 @@ const getAttendanceReport = async (req, res) => {
     }
 };
 
+// @desc    Generate dynamic report
+// @route   GET /api/reports/generate
+// @access  Private/Admin
+const generateDynamicReport = async (req, res) => {
+    const { childId, type, range, date } = req.query;
+
+    try {
+        let startDate, endDate;
+
+        if (range === 'daily') {
+            const parsedDate = new Date(date);
+            startDate = new Date(parsedDate);
+            startDate.setHours(0, 0, 0, 0);
+            endDate = new Date(parsedDate);
+            endDate.setHours(23, 59, 59, 999);
+        } else if (range === 'weekly') {
+            // date will be YYYY-Www, e.g. "2026-W14"
+            const year = parseInt(date.substring(0, 4));
+            const week = parseInt(date.substring(6));
+            
+            // Calculate start date of week
+            const simple = new Date(year, 0, 1 + (week - 1) * 7);
+            const dow = simple.getDay();
+            const ISOweekStart = simple;
+            if (dow <= 4)
+                ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+            else
+                ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+            
+            startDate = new Date(ISOweekStart);
+            startDate.setHours(0, 0, 0, 0);
+            
+            endDate = new Date(startDate);
+            endDate.setDate(endDate.getDate() + 6);
+            endDate.setHours(23, 59, 59, 999);
+        } else if (range === 'monthly') {
+            // date will be YYYY-MM
+            const [yearStr, monthStr] = date.split('-');
+            const year = parseInt(yearStr);
+            const month = parseInt(monthStr) - 1; // Month is 0-indexed
+            
+            startDate = new Date(year, month, 1);
+            endDate = new Date(year, month + 1, 0, 23, 59, 59, 999);
+        }
+
+        let query = {};
+        if (startDate && endDate) {
+            query.date = { $gte: startDate, $lte: endDate };
+        }
+        
+        if (childId && childId !== 'all') {
+            if (type === 'attendance') {
+                query.child = childId;
+            } else if (type === 'activity') {
+                query.childId = childId;
+            }
+        }
+
+        let records = [];
+
+        if (type === 'attendance') {
+            records = await Attendance.find(query)
+                .populate("child", "childName")
+                .populate("markedBy", "name")
+                .sort({ date: 1 });
+            
+            records = records.map(r => {
+                const recordDate = r.date ? new Date(r.date) : null;
+                const dateStr = recordDate && !isNaN(recordDate.getTime())
+                    ? recordDate.toISOString().split('T')[0]
+                    : 'Invalid Date';
+
+                return {
+                    name: r.child?.childName || 'Unknown',
+                    date: dateStr,
+                    status: r.status || '-',
+                    markedBy: r.markedBy?.name || 'System'
+                };
+            });
+        } else if (type === 'activity') {
+            const ChildDailyActivity = require("../models/ChildDailyActivity");
+            const activities = await ChildDailyActivity.find(query)
+                .populate("childId", "childName")
+                .populate("recordedBy", "name")
+                .sort({ date: 1 });
+            
+            // Flatten the activities sub-document array
+            activities.forEach(log => {
+                const recordDateStr = new Date(log.date).toISOString().split('T')[0];
+                const childName = log.childId?.childName || 'Unknown';
+                
+                if (log.activities && Array.isArray(log.activities)) {
+                    log.activities.forEach(act => {
+                        records.push({
+                            name: childName,
+                            date: recordDateStr,
+                            activity: act.activityName,
+                            status: act.completed ? 'Completed' : 'Pending',
+                            rating: act.rating || 0
+                        });
+                    });
+                }
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: {
+                records
+            }
+        });
+    } catch (error) {
+        console.error('Report Error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 module.exports = {
     getChildAttendanceReport,
     getStaffActivityReport,
-    getAttendanceReport
+    getAttendanceReport,
+    generateDynamicReport
 };
