@@ -42,6 +42,11 @@ const Reports = () => {
         setReportDate(getInitialDate(timeRange));
     }, [timeRange]);
 
+    // Clear report when filters change to force regeneration
+    useEffect(() => {
+        setReportResult(null);
+    }, [selectedChildId, reportType, timeRange, reportDate]);
+
     useEffect(() => {
         const fetchChildren = async () => {
             try {
