@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { FileText, Download, Filter, X, Search, CalendarDays } from 'lucide-react';
+import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 
 const Reports = () => {
     // Dropdown Data
@@ -133,6 +134,40 @@ const Reports = () => {
         const child = childrenList.find(c => c._id === selectedChildId);
         return child ? child.childName : 'Unknown Child';
     };
+
+    const getChartData = () => {
+        if (!reportResult || !reportResult.length) return [];
+        
+        if (reportType === 'attendance') {
+            const counts = reportResult.reduce((acc, curr) => {
+                const status = (curr.status || '').toLowerCase();
+                if (status === 'present') acc.present++;
+                else if (status === 'absent') acc.absent++;
+                return acc;
+            }, { present: 0, absent: 0 });
+
+            return [
+                { name: 'Present', value: counts.present, color: '#10B981' },
+                { name: 'Absent', value: counts.absent, color: '#F43F5E' }
+            ];
+        } else {
+            // Activity report - group by activity and count completion status or average rating
+            const activityStats = reportResult.reduce((acc, curr) => {
+                if (!acc[curr.activity]) {
+                    acc[curr.activity] = { name: curr.activity, completedCount: 0, total: 0 };
+                }
+                if (curr.status.toLowerCase() === 'completed') {
+                    acc[curr.activity].completedCount++;
+                }
+                acc[curr.activity].total++;
+                return acc;
+            }, {});
+            
+            return Object.values(activityStats);
+        }
+    };
+
+    const chartData = useMemo(() => getChartData(), [reportResult, reportType]);
 
     return (
         <div className="space-y-8 animate-in fade-in duration-700">
@@ -299,30 +334,107 @@ const Reports = () => {
                             <p>No data found for the selected criteria.</p>
                         </div>
                     ) : (
-                        <div className="border border-gray-100 rounded-3xl overflow-hidden">
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left">
-                                    <thead className="bg-gray-50/50">
-                                        <tr>
-                                            <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Date</th>
-                                            {selectedChildId === 'all' && (
-                                                <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Child Name</th>
-                                            )}
-                                            {reportType === 'attendance' ? (
-                                                <>
-                                                    <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
-                                                    <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Marked By</th>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Activity</th>
-                                                    <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
-                                                    <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Rating</th>
-                                                </>
-                                            )}
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-50">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            {/* Visual Summary */}
+                            <div className="lg:col-span-1 bg-gray-50/50 p-6 rounded-3xl border border-gray-100 flex flex-col justify-center items-center">
+                                <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-6 self-start w-full border-b border-gray-200 pb-2">
+                                    {reportType} Summary
+                                </h3>
+                                
+                                {reportType === 'attendance' ? (
+                                    <div className="w-full">
+                                        <div className="h-[200px] w-full">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <PieChart>
+                                                    <Pie
+                                                        data={chartData}
+                                                        cx="50%"
+                                                        cy="50%"
+                                                        innerRadius={50}
+                                                        outerRadius={80}
+                                                        paddingAngle={5}
+                                                        dataKey="value"
+                                                    >
+                                                        {chartData.map((entry, index) => (
+                                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                                        ))}
+                                                    </Pie>
+                                                    <RechartsTooltip 
+                                                        contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                                    />
+                                                    <Legend />
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4 mt-6">
+                                            <div className="p-4 bg-white rounded-2xl border border-emerald-100 shadow-sm text-center">
+                                                <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Present</p>
+                                                <p className="text-2xl font-black text-emerald-900">{chartData[0]?.value || 0}</p>
+                                            </div>
+                                            <div className="p-4 bg-white rounded-2xl border border-rose-100 shadow-sm text-center">
+                                                <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Absent</p>
+                                                <p className="text-2xl font-black text-rose-900">{chartData[1]?.value || 0}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="w-full">
+                                         <div className="h-[250px] w-full">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 0, left: 10, bottom: 0 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E5E7EB" />
+                                                    <XAxis type="number" hide />
+                                                    <YAxis 
+                                                        type="category" 
+                                                        dataKey="name" 
+                                                        axisLine={false} 
+                                                        tickLine={false}
+                                                        tick={{ fill: '#6B7280', fontSize: 10, fontWeight: 700 }}
+                                                        width={90}
+                                                    />
+                                                    <RechartsTooltip 
+                                                        cursor={{ fill: '#F3F4F6' }}
+                                                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                                    />
+                                                    <Bar dataKey="completedCount" name="Completed" fill="#8B5CF6" radius={[0, 4, 4, 0]} barSize={20} />
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                        <div className="mt-4 p-4 bg-white rounded-2xl border border-purple-100 text-center shadow-sm">
+                                            <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest mb-1">Total Activities</p>
+                                            <p className="text-2xl font-black text-purple-900">
+                                                {chartData.reduce((acc, curr) => acc + curr.total, 0)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Tabular Data */}
+                            <div className="lg:col-span-2 border border-gray-100 rounded-3xl overflow-hidden self-start">
+                                <div className="overflow-x-auto max-h-[400px]">
+                                    <table className="w-full text-left relative">
+                                        <thead className="bg-gray-50/90 backdrop-blur sticky top-0 z-10">
+                                            <tr>
+                                                <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Date</th>
+                                                {selectedChildId === 'all' && (
+                                                    <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Child Name</th>
+                                                )}
+                                                {reportType === 'attendance' ? (
+                                                    <>
+                                                        <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                                                        <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Marked By</th>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Activity</th>
+                                                        <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                                                        <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Rating</th>
+                                                    </>
+                                                )}
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-50">
                                         {reportResult.map((row, i) => (
                                             <tr key={i} className="hover:bg-purple-50/20 transition-colors">
                                                 <td className="px-6 py-4 text-sm text-gray-500 font-medium">{row.date}</td>
@@ -359,7 +471,8 @@ const Reports = () => {
                                             </tr>
                                         ))}
                                     </tbody>
-                                </table>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     )}
