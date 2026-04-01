@@ -6,7 +6,11 @@ const Staff = require("../models/Staff");
 const Child = require("../models/Child");
 const StaffAttendance = require("../models/StaffAttendance");
 const Report = require("../models/Report");
+const ChildDailyActivity = require("../models/ChildDailyActivity");
 
+// @desc    Get report by ID (Saved Report)
+// @route   GET /api/reports/:id
+// @access  Private
 // @desc    Get report by ID (Saved Report)
 // @route   GET /api/reports/:id
 // @access  Private
@@ -19,17 +23,155 @@ const getReportById = async (req, res) => {
             return res.status(404).json({ success: false, message: "Report not found." });
         }
 
-        // We can reuse the logic from generateFullReport by mocking the query params
-        req.query.childId = reportConfig.childId.toString();
-        req.query.range = reportConfig.range;
-        req.query.date = reportConfig.date;
+        // --- SECURITY CHECK (PARENTS ONLY) ---
+        if (req.user.role === 'parent') {
+            const childData = await Child.findById(reportConfig.childId);
+            if (!childData || childData.parent?.toString() !== req.user._id.toString()) {
+                return res.status(403).json({ success: false, message: "You are not authorized to view this report." });
+            }
+        }
 
-        return generateFullReport(req, res);
+        const reportData = await getUnifiedReportData(
+            reportConfig.childId.toString(),
+            reportConfig.range,
+            reportConfig.date
+        );
+
+        res.status(200).json({
+            success: true,
+            data: {
+                reportId: reportConfig._id,
+                ...reportData
+            }
+        });
     } catch (error) {
         console.error("Error fetching saved report:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+/**
+ * Core Logic: Generates unified report data from multiple models
+ * Reusable helper to avoid code duplication
+ */
+async function getUnifiedReportData(childId, range, date) {
+    let startDate, endDate;
+
+    // 1. Parse dates based on range
+    if (range === 'daily') {
+        const parsedDate = new Date(date);
+        startDate = new Date(parsedDate);
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(parsedDate);
+        endDate.setHours(23, 59, 59, 999);
+    } else if (range === 'weekly') {
+        const year = parseInt(date.substring(0, 4));
+        const week = parseInt(date.substring(6));
+        const simple = new Date(year, 0, 1 + (week - 1) * 7);
+        const dow = simple.getDay();
+        const ISOweekStart = simple;
+        if (dow <= 4) ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+        else ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+        
+        startDate = new Date(ISOweekStart);
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 6);
+        endDate.setHours(23, 59, 59, 999);
+    } else if (range === 'monthly') {
+        const [yearStr, monthStr] = date.split('-');
+        startDate = new Date(parseInt(yearStr), parseInt(monthStr) - 1, 1);
+        endDate = new Date(parseInt(yearStr), parseInt(monthStr), 0, 23, 59, 59, 999);
+    }
+
+    // 2. Build Base Queries
+    let childQuery = { date: { $gte: startDate, $lte: endDate } };
+    let childInfo = { name: "All Children", className: "All Classes", parentName: "N/A" };
+
+    if (childId && childId !== 'all') {
+        childQuery.child = childId;
+        const childData = await Child.findById(childId).populate('parent', 'name');
+        if (childData) {
+            childInfo = {
+                name: childData.childName,
+                className: childData.class || "Unassigned",
+                parentName: childData.parentName || childData.parent?.name || "Unknown",
+                parentId: childData.parent?._id || null
+            };
+        }
+    }
+
+    // 3. Fetch Attendance
+    let attendanceQuery = { ...childQuery };
+    if (childId && childId !== 'all') attendanceQuery.child = childId;
+
+    const attendanceRecords = await Attendance.find(attendanceQuery)
+        .populate("child", "childName")
+        .populate("markedBy", "name")
+        .sort({ date: 1 });
+
+    let summaryPresent = 0;
+    let summaryAbsent = 0;
+
+    const formattedAttendance = attendanceRecords.map(r => {
+        const status = r.status || '-';
+        if (status.toLowerCase() === 'present') summaryPresent++;
+        else if (status.toLowerCase() === 'absent') summaryAbsent++;
+        return {
+            name: r.child?.childName || 'Unknown',
+            date: r.date ? new Date(r.date).toISOString().split('T')[0] : 'Invalid Date',
+            status: status,
+            markedBy: r.markedBy?.name || 'System'
+        };
+    });
+
+    // 4. Fetch Activities
+    let activityQuery = { date: { $gte: startDate, $lte: endDate } };
+    if (childId && childId !== 'all') activityQuery.childId = childId;
+
+    const activityRecords = await ChildDailyActivity.find(activityQuery)
+        .populate("childId", "childName")
+        .populate("recordedBy", "name")
+        .sort({ date: 1 });
+
+    const formattedActivities = [];
+    let totalCompleted = 0;
+    let maxRatingSum = 0;
+    let maxRatingCount = 0;
+
+    activityRecords.forEach(log => {
+        const recordDateStr = new Date(log.date).toISOString().split('T')[0];
+        const childName = log.childId?.childName || 'Unknown';
+        if (log.activities && Array.isArray(log.activities)) {
+            log.activities.forEach(act => {
+                if (act.completed) totalCompleted++;
+                if (act.completed && act.rating > 0) {
+                    maxRatingSum += act.rating;
+                    maxRatingCount++;
+                }
+                formattedActivities.push({
+                    name: childName,
+                    date: recordDateStr,
+                    activity: act.activityName,
+                    status: act.completed ? 'Completed' : 'Pending',
+                    rating: act.rating || 0
+                });
+            });
+        }
+    });
+
+    return {
+        childInfo,
+        attendance: formattedAttendance,
+        activities: formattedActivities,
+        summary: {
+            presentDays: summaryPresent,
+            absentDays: summaryAbsent,
+            activitiesCompleted: totalCompleted,
+            averageRating: maxRatingCount > 0 ? (maxRatingSum / maxRatingCount).toFixed(1) : 0
+        }
+    };
+}
 
 // @desc    Get child attendance report
 // @route   GET /api/reports/child-attendance
@@ -293,139 +435,13 @@ const generateFullReport = async (req, res) => {
     const { childId, range, date } = req.query;
 
     try {
-        let startDate, endDate;
+        const reportData = await getUnifiedReportData(childId, range, date);
 
-        if (range === 'daily') {
-            const parsedDate = new Date(date);
-            startDate = new Date(parsedDate);
-            startDate.setHours(0, 0, 0, 0);
-            endDate = new Date(parsedDate);
-            endDate.setHours(23, 59, 59, 999);
-        } else if (range === 'weekly') {
-            const year = parseInt(date.substring(0, 4));
-            const week = parseInt(date.substring(6));
-            
-            const simple = new Date(year, 0, 1 + (week - 1) * 7);
-            const dow = simple.getDay();
-            const ISOweekStart = simple;
-            if (dow <= 4)
-                ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
-            else
-                ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
-            
-            startDate = new Date(ISOweekStart);
-            startDate.setHours(0, 0, 0, 0);
-            
-            endDate = new Date(startDate);
-            endDate.setDate(endDate.getDate() + 6);
-            endDate.setHours(23, 59, 59, 999);
-        } else if (range === 'monthly') {
-            const [yearStr, monthStr] = date.split('-');
-            const year = parseInt(yearStr);
-            const month = parseInt(monthStr) - 1;
-            
-            startDate = new Date(year, month, 1);
-            endDate = new Date(year, month + 1, 0, 23, 59, 59, 999);
-        }
-
-        let childQuery = { date: { $gte: startDate, $lte: endDate } };
-        
-        let childInfo = {
-            name: "All Children",
-            className: "All Classes",
-            parentName: "N/A"
-        };
-
-        if (childId && childId !== 'all') {
-            childQuery.child = childId;
-            
-            const childData = await Child.findById(childId).populate('parent', 'name');
-            if (childData) {
-                childInfo = {
-                    name: childData.childName,
-                    className: childData.class || "Unassigned",
-                    parentName: childData.parentName || childData.parent?.name || "Unknown",
-                    parentId: childData.parent?._id || null
-                };
-            }
-        }
-
-        // Fetch Attendance
-        let attendanceQuery = { ...childQuery };
-        if (childId && childId !== 'all') attendanceQuery.child = childId;
-
-        const attendanceRecords = await Attendance.find(attendanceQuery)
-            .populate("child", "childName")
-            .populate("markedBy", "name")
-            .sort({ date: 1 });
-            
-        let summaryPresent = 0;
-        let summaryAbsent = 0;
-            
-        const formattedAttendance = attendanceRecords.map(r => {
-            const status = r.status || '-';
-            if (status.toLowerCase() === 'present') summaryPresent++;
-            if (status.toLowerCase() === 'absent') summaryAbsent++;
-            
-            const recordDate = r.date ? new Date(r.date) : null;
-            return {
-                name: r.child?.childName || 'Unknown',
-                date: recordDate && !isNaN(recordDate.getTime()) ? recordDate.toISOString().split('T')[0] : 'Invalid Date',
-                status: status,
-                markedBy: r.markedBy?.name || 'System'
-            };
-        });
-
-        // Fetch Activities
-        const ChildDailyActivity = require("../models/ChildDailyActivity");
-        let activityQuery = { date: { $gte: startDate, $lte: endDate } };
-        if (childId && childId !== 'all') activityQuery.childId = childId;
-
-        const activityRecords = await ChildDailyActivity.find(activityQuery)
-            .populate("childId", "childName")
-            .populate("recordedBy", "name")
-            .sort({ date: 1 });
-            
-        const formattedActivities = [];
-        let totalCompleted = 0;
-        let maxRatingSum = 0;
-        let maxRatingCount = 0;
-            
-        activityRecords.forEach(log => {
-            const recordDateStr = new Date(log.date).toISOString().split('T')[0];
-            const childName = log.childId?.childName || 'Unknown';
-            
-            if (log.activities && Array.isArray(log.activities)) {
-                log.activities.forEach(act => {
-                    const isCompleted = act.completed;
-                    const actRating = act.rating || 0;
-                    
-                    if (isCompleted) totalCompleted++;
-                    if (isCompleted && actRating > 0) {
-                        maxRatingSum += actRating;
-                        maxRatingCount++;
-                    }
-
-                    formattedActivities.push({
-                        name: childName,
-                        date: recordDateStr,
-                        activity: act.activityName,
-                        status: isCompleted ? 'Completed' : 'Pending',
-                        rating: actRating
-                    });
-                });
-            }
-        });
-
-        const avgRating = maxRatingCount > 0 ? (maxRatingSum / maxRatingCount).toFixed(1) : 0;
-
-        // Save the report configuration to return an ID for notifications
+        // Save the report configuration to return an ID for notifications (Only if it's a specific child)
         let savedReportId = null;
         if (childId && childId !== 'all') {
             try {
-                // Ensure IDs are valid before creating
                 const adminId = req.user._id;
-                
                 if (mongoose.Types.ObjectId.isValid(childId) && mongoose.Types.ObjectId.isValid(adminId)) {
                     const newReport = await Report.create({
                         childId: new mongoose.Types.ObjectId(childId),
@@ -434,12 +450,9 @@ const generateFullReport = async (req, res) => {
                         generatedBy: new mongoose.Types.ObjectId(adminId)
                     });
                     savedReportId = newReport._id;
-                } else {
-                    console.warn("Invalid ID(s) provided for report creation. Skipping DB save.", { childId, adminId });
                 }
             } catch (saveErr) {
                 console.error("Failed to auto-save report config:", saveErr.message);
-                // We still return the report data so UI works, but notification won't have an ID
             }
         }
 
@@ -447,15 +460,7 @@ const generateFullReport = async (req, res) => {
             success: true,
             data: {
                 reportId: savedReportId,
-                childInfo,
-                attendance: formattedAttendance,
-                activities: formattedActivities,
-                summary: {
-                    presentDays: summaryPresent,
-                    absentDays: summaryAbsent,
-                    activitiesCompleted: totalCompleted,
-                    averageRating: avgRating
-                }
+                ...reportData
             }
         });
     } catch (error) {

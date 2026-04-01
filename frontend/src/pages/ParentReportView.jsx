@@ -116,7 +116,11 @@ const ParentReportView = () => {
                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Report Period</p>
                                 <div className="flex items-center gap-2">
                                     <CalendarDays size={18} className="text-purple-400" />
-                                    <p className="font-bold text-gray-900 text-lg">Detailed Summary</p>
+                                    <p className="font-bold text-gray-900 text-lg">
+                                        {reportResult.attendance?.[0]?.date && reportResult.attendance?.length > 1 
+                                            ? `${reportResult.attendance[0].date} to ${reportResult.attendance[reportResult.attendance.length - 1].date}`
+                                            : reportResult.attendance?.[0]?.date || 'Recent Period'}
+                                    </p>
                                 </div>
                             </div>
                         </div>
