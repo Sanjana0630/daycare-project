@@ -31,6 +31,7 @@ import ParentFeedback from './pages/ParentFeedback';
 import ParentNotifications from './pages/ParentNotifications';
 import ParentReportView from './pages/ParentReportView';
 import About from './pages/About';
+import Features from './pages/Features';
 
 // Security Guards
 const ProtectedRoute = ({ children }) => {
@@ -90,6 +91,7 @@ function App() {
         {/* Public Landing Page */}
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
+        <Route path="/features" element={<Features />} />
 
         {/* Public Authentication Routes - No DashboardLayout */}
         <Route path="/login" element={<Login />} />

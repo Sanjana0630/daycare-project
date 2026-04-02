@@ -32,7 +32,7 @@ const About = () => {
     const navLinks = [
         { name: 'Home', path: '/' },
         { name: 'About', path: '/about' },
-        { name: 'Features', path: '#' },
+        { name: 'Features', path: '/features' },
         { name: 'Contact', path: '#' },
     ];
 
