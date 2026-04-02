@@ -25,10 +25,10 @@ const Home = () => {
     }, []);
 
     const navLinks = [
-        { name: 'Home', href: '#home' },
-        { name: 'About', href: '#' },
-        { name: 'Features', href: '#' },
-        { name: 'Contact', href: '#' },
+        { name: 'Home', path: '/' },
+        { name: 'About', path: '/about' },
+        { name: 'Features', path: '#' },
+        { name: 'Contact', path: '#' },
     ];
 
     return (
@@ -50,13 +50,13 @@ const Home = () => {
                     {/* Desktop Nav */}
                     <div className="hidden md:flex items-center space-x-12">
                         {navLinks.map((link) => (
-                            <a
+                            <Link
                                 key={link.name}
-                                href={link.href}
+                                to={link.path}
                                 className="text-sm font-bold text-gray-400 hover:text-purple-600 transition-all tracking-wide uppercase"
                             >
                                 {link.name}
-                            </a>
+                            </Link>
                         ))}
                         <Link
                             to="/login"
@@ -82,14 +82,14 @@ const Home = () => {
                     }`}
                 >
                     {navLinks.map((link) => (
-                        <a
+                        <Link
                             key={link.name}
-                            href={link.href}
+                            to={link.path}
                             className="text-gray-900 hover:text-purple-600"
                             onClick={() => setIsMenuOpen(false)}
                         >
                             {link.name}
-                        </a>
+                        </Link>
                     ))}
                     <Link
                         to="/login"
