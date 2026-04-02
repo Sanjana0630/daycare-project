@@ -17,6 +17,7 @@ import {
     Calendar,
     Activity,
     Bell,
+    Star,
     ChevronDown,
     ChevronUp
 } from 'lucide-react';
@@ -72,6 +73,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         { name: 'Attendance', icon: Calendar, path: '/parent/attendance' },
         { name: 'Activities', icon: Activity, path: '/parent/activities' },
         { name: 'Fees', icon: CreditCard, path: '/parent/fees' },
+        { name: 'Feedback', icon: Star, path: '/parent/feedback' },
         { name: 'Notifications', icon: Bell, path: '/parent/notifications' },
         { name: 'Settings', icon: Settings, path: '/parent/settings' },
     ];

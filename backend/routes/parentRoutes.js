@@ -8,6 +8,8 @@ const {
     getParentActivitiesDirect,
     getParentFeeStatus,
     recordParentPayment,
+    submitFeedback,
+    getMyFeedback
 } = require("../controllers/parentController");
 const { protect, parent } = require("../middleware/authMiddleware");
 
@@ -21,5 +23,7 @@ router.get("/fees/child/:id", getChildFees);
 router.get("/activities/parent", getParentActivitiesDirect);
 router.get("/fees/status", getParentFeeStatus);
 router.post("/fees/pay", recordParentPayment);
+router.post("/feedback", submitFeedback);
+router.get("/feedback", getMyFeedback);
 
 module.exports = router;

@@ -5,6 +5,7 @@ const Fee = require("../models/Fee");
 const FeeStructure = require("../models/FeeStructure");
 const Payment = require("../models/Payment");
 const { calculateFee } = require("../utils/feeCalculator");
+const Feedback = require("../models/Feedback");
 
 // @desc    Get linked child for parent
 // @route   GET /api/parent/child
@@ -305,6 +306,57 @@ const recordParentPayment = async (req, res) => {
     }
 };
 
+// @desc    Submit feedback
+// @route   POST /api/parent/feedback
+// @access  Private/Parent
+const submitFeedback = async (req, res) => {
+    try {
+        const { childId, rating, category, message } = req.body;
+
+        if (!childId || !rating || !category || !message) {
+            return res.status(400).json({ success: false, message: "Please provide all required fields" });
+        }
+
+        const feedback = await Feedback.create({
+            parent: req.user._id,
+            child: childId,
+            rating,
+            category,
+            message
+        });
+
+        res.status(201).json({
+            success: true,
+            message: "Feedback submitted successfully",
+            data: feedback
+        });
+    } catch (error) {
+        console.error('Error in submitFeedback:', error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
+// @desc    Get my feedback
+// @route   GET /api/parent/feedback
+// @access  Private/Parent
+const getMyFeedback = async (req, res) => {
+    try {
+        const feedback = await Feedback.find({ parent: req.user._id })
+            .populate("child", "childName")
+            .sort({ createdAt: -1 })
+            .lean();
+
+        res.status(200).json({
+            success: true,
+            count: feedback.length,
+            data: feedback
+        });
+    } catch (error) {
+        console.error('Error in getMyFeedback:', error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
 module.exports = {
     getChildForParent,
     getChildAttendance,
@@ -312,5 +364,7 @@ module.exports = {
     getChildFees,
     getParentActivitiesDirect,
     getParentFeeStatus,
-    recordParentPayment
+    recordParentPayment,
+    submitFeedback,
+    getMyFeedback
 };

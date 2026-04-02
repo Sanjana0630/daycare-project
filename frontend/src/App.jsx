@@ -21,10 +21,13 @@ import StaffProfile from './pages/StaffProfile';
 import Reports from './pages/Reports';
 import EditChild from './pages/EditChild';
 import ChildProgress from './pages/ChildProgress';
+import Parents from './pages/Parents';
+import ParentProfile from './pages/ParentProfile';
 import ParentAttendance from './pages/ParentAttendance';
 import ParentActivities from './pages/ParentActivities';
 import Fees from './pages/Fees';
 import ParentFees from './pages/ParentFees';
+import ParentFeedback from './pages/ParentFeedback';
 import ParentNotifications from './pages/ParentNotifications';
 import ParentReportView from './pages/ParentReportView';
 
@@ -111,7 +114,8 @@ function App() {
                   <Route path="/admin/staff/approve" element={<RoleBasedRoute allowedRoles={["admin"]}><StaffApproval /></RoleBasedRoute>} />
                   <Route path="/admin/attendance/staff" element={<RoleBasedRoute allowedRoles={["admin"]}><StaffAttendance /></RoleBasedRoute>} />
                   <Route path="/admin/attendance/children" element={<RoleBasedRoute allowedRoles={["admin"]}><ChildrenAttendance /></RoleBasedRoute>} />
-                  <Route path="/parents" element={<RoleBasedRoute allowedRoles={["admin"]}><div className="p-8 text-gray-500 font-medium">Parents Management</div></RoleBasedRoute>} />
+                  <Route path="/parents" element={<RoleBasedRoute allowedRoles={["admin"]}><Parents /></RoleBasedRoute>} />
+                  <Route path="/admin/parents/:id" element={<RoleBasedRoute allowedRoles={["admin"]}><ParentProfile /></RoleBasedRoute>} />
                   <Route path="/attendance" element={<RoleBasedRoute allowedRoles={["admin"]}><div className="p-8 text-gray-500 font-medium">Admin Attendance</div></RoleBasedRoute>} />
                   <Route path="/fees" element={<RoleBasedRoute allowedRoles={["admin"]}><Fees /></RoleBasedRoute>} />
                   <Route path="/reports" element={<RoleBasedRoute allowedRoles={["admin"]}><Reports /></RoleBasedRoute>} />
@@ -133,6 +137,7 @@ function App() {
                   <Route path="/parent/attendance" element={<RoleBasedRoute allowedRoles={["parent"]}><ParentAttendance /></RoleBasedRoute>} />
                   <Route path="/parent/activities" element={<RoleBasedRoute allowedRoles={["parent"]}><ParentActivities /></RoleBasedRoute>} />
                   <Route path="/parent/fees" element={<RoleBasedRoute allowedRoles={["parent"]}><ParentFees /></RoleBasedRoute>} />
+                  <Route path="/parent/feedback" element={<RoleBasedRoute allowedRoles={["parent"]}><ParentFeedback /></RoleBasedRoute>} />
                   <Route path="/parent/notifications" element={<RoleBasedRoute allowedRoles={["parent"]}><ParentNotifications /></RoleBasedRoute>} />
                   <Route path="/parent/report/:reportId" element={<RoleBasedRoute allowedRoles={["parent"]}><ParentReportView /></RoleBasedRoute>} />
                   <Route path="/parent/settings" element={<RoleBasedRoute allowedRoles={["parent"]}><Placeholder title="Parent Settings" /></RoleBasedRoute>} />

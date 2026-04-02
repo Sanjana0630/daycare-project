@@ -4,6 +4,7 @@ const StaffAttendance = require("../models/StaffAttendance");
 const Attendance = require("../models/Attendance");
 const Child = require("../models/Child");
 const ChildDailyActivity = require("../models/ChildDailyActivity");
+const Feedback = require("../models/Feedback");
 
 // Consistent date normalization helper (matches staffController)
 const getNormalizedDate = (dateParam) => {
@@ -449,6 +450,102 @@ const getChildYearlyActivityStats = async (req, res) => {
     }
 };
 
+// @desc    Get all users with role parent
+// @route   GET /api/admin/parents
+// @access  Private/Admin
+const getParents = async (req, res) => {
+    try {
+        const parents = await User.find({ role: "parent" }).select("-password").lean();
+        
+        // Enhance with children count
+        const parentIds = parents.map(p => p._id);
+        const children = await Child.find({ parent: { $in: parentIds } }).lean();
+        
+        const enhancedParents = parents.map(parent => {
+            const myChildren = children.filter(c => c.parent?.toString() === parent._id.toString());
+            return {
+                ...parent,
+                childrenCount: myChildren.length,
+                children: myChildren.map(c => ({ _id: c._id, childName: c.childName }))
+            };
+        });
+
+        res.status(200).json({
+            success: true,
+            count: enhancedParents.length,
+            data: enhancedParents,
+        });
+    } catch (error) {
+        console.error('Error in getParents:', error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
+// @desc    Get feedback for a specific parent
+// @route   GET /api/admin/parents/:id/feedback
+// @access  Private/Admin
+const getParentFeedback = async (req, res) => {
+    try {
+        const feedback = await Feedback.find({ parent: req.params.id })
+            .populate("child", "childName")
+            .sort({ createdAt: -1 })
+            .lean();
+
+        res.status(200).json({
+            success: true,
+            count: feedback.length,
+            data: feedback,
+        });
+    } catch (error) {
+        console.error('Error in getParentFeedback:', error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
+// @desc    Toggle feedback visibility
+// @route   PATCH /api/admin/feedback/:id/toggle-visibility
+// @access  Private/Admin
+const toggleFeedbackVisibility = async (req, res) => {
+    try {
+        const feedback = await Feedback.findById(req.params.id);
+        if (!feedback) {
+            return res.status(404).json({ success: false, message: "Feedback not found" });
+        }
+
+        feedback.isHidden = !feedback.isHidden;
+        await feedback.save();
+
+        res.status(200).json({
+            success: true,
+            message: `Feedback ${feedback.isHidden ? 'hidden' : 'shown'} successfully`,
+            data: feedback,
+        });
+    } catch (error) {
+        console.error('Error in toggleFeedbackVisibility:', error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
+// @desc    Delete feedback entry
+// @route   DELETE /api/admin/feedback/:id
+// @access  Private/Admin
+const deleteFeedbackEntry = async (req, res) => {
+    try {
+        const feedback = await Feedback.findByIdAndDelete(req.params.id);
+        if (!feedback) {
+            return res.status(404).json({ success: false, message: "Feedback not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Feedback deleted successfully",
+        });
+    } catch (error) {
+        console.error('Error in deleteFeedbackEntry:', error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
 module.exports = {
     getStaffUsers,
     upsertStaffAttendance,
@@ -463,5 +560,9 @@ module.exports = {
     getStaffAttendanceHistory,
     getChildDailyActivityLog,
     getChildMonthlyActivityStats,
-    getChildYearlyActivityStats
+    getChildYearlyActivityStats,
+    getParents,
+    getParentFeedback,
+    toggleFeedbackVisibility,
+    deleteFeedbackEntry
 };

@@ -15,7 +15,11 @@ const {
     getStaffAttendanceHistory,
     getChildDailyActivityLog,
     getChildMonthlyActivityStats,
-    getChildYearlyActivityStats
+    getChildYearlyActivityStats,
+    getParents,
+    getParentFeedback,
+    toggleFeedbackVisibility,
+    deleteFeedbackEntry
 } = require("../controllers/adminController");
 
 router.get("/staff", protect, admin, getStaffUsers);
@@ -32,5 +36,11 @@ router.get("/staff-attendance/history/:staffId", protect, admin, getStaffAttenda
 router.get("/child-activity/:childId", protect, admin, getChildDailyActivityLog);
 router.get("/child-activity/monthly/:childId", protect, admin, getChildMonthlyActivityStats);
 router.get("/child-activity/yearly/:childId", protect, admin, getChildYearlyActivityStats);
+
+// Parent Management & Feedback
+router.get("/parents", protect, admin, getParents);
+router.get("/parents/:id/feedback", protect, admin, getParentFeedback);
+router.patch("/feedback/:id/toggle-visibility", protect, admin, toggleFeedbackVisibility);
+router.delete("/feedback/:id", protect, admin, deleteFeedbackEntry);
 
 module.exports = router;
