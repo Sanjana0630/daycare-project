@@ -14,6 +14,8 @@ import {
     X,
     Users
 } from 'lucide-react';
+import AboutImage1 from '../assets/about_daycare.png';
+import AboutImage2 from '../assets/daycare_activities.png';
 
 const About = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -159,16 +161,37 @@ const About = () => {
                     </div>
 
                     <div className="relative flex justify-center lg:justify-end animate-in fade-in slide-in-from-right-8 duration-1000 delay-200">
-                        <div className="absolute inset-0 bg-gradient-to-tr from-purple-100 to-pink-100 rounded-full blur-3xl opacity-30 transform -rotate-12 scale-110"></div>
-                        <div className="relative z-10 w-full max-w-[480px] bg-white p-4 rounded-[3.5rem] shadow-2xl shadow-purple-900/5 rotate-2 group hover:rotate-0 transition-transform duration-700">
-                            <div className="bg-gray-50 rounded-[3rem] p-12 aspect-square flex items-center justify-center relative overflow-hidden group">
-                                <Users size={120} className="text-purple-200 group-hover:scale-110 transition-transform duration-1000" />
-                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-purple-100/50 rounded-full blur-2xl"></div>
-                                <Heart size={64} className="absolute text-pink-500 animate-bounce" fill="currentColor" />
+                        {/* Main Image Box */}
+                        <div className="absolute inset-x-0 bottom-0 top-1/2 bg-gradient-to-tr from-purple-100 to-pink-100 rounded-full blur-[120px] opacity-20 transform -rotate-12 scale-110"></div>
+                        
+                        <div className="relative z-10 w-full max-w-[420px] group transition-all duration-700">
+                            {/* Primary Image */}
+                            <div className="relative bg-white p-3 rounded-[3.5rem] shadow-2xl shadow-purple-900/10 -rotate-2 group-hover:rotate-0 transition-transform duration-700 border border-purple-50">
+                                <div className="bg-gray-50 rounded-[3rem] overflow-hidden aspect-[4/5] relative group-hover:shadow-inner transition-all">
+                                    <img 
+                                        src={AboutImage1} 
+                                        alt="Daycare Interior" 
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-purple-900/20 to-transparent"></div>
+                                </div>
                             </div>
-                        </div>
-                        <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-white rounded-[2rem] shadow-xl flex items-center justify-center text-amber-500 border border-amber-50 animate-float">
-                            <Star size={36} fill="currentColor" />
+                            
+                            {/* Secondary Image - Overlapping */}
+                            <div className="absolute -bottom-16 -right-12 w-48 h-48 bg-white p-2.5 rounded-[2.5rem] shadow-2xl shadow-pink-900/10 rotate-6 group-hover:rotate-3 transition-transform duration-1000 border border-pink-50 animate-float">
+                                <div className="bg-gray-50 rounded-[2rem] overflow-hidden w-full h-full">
+                                    <img 
+                                        src={AboutImage2} 
+                                        alt="Daycare Activities" 
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Floating Heart Icon Accent */}
+                            <div className="absolute -top-6 -left-6 w-20 h-20 bg-white rounded-[2rem] shadow-2xl flex items-center justify-center text-pink-500 animate-pulse border border-pink-50">
+                                <Heart size={36} fill="currentColor" />
+                            </div>
                         </div>
                     </div>
                 </div>
