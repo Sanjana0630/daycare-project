@@ -35,8 +35,9 @@ const Contact = () => {
 
     const navLinks = [
         { name: 'Home', path: '/' },
-        { name: 'About', path: '/about' },
         { name: 'Features', path: '/features' },
+        { name: 'About', path: '/about' },
+        { name: 'Reviews', path: '/reviews' },
         { name: 'Contact', path: '/contact' },
     ];
 
@@ -81,9 +82,8 @@ const Contact = () => {
         <div className="min-h-screen bg-white font-sans text-gray-900 selection:bg-purple-100 selection:text-purple-900 overflow-x-hidden">
             {/* Navbar */}
             <nav
-                className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-                    scrolled ? 'bg-white/70 backdrop-blur-xl border-b border-gray-100 py-3' : 'bg-transparent py-8'
-                }`}
+                className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'bg-white/70 backdrop-blur-xl border-b border-gray-100 py-3' : 'bg-transparent py-8'
+                    }`}
             >
                 <div className="container mx-auto px-6 md:px-12 flex items-center justify-between">
                     <Link to="/" className="flex items-center space-x-3 group">
@@ -98,9 +98,8 @@ const Contact = () => {
                             <Link
                                 key={link.name}
                                 to={link.path}
-                                className={`text-sm font-bold transition-all tracking-wide uppercase ${
-                                    link.path === '/contact' ? 'text-purple-600 underline underline-offset-4 decoration-2' : 'text-gray-400 hover:text-purple-600'
-                                }`}
+                                className={`text-sm font-bold transition-all tracking-wide uppercase ${link.path === '/contact' ? 'text-purple-600 underline underline-offset-4 decoration-2' : 'text-gray-400 hover:text-purple-600'
+                                    }`}
                             >
                                 {link.name}
                             </Link>
@@ -123,9 +122,8 @@ const Contact = () => {
 
                 {/* Mobile menu */}
                 <div
-                    className={`fixed inset-0 bg-white z-[60] flex flex-col items-center justify-center space-y-10 text-3xl font-black transition-all duration-500 md:hidden ${
-                        isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'
-                    }`}
+                    className={`fixed inset-0 bg-white z-[60] flex flex-col items-center justify-center space-y-10 text-3xl font-black transition-all duration-500 md:hidden ${isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'
+                        }`}
                 >
                     {navLinks.map((link) => (
                         <Link
@@ -162,13 +160,13 @@ const Contact = () => {
                         <p className="text-lg md:text-xl text-gray-500 font-medium leading-relaxed max-w-lg">
                             Have questions about our daycare programs? We're here to help and answer any questions you might have.
                         </p>
-                        
+
                         <div className="flex items-center gap-6 pt-4">
                             <div className="flex -space-x-3">
-                                {[1,2,3,4].map(i => (
+                                {[1, 2, 3, 4].map(i => (
                                     <div key={i} className="w-12 h-12 rounded-full border-4 border-white bg-gray-100 flex items-center justify-center overflow-hidden">
                                         <div className="w-full h-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold">
-                                            {String.fromCharCode(64+i)}
+                                            {String.fromCharCode(64 + i)}
                                         </div>
                                     </div>
                                 ))}
@@ -258,7 +256,7 @@ const Contact = () => {
                                             <h2 className="text-3xl font-black text-gray-900 tracking-tight">Message Sent!</h2>
                                             <p className="text-gray-500 font-medium">Thank you for reaching out. We'll get back to you shortly.</p>
                                         </div>
-                                        <button 
+                                        <button
                                             onClick={() => setFormStatus('idle')}
                                             className="text-purple-600 font-bold hover:underline"
                                         >
@@ -270,8 +268,8 @@ const Contact = () => {
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                             <div className="space-y-3">
                                                 <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-4">Your Name</label>
-                                                <input 
-                                                    type="text" 
+                                                <input
+                                                    type="text"
                                                     name="name"
                                                     value={formData.name}
                                                     onChange={handleInputChange}
@@ -282,8 +280,8 @@ const Contact = () => {
                                             </div>
                                             <div className="space-y-3">
                                                 <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-4">Email Address</label>
-                                                <input 
-                                                    type="email" 
+                                                <input
+                                                    type="email"
                                                     name="email"
                                                     value={formData.email}
                                                     onChange={handleInputChange}
@@ -296,8 +294,8 @@ const Contact = () => {
 
                                         <div className="space-y-3">
                                             <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-4">Subject</label>
-                                            <input 
-                                                type="text" 
+                                            <input
+                                                type="text"
                                                 name="subject"
                                                 value={formData.subject}
                                                 onChange={handleInputChange}
@@ -309,7 +307,7 @@ const Contact = () => {
 
                                         <div className="space-y-3">
                                             <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-4">Your Message</label>
-                                            <textarea 
+                                            <textarea
                                                 name="message"
                                                 value={formData.message}
                                                 onChange={handleInputChange}
@@ -320,7 +318,7 @@ const Contact = () => {
                                             ></textarea>
                                         </div>
 
-                                        <button 
+                                        <button
                                             type="submit"
                                             disabled={formStatus === 'sending'}
                                             className="w-full bg-gray-900 text-white rounded-2xl py-5 font-black text-lg hover:bg-purple-600 shadow-xl shadow-gray-900/10 hover:shadow-purple-500/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -354,7 +352,7 @@ const Contact = () => {
                             <h2 className="text-3xl md:text-4xl font-black tracking-tight">Ready to join our family?</h2>
                             <p className="text-purple-100 font-medium">Start your child's journey with TinyTots today.</p>
                         </div>
-                        <Link 
+                        <Link
                             to="/register"
                             className="bg-white text-gray-900 px-10 py-5 rounded-2xl font-black text-lg hover:bg-gray-50 transition-all flex items-center gap-2 group relative z-10"
                         >

@@ -1,22 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
+    Star,
     ChevronRight,
     Menu,
     X,
-    Users,
-    Activity,
-    CreditCard,
-    BarChart3,
-    ShieldCheck,
-    Bell,
-    CheckSquare,
-    Star,
-    LayoutDashboard
+    Quote,
+    User,
+    CheckCircle
 } from 'lucide-react';
-import FeaturesHero from '../assets/features_hero.png';
 
-const Features = () => {
+const Reviews = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
 
@@ -36,46 +30,24 @@ const Features = () => {
         { name: 'Contact', path: '/contact' },
     ];
 
-    const featureList = [
+    const reviews = [
         {
-            title: "Child Management",
-            desc: "Easily manage child profiles, classes, and records.",
-            icon: <Users className="text-purple-600" size={24} />
+            name: "Sarah Johnson",
+            role: "Parent of 2-year old",
+            text: "TinyTots has been a blessing for our family. The staff is so caring and the real-time updates keep us at ease throughout the day.",
+            rating: 5
         },
         {
-            title: "Attendance Tracking",
-            desc: "Mark and track daily attendance with detailed reports.",
-            icon: <Activity className="text-pink-600" size={24} />
+            name: "Michael Chen",
+            role: "Parent of 4-year old",
+            text: "The learning activities are top-notch. I've seen so much growth in my daughter's social and cognitive skills since she joined.",
+            rating: 5
         },
         {
-            title: "Fee Management",
-            desc: "Automated fee tracking with due dates and late fees.",
-            icon: <CreditCard className="text-indigo-600" size={24} />
-        },
-        {
-            title: "Reports & Analytics",
-            desc: "Generate attendance and activity reports instantly.",
-            icon: <BarChart3 className="text-purple-600" size={24} />
-        },
-        {
-            title: "Staff Management",
-            desc: "Assign teachers and manage staff efficiently.",
-            icon: <ShieldCheck className="text-pink-600" size={24} />
-        },
-        {
-            title: "Real-time Notifications",
-            desc: "Instant alerts for parents and staff members.",
-            icon: <Bell className="text-indigo-600" size={24} />
-        },
-        {
-            title: "Activity Tracking",
-            desc: "Monitor daily activities and child progress.",
-            icon: <CheckSquare className="text-purple-600" size={24} />
-        },
-        {
-            title: "Feedback System",
-            desc: "Parents can give ratings and feedback easily.",
-            icon: <Star className="text-amber-500" size={24} />
+            name: "Emily Rodriguez",
+            role: "Parent of Toddler",
+            text: "Clean, safe, and professional. The digital fee management and attendance system makes everything so convenient.",
+            rating: 5
         }
     ];
 
@@ -101,7 +73,7 @@ const Features = () => {
                                 key={link.name}
                                 to={link.path}
                                 className={`text-sm font-bold transition-all tracking-wide uppercase ${
-                                    link.path === '/features' ? 'text-purple-600 underline underline-offset-4 decoration-2' : 'text-gray-400 hover:text-purple-600'
+                                    link.path === '/reviews' ? 'text-purple-600 underline underline-offset-4 decoration-2' : 'text-gray-400 hover:text-purple-600'
                                 }`}
                             >
                                 {link.name}
@@ -152,79 +124,87 @@ const Features = () => {
             {/* Hero Section */}
             <section className="relative pt-48 pb-20 overflow-hidden bg-white">
                 <div className="absolute top-0 left-0 w-full h-full -z-10 bg-[radial-gradient(circle_at_20%_30%,rgba(168,85,247,0.03),transparent_40%)]"></div>
-                <div className="container mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                    <div className="space-y-8 animate-in fade-in slide-in-from-left-8 duration-1000">
-                        <div className="inline-flex items-center gap-2 px-4 py-1 bg-purple-50 text-purple-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-purple-100">
-                            🚀 Advanced Capabilities
-                        </div>
-                        <h1 className="text-6xl md:text-7xl font-black text-gray-900 tracking-tight leading-[0.95]">
-                            Powerful Features for<br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-400 to-indigo-600">Smart Daycare.</span>
-                        </h1>
-                        <p className="text-lg md:text-xl text-gray-500 font-medium leading-relaxed max-w-xl">
-                            Everything you need to manage daycare efficiently and keep parents connected in one seamless platform.
-                        </p>
+                <div className="container mx-auto px-6 md:px-12 text-center space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+                    <div className="inline-flex items-center gap-2 px-4 py-1 bg-purple-50 text-purple-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-purple-100">
+                        ⭐ Parent Feedback
                     </div>
-
-                    <div className="relative flex justify-center lg:justify-end animate-in fade-in slide-in-from-right-8 duration-1000 delay-200">
-                        <div className="absolute inset-0 bg-gradient-to-tr from-purple-100 to-pink-100 rounded-full blur-[100px] opacity-20 transform -rotate-12 scale-110"></div>
-                        <div className="relative z-10 w-full max-w-[500px] bg-white p-3 rounded-[3.5rem] shadow-2xl shadow-purple-900/10 active:scale-[0.98] transition-transform">
-                            <div className="bg-gray-50 rounded-[3rem] overflow-hidden aspect-[4/3]">
-                                <img
-                                    src={FeaturesHero}
-                                    alt="Features Dashboard"
-                                    className="w-full h-full object-cover grayscale-[10%] hover:grayscale-0 transition-all duration-700"
-                                />
-                            </div>
-                        </div>
-                        {/* Floating Dashboard Icon */}
-                        <div className="absolute -top-6 -left-6 w-20 h-20 bg-white rounded-[2rem] shadow-2xl flex items-center justify-center text-purple-500 border border-purple-50 animate-bounce">
-                            <LayoutDashboard size={36} />
-                        </div>
-                    </div>
+                    <h1 className="text-6xl md:text-7xl font-black text-gray-900 tracking-tight leading-[0.95]">
+                        Loved by Parents.<br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-400 to-indigo-600 italic">Trusted by Families.</span>
+                    </h1>
+                    <p className="text-lg md:text-xl text-gray-500 font-medium leading-relaxed max-w-2xl mx-auto">
+                        Don't just take our word for it. Hear what dozens of happy parents have to say about their experience with TinyTots.
+                    </p>
                 </div>
             </section>
 
-            {/* Feature Grid */}
-            <section className="py-24 bg-gray-50/50">
+            {/* Reviews Grid */}
+            <section className="py-20 bg-gray-50/50">
                 <div className="container mx-auto px-6 md:px-12">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                        {featureList.map((feature, idx) => (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {reviews.map((review, idx) => (
                             <div key={idx} className="bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-2xl hover:border-purple-100 hover:-translate-y-2 transition-all duration-500 group relative overflow-hidden">
                                 <div className="absolute top-0 right-0 w-24 h-24 bg-purple-50 rounded-full translate-x-12 -translate-y-12 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 group-hover:bg-purple-50 transition-all shadow-inner relative z-10">
-                                    {feature.icon}
+                                <div className="flex text-amber-400 mb-6 gap-1 relative z-10 transition-transform group-hover:scale-105">
+                                    {[...Array(review.rating)].map((_, i) => (
+                                        <Star key={i} size={18} fill="currentColor" />
+                                    ))}
                                 </div>
-                                <h3 className="text-xl font-black text-gray-900 tracking-tight mb-4 relative z-10">{feature.title}</h3>
-                                <p className="text-sm font-medium text-gray-500 leading-relaxed relative z-10 line-clamp-2">{feature.desc}</p>
+                                <Quote className="text-purple-100 absolute top-10 right-10" size={60} />
+                                <p className="text-lg font-medium text-gray-600 leading-relaxed mb-8 relative z-10 italic">
+                                    "{review.text}"
+                                </p>
+                                <div className="flex items-center gap-4 relative z-10">
+                                    <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center text-purple-600 shadow-inner group-hover:rotate-6 transition-transform">
+                                        <User size={24} />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-black text-gray-900 tracking-tight">{review.name}</h4>
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{review.role}</p>
+                                    </div>
+                                </div>
                             </div>
                         ))}
                     </div>
                 </div>
             </section>
 
+            {/* Single-line Minimal Trust Strip */}
+            <section className="py-20 bg-white">
+                <div className="container mx-auto px-6 md:px-12 flex flex-wrap justify-center items-center gap-10 grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all duration-1000">
+                    <div className="flex items-center gap-2">
+                        <CheckCircle size={24} className="text-green-500" />
+                        <span className="font-black text-xs uppercase tracking-[0.2em]">Verified Reviews</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Star size={24} className="text-amber-500" />
+                        <span className="font-black text-xs uppercase tracking-[0.2em]">5.0 Average Rating</span>
+                    </div>
+                </div>
+            </section>
+
             {/* CTA Section */}
-            <section className="py-24">
+            <section className="py-20">
                 <div className="container mx-auto px-6 md:px-12">
-                    <div className="bg-gray-900 rounded-[4rem] p-12 md:p-24 text-center space-y-10 relative overflow-hidden">
+                    <div className="bg-gray-900 rounded-[4rem] p-12 md:p-20 text-center space-y-10 relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-full h-full -z-10 bg-[radial-gradient(circle_at_80%_20%,rgba(168,85,247,0.15),transparent_40%)]"></div>
-                        <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-tight max-w-3xl mx-auto">
-                            Ready to simplify your <br />
-                            <span className="text-purple-400 italic">daycare?</span>
+                        <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-tight max-w-2xl mx-auto">
+                            Experience the TinyTots <br />
+                            <span className="text-purple-400 italic font-medium">Difference Today.</span>
                         </h2>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4">
                             <Link
                                 to="/register"
                                 className="w-full sm:w-auto bg-purple-600 text-white px-10 py-5 rounded-3xl font-black text-lg shadow-2xl shadow-purple-500/20 hover:bg-purple-500 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
                             >
-                                Get Started
+                                Enroll Now
                                 <ChevronRight size={20} />
                             </Link>
                             <Link
-                                to="/login"
+                                to="/contact"
                                 className="w-full sm:w-auto bg-white/10 text-white px-10 py-5 rounded-3xl font-black text-lg hover:bg-white/20 transition-all border border-white/10 text-center"
                             >
-                                Login
+                                Contact Us
                             </Link>
                         </div>
                     </div>
@@ -234,11 +214,11 @@ const Features = () => {
             {/* Footer */}
             <footer className="py-12 border-t border-gray-100 text-center">
                 <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.4em]">
-                    © {new Date().getFullYear()} TinyTots Daycare • Efficient Management
+                    © {new Date().getFullYear()} TinyTots Daycare • Trusted Reviews
                 </p>
             </footer>
         </div>
     );
 };
 
-export default Features;
+export default Reviews;

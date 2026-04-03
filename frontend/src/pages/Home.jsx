@@ -26,8 +26,9 @@ const Home = () => {
 
     const navLinks = [
         { name: 'Home', path: '/' },
-        { name: 'About', path: '/about' },
         { name: 'Features', path: '/features' },
+        { name: 'About', path: '/about' },
+        { name: 'Reviews', path: '/reviews' },
         { name: 'Contact', path: '/contact' },
     ];
 
@@ -53,7 +54,9 @@ const Home = () => {
                             <Link
                                 key={link.name}
                                 to={link.path}
-                                className="text-sm font-bold text-gray-400 hover:text-purple-600 transition-all tracking-wide uppercase"
+                                className={`text-sm font-bold transition-all tracking-wide uppercase ${
+                                    link.path === '/' ? 'text-purple-600 underline underline-offset-4 decoration-2' : 'text-gray-400 hover:text-purple-600'
+                                }`}
                             >
                                 {link.name}
                             </Link>
