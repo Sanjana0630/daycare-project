@@ -33,7 +33,7 @@ const About = () => {
         { name: 'Home', path: '/' },
         { name: 'About', path: '/about' },
         { name: 'Features', path: '/features' },
-        { name: 'Contact', path: '#' },
+        { name: 'Contact', path: '/contact' },
     ];
 
     const quickInfo = [
