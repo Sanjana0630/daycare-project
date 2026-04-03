@@ -7,20 +7,45 @@ import {
     X,
     Quote,
     User,
-    CheckCircle
+    CheckCircle,
+    Loader2,
+    MessageSquare
 } from 'lucide-react';
+import { BASE_URL } from '../config';
 
 const Reviews = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
+    const [reviews, setReviews] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const handleScroll = () => {
             setScrolled(window.scrollY > 20);
         };
         window.addEventListener('scroll', handleScroll);
+        fetchReviews();
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+
+    const fetchReviews = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch(`${BASE_URL}/api/feedback`);
+            const data = await response.json();
+            if (data.success) {
+                // Filter to show only feedback where rating exists and message is not empty
+                const filteredReviews = data.data.filter(item => 
+                    item.rating && item.message && item.message.trim() !== ''
+                );
+                setReviews(filteredReviews);
+            }
+        } catch (error) {
+            console.error('Error fetching reviews:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const navLinks = [
         { name: 'Home', path: '/' },
@@ -28,27 +53,6 @@ const Reviews = () => {
         { name: 'About', path: '/about' },
         { name: 'Reviews', path: '/reviews' },
         { name: 'Contact', path: '/contact' },
-    ];
-
-    const reviews = [
-        {
-            name: "Sarah Johnson",
-            role: "Parent of 2-year old",
-            text: "TinyTots has been a blessing for our family. The staff is so caring and the real-time updates keep us at ease throughout the day.",
-            rating: 5
-        },
-        {
-            name: "Michael Chen",
-            role: "Parent of 4-year old",
-            text: "The learning activities are top-notch. I've seen so much growth in my daughter's social and cognitive skills since she joined.",
-            rating: 5
-        },
-        {
-            name: "Emily Rodriguez",
-            role: "Parent of Toddler",
-            text: "Clean, safe, and professional. The digital fee management and attendance system makes everything so convenient.",
-            rating: 5
-        }
     ];
 
     return (
@@ -139,33 +143,58 @@ const Reviews = () => {
             </section>
 
             {/* Reviews Grid */}
-            <section className="py-20 bg-gray-50/50">
+            <section className="py-20 bg-gray-50/50 min-h-[400px]">
                 <div className="container mx-auto px-6 md:px-12">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {reviews.map((review, idx) => (
-                            <div key={idx} className="bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-2xl hover:border-purple-100 hover:-translate-y-2 transition-all duration-500 group relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-purple-50 rounded-full translate-x-12 -translate-y-12 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                <div className="flex text-amber-400 mb-6 gap-1 relative z-10 transition-transform group-hover:scale-105">
-                                    {[...Array(review.rating)].map((_, i) => (
-                                        <Star key={i} size={18} fill="currentColor" />
-                                    ))}
-                                </div>
-                                <Quote className="text-purple-100 absolute top-10 right-10" size={60} />
-                                <p className="text-lg font-medium text-gray-600 leading-relaxed mb-8 relative z-10 italic">
-                                    "{review.text}"
-                                </p>
-                                <div className="flex items-center gap-4 relative z-10">
-                                    <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center text-purple-600 shadow-inner group-hover:rotate-6 transition-transform">
-                                        <User size={24} />
+                    {loading ? (
+                        <div className="flex flex-col items-center justify-center py-20">
+                            <Loader2 className="h-12 w-12 text-purple-600 animate-spin mb-4" />
+                            <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Fetching Real Feedback...</p>
+                        </div>
+                    ) : reviews.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {reviews.map((review, idx) => (
+                                <div key={review._id || idx} className="bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-2xl hover:border-purple-100 hover:-translate-y-2 transition-all duration-500 group relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-24 h-24 bg-purple-50 rounded-full translate-x-12 -translate-y-12 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                    <div className="flex text-amber-400 mb-6 gap-1 relative z-10 transition-transform group-hover:scale-105">
+                                        {[...Array(review.rating)].map((_, i) => (
+                                            <Star key={i} size={18} fill="currentColor" />
+                                        ))}
                                     </div>
-                                    <div>
-                                        <h4 className="font-black text-gray-900 tracking-tight">{review.name}</h4>
-                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{review.role}</p>
+                                    <Quote className="text-purple-100 absolute top-10 right-10" size={60} />
+                                    <p className="text-lg font-medium text-gray-600 leading-relaxed mb-8 relative z-10 italic">
+                                        "{review.message}"
+                                    </p>
+                                    <div className="flex items-center gap-4 relative z-10">
+                                        <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center text-purple-600 shadow-inner group-hover:rotate-6 transition-transform">
+                                            <User size={24} />
+                                        </div>
+                                        <div>
+                                            <h4 className="font-black text-gray-900 tracking-tight">{review.parentName}</h4>
+                                            {review.childName && (
+                                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Parent of {review.childName}</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="mt-6 pt-6 border-t border-gray-50 flex items-center justify-between relative z-10">
+                                        <span className="text-[10px] font-black text-purple-200 uppercase tracking-[0.2em]">
+                                            {review.category || 'Feedback'}
+                                        </span>
+                                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">
+                                            {new Date(review.createdAt).toLocaleDateString()}
+                                        </span>
                                     </div>
                                 </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-24 bg-white rounded-[3rem] border-2 border-dashed border-gray-100 max-w-2xl mx-auto shadow-inner">
+                            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-200">
+                                <MessageSquare size={40} />
                             </div>
-                        ))}
-                    </div>
+                            <h3 className="text-2xl font-black text-gray-900 tracking-tight mb-2">No reviews available yet</h3>
+                            <p className="text-gray-400 font-medium">Be the first parent to share your journey with us!</p>
+                        </div>
+                    )}
                 </div>
             </section>
 
@@ -178,7 +207,7 @@ const Reviews = () => {
                     </div>
                     <div className="flex items-center gap-2">
                         <Star size={24} className="text-amber-500" />
-                        <span className="font-black text-xs uppercase tracking-[0.2em]">5.0 Average Rating</span>
+                        <span className="font-black text-xs uppercase tracking-[0.2em]">Authentic Experiences</span>
                     </div>
                 </div>
             </section>
