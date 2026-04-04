@@ -7,6 +7,11 @@ const protect = async (req, res, next) => {
     if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
         try {
             token = req.headers.authorization.split(" ")[1];
+
+            if (!token || token === "null" || token === "undefined") {
+                return res.status(401).json({ message: "Not authorized, invalid token" });
+            }
+
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
             if (decoded.id === "65f1a2b2c3d4e5f6a7b8c9d0") {
@@ -15,15 +20,15 @@ const protect = async (req, res, next) => {
                 req.user = await User.findById(decoded.id).select("-password");
             }
 
-            next();
+            return next();
         } catch (error) {
-            console.error(error);
-            res.status(401).json({ message: "Not authorized, token failed" });
+            console.error("JWT Verification Error:", error.message);
+            return res.status(401).json({ message: "Not authorized, token failed" });
         }
     }
 
     if (!token) {
-        res.status(401).json({ message: "Not authorized, no token" });
+        return res.status(401).json({ message: "Not authorized, no token" });
     }
 };
 

@@ -28,13 +28,19 @@ const ParentSettings = () => {
     }, []);
 
     const fetchProfile = async () => {
+        const token = localStorage.getItem('token');
+        if (!token || token === 'null' || token === 'undefined') {
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
         try {
-            const token = localStorage.getItem('token');
             const response = await fetch(`${BASE_URL}/api/parent/me`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
+            console.log('Profile Data Fetched:', data);
             if (data.success) {
                 setProfile({
                     fullName: data.data.fullName || '',

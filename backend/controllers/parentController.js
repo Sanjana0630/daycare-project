@@ -363,7 +363,19 @@ const getMyFeedback = async (req, res) => {
 // @access  Private/Parent
 const getProfile = async (req, res) => {
     try {
-        const user = await User.findById(req.user._id).select("-password");
+        const user = await User.findById(req.user._id).select("-password").lean();
+        
+        if (user && !user.phoneNumber) {
+            // Try fetching from Child record where parentEmail matches or parentId matches
+            const child = await Child.findOne({ 
+                $or: [{ parent: user._id }, { parentEmail: user.email }] 
+            }).select("parentPhone").lean();
+            
+            if (child && child.parentPhone) {
+                user.phoneNumber = child.parentPhone;
+            }
+        }
+
         res.status(200).json({ success: true, data: user });
     } catch (error) {
         console.error(error);

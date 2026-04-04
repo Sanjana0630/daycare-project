@@ -39,7 +39,7 @@ import Reviews from './pages/Reviews';
 // Security Guards
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
-  if (!token) {
+  if (!token || token === 'null' || token === 'undefined') {
     return <Navigate to="/login" replace />;
   }
   return children;
