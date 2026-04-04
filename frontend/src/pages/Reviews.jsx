@@ -18,6 +18,7 @@ const Reviews = () => {
     const [scrolled, setScrolled] = useState(false);
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isExpanded, setIsExpanded] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -34,11 +35,11 @@ const Reviews = () => {
             const response = await fetch(`${BASE_URL}/api/feedback`);
             const data = await response.json();
             if (data.success) {
-                // Filter to show only feedback where rating exists and message is not empty
-                const filteredReviews = data.data.filter(item => 
-                    item.rating && item.message && item.message.trim() !== ''
-                );
-                setReviews(filteredReviews);
+                // Filter and sort by latest first
+                const processedReviews = data.data
+                    .filter(item => item.rating && item.message && item.message.trim() !== '')
+                    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                setReviews(processedReviews);
             }
         } catch (error) {
             console.error('Error fetching reviews:', error);
@@ -152,7 +153,7 @@ const Reviews = () => {
                         </div>
                     ) : reviews.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {reviews.map((review, idx) => (
+                            {reviews.slice(0, isExpanded ? 10 : 3).map((review, idx) => (
                                 <div key={review._id || idx} className="bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-2xl hover:border-purple-100 hover:-translate-y-2 transition-all duration-500 group relative overflow-hidden">
                                     <div className="absolute top-0 right-0 w-24 h-24 bg-purple-50 rounded-full translate-x-12 -translate-y-12 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                     <div className="flex text-amber-400 mb-6 gap-1 relative z-10 transition-transform group-hover:scale-105">
@@ -196,6 +197,21 @@ const Reviews = () => {
                         </div>
                     )}
                 </div>
+
+                {/* Show All / Less Button */}
+                {reviews.length > 3 && !loading && (
+                    <div className="flex justify-center mt-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        <button
+                            onClick={() => setIsExpanded(!isExpanded)}
+                            className="group flex items-center gap-3 px-10 py-5 bg-white border-2 border-purple-100 rounded-[2rem] font-black text-sm text-purple-600 hover:bg-purple-600 hover:text-white hover:border-purple-600 hover:shadow-2xl hover:shadow-purple-500/30 transition-all active:scale-[0.98] shadow-sm transform transition-transform"
+                        >
+                            {isExpanded ? 'Show Less' : 'Show All Reviews'}
+                            <div className={`p-1.5 rounded-full transition-all duration-500 ${isExpanded ? 'bg-purple-100 text-purple-600 rotate-180' : 'bg-purple-50 text-purple-600 group-hover:bg-white/20 group-hover:text-white group-hover:translate-x-1'}`}>
+                                <ChevronRight size={16} />
+                            </div>
+                        </button>
+                    </div>
+                )}
             </section>
 
             {/* Single-line Minimal Trust Strip */}
