@@ -170,8 +170,8 @@ const Reviews = () => {
                                             <User size={24} />
                                         </div>
                                         <div>
-                                            <h4 className="font-black text-gray-900 tracking-tight">{review.parentName}</h4>
-                                            <p className="text-[10px] font-black text-purple-400 uppercase tracking-[0.2em]">Parent</p>
+                                            <h4 className="font-semibold text-gray-800 tracking-tight">{review.parentName || "Parent"}</h4>
+                                            <p className="text-sm font-medium text-purple-500">Parent</p>
                                         </div>
                                     </div>
                                     <div className="mt-6 pt-6 border-t border-gray-50 flex items-center justify-between relative z-10">
