@@ -498,9 +498,9 @@ const EditChild = () => {
                             <div className="flex flex-col items-center gap-4">
                                 {existingPhoto && !formData.photo && (
                                     <div className="relative group">
-                                        <img 
-                                            src={`${BASE_URL}${existingPhoto}`} 
-                                            alt="Child" 
+                                        <img
+                                            src={`${BASE_URL}${existingPhoto}`}
+                                            alt="Child"
                                             className="w-24 h-24 rounded-2xl object-cover border-2 border-purple-100 shadow-sm"
                                         />
                                         <div className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -510,9 +510,9 @@ const EditChild = () => {
                                 )}
                                 {formData.photo && (
                                     <div className="relative group">
-                                        <img 
-                                            src={URL.createObjectURL(formData.photo)} 
-                                            alt="Preview" 
+                                        <img
+                                            src={URL.createObjectURL(formData.photo)}
+                                            alt="Preview"
                                             className="w-24 h-24 rounded-2xl object-cover border-2 border-purple-100 shadow-sm"
                                         />
                                         <div className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -628,7 +628,7 @@ const EditChild = () => {
                                         <User size={18} className="text-purple-500" />
                                         {assignedClass && assignedClass !== "Not Eligible" ? (() => {
                                             const teacherInfo = teachers.find(t => t.assignedClass === assignedClass);
-                                            return teacherInfo 
+                                            return teacherInfo
                                                 ? <span className="font-semibold text-purple-700 text-sm">{teacherInfo.name || teacherInfo.fullName}</span>
                                                 : <span className="text-red-500 text-sm font-medium italic">No teacher assigned for this class</span>;
                                         })() : <span className="text-gray-400 text-sm italic">Select valid DOB first</span>}
