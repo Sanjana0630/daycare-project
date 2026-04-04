@@ -171,9 +171,7 @@ const Reviews = () => {
                                         </div>
                                         <div>
                                             <h4 className="font-black text-gray-900 tracking-tight">{review.parentName}</h4>
-                                            {review.childName && (
-                                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Parent of {review.childName}</p>
-                                            )}
+                                            <p className="text-[10px] font-black text-purple-400 uppercase tracking-[0.2em]">Parent</p>
                                         </div>
                                     </div>
                                     <div className="mt-6 pt-6 border-t border-gray-50 flex items-center justify-between relative z-10">
