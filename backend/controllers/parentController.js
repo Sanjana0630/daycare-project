@@ -1,3 +1,4 @@
+const User = require("../models/User");
 const Child = require("../models/Child");
 const Attendance = require("../models/Attendance");
 const Activity = require("../models/Activity");
@@ -357,7 +358,60 @@ const getMyFeedback = async (req, res) => {
     }
 };
 
+// @desc    Get parent profile
+// @route   GET /api/parent/me
+// @access  Private/Parent
+const getProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).select("-password");
+        res.status(200).json({ success: true, data: user });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
+// @desc    Update parent profile
+// @route   PUT /api/parent/update
+// @access  Private/Parent
+const updateProfile = async (req, res) => {
+    try {
+        const { fullName, phoneNumber, address, profileImage } = req.body;
+
+        const user = await User.findById(req.user._id);
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        user.fullName = fullName || user.fullName;
+        user.phoneNumber = phoneNumber || user.phoneNumber;
+        user.address = address || user.address;
+        user.profileImage = profileImage || user.profileImage;
+
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Profile updated successfully",
+            data: {
+                _id: user._id,
+                fullName: user.fullName,
+                email: user.email,
+                phoneNumber: user.phoneNumber,
+                address: user.address,
+                profileImage: user.profileImage
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
 module.exports = {
+    getProfile,
+    updateProfile,
     getChildForParent,
     getChildAttendance,
     getChildActivities,

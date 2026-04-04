@@ -25,6 +25,15 @@ const userSchema = new mongoose.Schema({
         enum: ["pending", "active", "rejected"],
         default: "active",
     },
+    phoneNumber: {
+        type: String,
+    },
+    address: {
+        type: String,
+    },
+    profileImage: {
+        type: String, // Base64 or URL
+    },
 }, { timestamps: true });
 
 // Hash password before saving

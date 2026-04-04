@@ -9,7 +9,9 @@ const {
     getParentFeeStatus,
     recordParentPayment,
     submitFeedback,
-    getMyFeedback
+    getMyFeedback,
+    getProfile,
+    updateProfile
 } = require("../controllers/parentController");
 const { protect, parent } = require("../middleware/authMiddleware");
 
@@ -25,5 +27,7 @@ router.get("/fees/status", getParentFeeStatus);
 router.post("/fees/pay", recordParentPayment);
 router.post("/feedback", submitFeedback);
 router.get("/feedback", getMyFeedback);
+router.get("/me", getProfile);
+router.put("/update", updateProfile);
 
 module.exports = router;

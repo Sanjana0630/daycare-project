@@ -30,6 +30,7 @@ import ParentFees from './pages/ParentFees';
 import ParentFeedback from './pages/ParentFeedback';
 import ParentNotifications from './pages/ParentNotifications';
 import ParentReportView from './pages/ParentReportView';
+import ParentSettings from './pages/ParentSettings';
 import About from './pages/About';
 import Features from './pages/Features';
 import Contact from './pages/Contact';
@@ -148,8 +149,8 @@ function App() {
                   <Route path="/parent/feedback" element={<RoleBasedRoute allowedRoles={["parent"]}><ParentFeedback /></RoleBasedRoute>} />
                   <Route path="/parent/notifications" element={<RoleBasedRoute allowedRoles={["parent"]}><ParentNotifications /></RoleBasedRoute>} />
                   <Route path="/parent/report/:reportId" element={<RoleBasedRoute allowedRoles={["parent"]}><ParentReportView /></RoleBasedRoute>} />
-                  <Route path="/parent/settings" element={<RoleBasedRoute allowedRoles={["parent"]}><Placeholder title="Parent Settings" /></RoleBasedRoute>} />
-                  <Route path="/parent/profile" element={<RoleBasedRoute allowedRoles={["parent"]}><Placeholder title="Parent Profile" /></RoleBasedRoute>} />
+                  <Route path="/parent/settings" element={<RoleBasedRoute allowedRoles={["parent"]}><ParentSettings /></RoleBasedRoute>} />
+                  <Route path="/parent/profile" element={<RoleBasedRoute allowedRoles={["parent"]}><ParentSettings /></RoleBasedRoute>} />
 
                   {/* Catch-all or Redirects */}
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
