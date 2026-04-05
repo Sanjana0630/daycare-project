@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Eye, Calendar, Clock, CheckCircle2, IndianRupee } from 'lucide-react';
+import { Bell, Eye, Calendar, Clock, CheckCircle2, IndianRupee, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const ParentNotifications = () => {
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [filter, setFilter] = useState('all');
     const navigate = useNavigate();
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005';
 
@@ -42,14 +43,39 @@ const ParentNotifications = () => {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             
+            // Update local state and header
+            setNotifications(prev => prev.map(n => n._id === notificationId ? { ...n, isRead: true } : n));
+            window.dispatchEvent(new Event('notificationUpdated'));
+            
             // Navigate to report view
-            navigate(`/parent/report/${reportId}`);
+            if (reportId) {
+                navigate(`/parent/report/${reportId}`);
+            }
         } catch (err) {
             console.error('Error marking as read:', err);
             // Still navigate even if marking as read fails
             navigate(`/parent/report/${reportId}`);
         }
     };
+
+    const handleDelete = async (notificationId) => {
+        try {
+            const token = localStorage.getItem('token');
+            await fetch(`${apiUrl}/api/notifications/${notificationId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            setNotifications(prev => prev.filter(n => n._id !== notificationId));
+            window.dispatchEvent(new Event('notificationUpdated'));
+        } catch (err) {
+            console.error('Error deleting notification:', err);
+        }
+    };
+
+    const filteredNotifications = filter === 'unread' 
+        ? notifications.filter(n => !n.isRead) 
+        : notifications;
 
     if (loading) {
         return (
@@ -71,45 +97,75 @@ const ParentNotifications = () => {
                 </div>
             </div>
 
+            {/* Filter Controls */}
+            <div className="flex items-center gap-3 px-2">
+                <button
+                    onClick={() => setFilter('all')}
+                    className={`px-5 py-2 rounded-xl text-sm font-bold transition-all ${filter === 'all' ? 'bg-gray-900 text-white shadow-md' : 'bg-white text-gray-500 hover:bg-gray-50 border border-gray-200'}`}
+                >
+                    All
+                </button>
+                <button
+                    onClick={() => setFilter('unread')}
+                    className={`px-5 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${filter === 'unread' ? 'bg-purple-600 text-white shadow-md shadow-purple-200' : 'bg-white text-gray-500 hover:bg-gray-50 border border-gray-200'}`}
+                >
+                    Unread
+                    {notifications.filter(n => !n.isRead).length > 0 && filter !== 'unread' && (
+                        <span className="w-5 h-5 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-[10px]">
+                            {notifications.filter(n => !n.isRead).length}
+                        </span>
+                    )}
+                </button>
+            </div>
+
             {error && (
                 <div className="p-4 bg-red-50 text-red-600 border border-red-100 rounded-2xl font-bold">
                     {error}
                 </div>
             )}
 
-            {notifications.length === 0 ? (
+            {filteredNotifications.length === 0 ? (
                 <div className="bg-white p-12 rounded-[40px] border border-gray-100 shadow-sm text-center space-y-4">
                     <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto text-gray-300">
                         <Bell size={32} />
                     </div>
-                    <h3 className="text-xl font-black text-gray-900">No Notifications Yet</h3>
+                    <h3 className="text-xl font-black text-gray-900">No {filter === 'unread' ? 'Unread ' : 'New '}Notifications 🎉</h3>
                     <p className="text-gray-500 font-medium max-w-sm mx-auto">
-                        We'll notify you here when there are new reports or updates regarding your child.
+                        You're all caught up!
                     </p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {notifications.map((n) => (
+                    {filteredNotifications.map((n) => (
                         <div 
                             key={n._id} 
                             className={`bg-white p-6 rounded-[32px] border transition-all duration-300 group hover:shadow-xl hover:shadow-purple-100/50 ${!n.isRead ? 'border-purple-200 bg-purple-50/20' : 'border-gray-100'}`}
                         >
                             <div className="flex justify-between items-start mb-4">
-                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${!n.isRead ? 'bg-purple-100 text-purple-600' : 'bg-gray-100 text-gray-400'}`}>
-                                    <Bell size={20} />
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${!n.isRead ? 'bg-purple-100 text-purple-600' : 'bg-gray-100 text-gray-400'}`}>
+                                        <Bell size={20} />
+                                    </div>
+                                    {!n.isRead && (
+                                        <span className="px-2 py-1 bg-purple-600 text-white text-[10px] font-black uppercase tracking-widest rounded-lg animate-pulse">
+                                            New
+                                        </span>
+                                    )}
                                 </div>
-                                {!n.isRead && (
-                                    <span className="px-2 py-1 bg-purple-600 text-white text-[10px] font-black uppercase tracking-widest rounded-lg animate-pulse">
-                                        New
-                                    </span>
-                                )}
+                                <button 
+                                    onClick={() => handleDelete(n._id)}
+                                    className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                                    title="Delete notification"
+                                >
+                                    <Trash2 size={18} />
+                                </button>
                             </div>
                             
-                            <h4 className="text-lg font-black text-gray-900 mb-2 group-hover:text-purple-700 transition-colors">
+                            <h4 className={`text-lg transition-colors mb-2 ${!n.isRead ? 'font-black text-gray-900 group-hover:text-purple-700' : 'font-bold text-gray-600'}`}>
                                 {n.type === 'REPORT' ? 'New Activity Report' : n.type === 'FEE' ? 'Fee Payment Reminder' : 'Notification'}
                             </h4>
                             
-                            <p className="text-gray-500 text-sm font-medium mb-6 line-clamp-2">
+                            <p className={`${!n.isRead ? 'text-gray-500' : 'text-gray-400'} text-sm font-medium mb-6 line-clamp-2`}>
                                 {n.message}
                             </p>
                             
@@ -126,8 +182,19 @@ const ParentNotifications = () => {
                             
                             {n.type === 'FEE' ? (
                                 <button 
-                                    onClick={() => navigate('/parent/fees')}
-                                    className="w-full py-3 bg-amber-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-amber-700 transition-all active:scale-95 shadow-lg shadow-amber-200"
+                                        onClick={async () => {
+                                            if (!n.isRead) {
+                                                const token = localStorage.getItem('token');
+                                                await fetch(`${apiUrl}/api/notifications/${n._id}/read`, {
+                                                    method: 'PATCH',
+                                                    headers: { 'Authorization': `Bearer ${token}` }
+                                                });
+                                                setNotifications(prev => prev.map(notif => notif._id === n._id ? { ...notif, isRead: true } : notif));
+                                                window.dispatchEvent(new Event('notificationUpdated'));
+                                            }
+                                            navigate('/parent/fees');
+                                        }}
+                                        className="w-full py-3 bg-amber-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-amber-700 transition-all active:scale-95 shadow-lg shadow-amber-200"
                                 >
                                     <IndianRupee size={16} />
                                     Pay Now

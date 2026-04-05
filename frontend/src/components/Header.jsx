@@ -33,7 +33,17 @@ const Header = ({ onMenuClick }) => {
         fetchUnreadCount();
         // Optional: set an interval to check for new notifications
         const interval = setInterval(fetchUnreadCount, 30000); // every 30 seconds
-        return () => clearInterval(interval);
+
+        // Custom event listener for instant updates
+        const handleNotificationUpdate = () => {
+            fetchUnreadCount();
+        };
+        window.addEventListener('notificationUpdated', handleNotificationUpdate);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('notificationUpdated', handleNotificationUpdate);
+        };
     }, [role, apiUrl]);
 
     // Get first letter for avatar
