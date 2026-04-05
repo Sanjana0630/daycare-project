@@ -97,33 +97,90 @@ const ParentFees = () => {
 
     const generateReceipt = (payment, action = 'download') => {
         const doc = new jsPDF();
-        
-        doc.setFontSize(22);
-        doc.text("Fee Receipt", 105, 20, null, null, "center");
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const monthName = monthNames[payment.month - 1];
 
-        doc.setFontSize(14);
-        doc.text("Daycare Management System", 105, 30, null, null, "center");
+        // --- Header Section ---
+        doc.setFillColor(124, 58, 237); // Purple theme (#7c3aec)
+        doc.rect(0, 0, pageWidth, 40, 'F');
+        
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(24);
+        doc.setFont("helvetica", "bold");
+        doc.text("TinyTots Daycare", pageWidth / 2, 20, { align: "center" });
         
         doc.setFontSize(12);
-        doc.text(`Receipt No: RCT-${payment._id.substring(0, 6).toUpperCase()}`, 20, 50);
-        doc.text(`Date: ${new Date(payment.date).toLocaleDateString()}`, 150, 50);
-        
-        doc.line(20, 55, 190, 55);
+        doc.setFont("helvetica", "normal");
+        doc.text("FEE PAYMENT RECEIPT", pageWidth / 2, 30, { align: "center" });
 
-        doc.text(`Child Name: ${feeData.childName}`, 20, 65);
-        doc.text(`Amount Paid: Rs. ${payment.amount}`, 20, 75);
-        doc.text(`Payment Mode: ${payment.mode}`, 20, 85);
-        doc.text(`For Month: ${payment.month}/${payment.year}`, 20, 95);
-
-        doc.line(20, 105, 190, 105);
-
+        // --- Receipt Info Row ---
+        doc.setTextColor(50, 50, 50);
         doc.setFontSize(10);
-        doc.text("Thank you for your payment!", 105, 115, null, null, "center");
+        doc.text(`Receipt No: RCT-${payment._id.substring(0, 6).toUpperCase()}`, 20, 55);
+        doc.text(`Date: ${new Date(payment.date).toLocaleDateString()}`, pageWidth - 20, 55, { align: "right" });
+        
+        doc.setDrawColor(200, 200, 200);
+        doc.line(20, 60, pageWidth - 20, 60);
+
+        // --- Section 1: Child Info ---
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text("CHILD INFORMATION", 20, 75);
+        
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(11);
+        doc.text(`Child Name: ${feeData.childName}`, 25, 85);
+        doc.text(`Parent Name: ${feeData.parentName || 'Authorized Parent'}`, 25, 93);
+        doc.text(`Class: ${feeData.class || 'N/A'}`, 25, 101);
+
+        // --- Section 2: Month Info ---
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.text(`FEE FOR MONTH: ${monthName} ${payment.year}`, pageWidth / 2, 120, { align: "center" });
+
+        // --- Section 3: Payment Details ---
+        doc.setDrawColor(230, 230, 230);
+        doc.roundedRect(20, 130, pageWidth - 40, 65, 3, 3, 'S'); // Card layout
+        
+        doc.setFontSize(12);
+        doc.text("PAYMENT SUMMARY", 30, 145);
+        
+        doc.setFont("helvetica", "normal");
+        doc.text("Amount Paid:", 35, 160);
+        doc.setTextColor(34, 197, 94); // Emerald/Green
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(18);
+        doc.text(`Rs. ${payment.amount}`, pageWidth - 35, 160, { align: "right" });
+        
+        doc.setTextColor(50, 50, 50);
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "normal");
+        doc.text("Payment Mode:", 35, 175);
+        doc.text(payment.mode, pageWidth - 35, 175, { align: "right" });
+        
+        doc.text("Status:", 35, 187);
+        doc.setTextColor(34, 197, 94);
+        doc.setFont("helvetica", "bold");
+        doc.text("PAID ✅", pageWidth - 35, 187, { align: "right" });
+
+        // --- Footer ---
+        doc.setTextColor(150, 150, 150);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.line(20, 260, pageWidth - 20, 260);
+        
+        doc.setTextColor(124, 58, 237);
+        doc.setFontSize(14);
+        doc.text("Thank you for your payment 💜", pageWidth / 2, 275, { align: "center" });
+        
+        doc.setFontSize(9);
+        doc.setTextColor(180, 180, 180);
+        doc.text("This is a system-generated receipt and requires no signature.", pageWidth / 2, 285, { align: "center" });
 
         if (action === 'view') {
             window.open(doc.output('bloburl'), '_blank');
         } else {
-            doc.save(`Receipt_${feeData.childName}_${payment.month}_${payment.year}.pdf`);
+            doc.save(`Receipt_${feeData.childName}_${monthName}_${payment.year}.pdf`);
         }
     };
 
@@ -157,7 +214,7 @@ const ParentFees = () => {
         );
     }
 
-    const { childName, month, year, expectedFee, baseFee, lateFee, dueDate, paidAmount, pendingAmount, status, recentPayments, admissionDate } = feeData;
+    const { childName, parentName, class: childClass, month, year, expectedFee, baseFee, lateFee, dueDate, paidAmount, pendingAmount, status, recentPayments, admissionDate } = feeData;
     const progress = generateProgressBar(paidAmount, expectedFee);
     const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long' });
 

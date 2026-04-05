@@ -137,7 +137,7 @@ const getFeesDashboard = async (req, res) => {
                 overdueCount
             },
             children: childStatusList,
-            recentPayments: await Payment.find().sort({ createdAt: -1 }).limit(5).populate('child', 'childName')
+            recentPayments: await Payment.find().sort({ createdAt: -1 }).limit(5).populate('child', 'childName parentName')
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
