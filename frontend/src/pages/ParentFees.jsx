@@ -381,29 +381,45 @@ const ParentFees = () => {
                 </h3>
 
                 {recentPayments && recentPayments.length > 0 ? (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         {recentPayments.map((payment) => (
-                            <div key={payment._id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors gap-4">
-                                <div className="flex items-center gap-4">
-                                     <div className="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center text-emerald-500 text-lg">
-                                        <i className="fa-solid fa-check"></i>
+                            <div 
+                                key={payment._id} 
+                                className="flex flex-col sm:flex-row items-center justify-between p-5 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-purple-200 hover:-translate-y-1 transition-all duration-300 gap-4 group"
+                            >
+                                <div className="flex items-center gap-5 w-full sm:w-auto">
+                                     <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center text-xl shrink-0 shadow-inner group-hover:bg-purple-100 transition-colors">
+                                        {payment.mode === 'UPI' || payment.mode === 'Card' ? '💰' : '📄'}
                                      </div>
-                                     <div>
-                                         <p className="text-sm font-bold text-gray-900">₹{payment.amount} Paid via {payment.mode}</p>
-                                         <p className="text-xs text-gray-500 font-medium">Recorded on {new Date(payment.date).toLocaleDateString()}</p>
+                                     
+                                     <div className="flex-1">
+                                         <div className="flex items-center gap-2">
+                                             <p className="text-base font-black text-gray-900 tracking-tight">₹{payment.amount}</p>
+                                             <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-md uppercase tracking-wider border border-emerald-100 flex items-center gap-1">
+                                                 <i className="fa-solid fa-circle-check"></i> PAID
+                                             </span>
+                                         </div>
+                                         <p className="text-sm text-gray-500 font-bold mt-0.5">
+                                             Paid via {payment.mode} <span className="text-emerald-500 ml-1">✅</span>
+                                         </p>
+                                         <p className="text-xs text-gray-400 font-medium mt-1">
+                                             <i className="fa-regular fa-clock mr-1"></i>
+                                             {new Date(payment.date).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}
+                                         </p>
                                      </div>
                                 </div>
-                                <div className="flex gap-2 w-full sm:w-auto">
+
+                                <div className="flex gap-3 w-full sm:w-auto">
                                     <button
                                         onClick={() => generateReceipt(payment, 'view')}
-                                        className="flex-1 sm:flex-none px-3 py-2 bg-white text-purple-600 text-xs font-bold rounded-lg border border-purple-100 hover:bg-purple-50 transition-colors shadow-sm flex items-center justify-center gap-2"
+                                        className="flex-1 sm:flex-none px-5 py-2.5 bg-white text-purple-600 text-xs font-black rounded-xl border-2 border-purple-100 hover:border-purple-600 hover:bg-purple-50 transition-all shadow-sm flex items-center justify-center gap-2"
                                         title="View Receipt"
                                     >
                                         <i className="fa-solid fa-eye"></i> View
                                     </button>
                                     <button
                                         onClick={() => generateReceipt(payment, 'download')}
-                                        className="flex-1 sm:flex-none px-3 py-2 bg-white text-gray-700 text-xs font-bold rounded-lg border border-gray-200 hover:border-purple-300 hover:text-purple-600 transition-colors shadow-sm flex items-center justify-center gap-2"
+                                        className="flex-1 sm:flex-none px-5 py-2.5 bg-purple-50 text-purple-700 text-xs font-black rounded-xl hover:bg-purple-600 hover:text-white transition-all shadow-sm flex items-center justify-center gap-2"
                                         title="Download Receipt"
                                     >
                                         <i className="fa-solid fa-download"></i> Download
