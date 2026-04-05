@@ -7,6 +7,7 @@ const FeeStructure = require("../models/FeeStructure");
 const Payment = require("../models/Payment");
 const { calculateFee } = require("../utils/feeCalculator");
 const Feedback = require("../models/Feedback");
+const Notification = require("../models/Notification");
 
 // @desc    Get linked child for parent
 // @route   GET /api/parent/child
@@ -239,6 +240,46 @@ const getParentFeeStatus = async (req, res) => {
         if (status === 'Pending' && expectedFee > 0 && currentDate > feeInfo.graceEnd) {
             status = 'Overdue';
         }
+
+        // --- Instant Notification Logic ---
+        if (status === 'Pending' || status === 'Overdue') {
+            // Find or create Fee tracking record
+            let feeRecord = await Fee.findOne({
+                child: child._id,
+                month: numericMonth,
+                year: numericYear
+            });
+
+            if (!feeRecord) {
+                feeRecord = await Fee.create({
+                    child: child._id,
+                    amount: expectedFee,
+                    dueDate: feeInfo.dueDate,
+                    month: numericMonth,
+                    year: numericYear,
+                    status: "Pending",
+                    isPaid: false
+                });
+            }
+
+            // Create initial notification if not already done
+            if (!feeRecord.reminderCreated) {
+                const monthName = new Date(numericYear, numericMonth - 1).toLocaleString('default', { month: 'long' });
+                
+                await Notification.create({
+                    parentId: req.user._id,
+                    childId: child._id,
+                    feeId: feeRecord._id,
+                    generatedBy: req.user._id,
+                    type: "FEE",
+                    message: `Your child's (${child.childName}) fee for ${monthName} ${numericYear} is pending.`
+                });
+
+                feeRecord.reminderCreated = true;
+                await feeRecord.save();
+            }
+        }
+        // --- End of Notification Logic ---
 
         // Payments for the selected month & year
         const recentPayments = await Payment.find({ 

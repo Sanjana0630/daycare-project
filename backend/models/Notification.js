@@ -14,7 +14,10 @@ const notificationSchema = new mongoose.Schema({
     reportId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Report",
-        required: true,
+    },
+    feeId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Fee",
     },
     generatedBy: {
         type: mongoose.Schema.Types.ObjectId,
@@ -23,7 +26,7 @@ const notificationSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ["REPORT", "GENERAL"],
+        enum: ["REPORT", "GENERAL", "FEE"],
         default: "REPORT",
     },
     message: {

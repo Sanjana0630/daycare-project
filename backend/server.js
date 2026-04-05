@@ -10,6 +10,7 @@ const reportRoutes = require("./routes/reportRoutes");
 const feeRoutes = require("./routes/feeRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const feedbackRoutes = require("./routes/feedbackRoutes");
+const initFeeCron = require("./jobs/feeCron");
 
 dotenv.config();
 
@@ -48,6 +49,9 @@ app.use("/api/feedback", feedbackRoutes);
 
 // Database Connection
 connectDB();
+
+// Initialize Cron Jobs
+initFeeCron();
 
 const PORT = process.env.PORT || 5005;
 app.listen(PORT, () => {

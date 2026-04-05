@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Eye, Calendar, Clock, CheckCircle2 } from 'lucide-react';
+import { Bell, Eye, Calendar, Clock, CheckCircle2, IndianRupee } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const ParentNotifications = () => {
@@ -106,7 +106,7 @@ const ParentNotifications = () => {
                             </div>
                             
                             <h4 className="text-lg font-black text-gray-900 mb-2 group-hover:text-purple-700 transition-colors">
-                                {n.type === 'REPORT' ? 'New Activity Report' : 'Notification'}
+                                {n.type === 'REPORT' ? 'New Activity Report' : n.type === 'FEE' ? 'Fee Payment Reminder' : 'Notification'}
                             </h4>
                             
                             <p className="text-gray-500 text-sm font-medium mb-6 line-clamp-2">
@@ -124,13 +124,23 @@ const ParentNotifications = () => {
                                 </div>
                             </div>
                             
-                            <button 
-                                onClick={() => handleViewReport(n._id, n.reportId)}
-                                className="w-full py-3 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-black transition-all active:scale-95 shadow-lg shadow-gray-200"
-                            >
-                                <Eye size={16} />
-                                View Report
-                            </button>
+                            {n.type === 'FEE' ? (
+                                <button 
+                                    onClick={() => navigate('/parent/fees')}
+                                    className="w-full py-3 bg-amber-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-amber-700 transition-all active:scale-95 shadow-lg shadow-amber-200"
+                                >
+                                    <IndianRupee size={16} />
+                                    Pay Now
+                                </button>
+                            ) : (
+                                <button 
+                                    onClick={() => handleViewReport(n._id, n.reportId)}
+                                    className="w-full py-3 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-black transition-all active:scale-95 shadow-lg shadow-gray-200"
+                                >
+                                    <Eye size={16} />
+                                    View Report
+                                </button>
+                            )}
                         </div>
                     ))}
                 </div>
