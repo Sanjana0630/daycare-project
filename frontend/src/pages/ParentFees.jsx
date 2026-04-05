@@ -415,7 +415,7 @@ const ParentFees = () => {
                 ) : (
                      <div className="text-center py-8">
                         <i className="fa-solid fa-receipt text-3xl text-gray-300 mb-3"></i>
-                        <p className="text-sm font-medium text-gray-500">No recent payment history found.</p>
+                        <p className="text-sm font-medium text-gray-500">No payment records found for {monthNames[selectedMonth - 1]} {selectedYear}.</p>
                      </div>
                 )}
             </div>

@@ -240,8 +240,12 @@ const getParentFeeStatus = async (req, res) => {
             status = 'Overdue';
         }
 
-        // Recent Payments (Last 5 overall)
-        const recentPayments = await Payment.find({ child: child._id }).sort({ date: -1 }).limit(5);
+        // Payments for the selected month & year
+        const recentPayments = await Payment.find({ 
+            child: child._id, 
+            month: numericMonth, 
+            year: numericYear 
+        }).sort({ date: -1 });
 
         res.status(200).json({
             success: true,
