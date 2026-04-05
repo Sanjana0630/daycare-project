@@ -113,7 +113,7 @@ const Fees = () => {
         }
     };
 
-    const generateReceipt = (payment) => {
+    const generateReceipt = (payment, action = 'download') => {
         const doc = new jsPDF();
         
         doc.setFontSize(22);
@@ -138,7 +138,11 @@ const Fees = () => {
         doc.setFontSize(10);
         doc.text("Thank you for your payment!", 105, 115, null, null, "center");
 
-        doc.save(`Receipt_${payment.child.childName}_${payment.month}_${payment.year}.pdf`);
+        if (action === 'view') {
+            window.open(doc.output('bloburl'), '_blank');
+        } else {
+            doc.save(`Receipt_${payment.child.childName}_${payment.month}_${payment.year}.pdf`);
+        }
     };
 
     const processedChildren = children.map(child => {
@@ -406,12 +410,23 @@ const Fees = () => {
                                         </div>
                                         <div className="text-right">
                                             <p className="text-sm font-black text-emerald-600">+₹{payment.amount}</p>
-                                            <button 
-                                                onClick={() => generateReceipt(payment)}
-                                                className="text-[10px] font-bold text-blue-500 hover:text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity mt-1 flex items-center gap-1 justify-end"
-                                            >
-                                                <i className="fa-solid fa-download"></i> Receipt
-                                            </button>
+                                            <div className="flex items-center gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity mt-1">
+                                                <button 
+                                                    onClick={() => generateReceipt(payment, 'view')}
+                                                    className="text-[10px] font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1"
+                                                    title="View Receipt"
+                                                >
+                                                    <i className="fa-solid fa-eye"></i> View
+                                                </button>
+                                                <span className="text-gray-300 text-[10px]">|</span>
+                                                <button 
+                                                    onClick={() => generateReceipt(payment, 'download')}
+                                                    className="text-[10px] font-bold text-blue-500 hover:text-blue-700 flex items-center gap-1"
+                                                    title="Download Receipt"
+                                                >
+                                                    <i className="fa-solid fa-download"></i> Download
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))

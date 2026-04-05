@@ -95,7 +95,7 @@ const ParentFees = () => {
         }
     };
 
-    const generateReceipt = (payment) => {
+    const generateReceipt = (payment, action = 'download') => {
         const doc = new jsPDF();
         
         doc.setFontSize(22);
@@ -120,7 +120,11 @@ const ParentFees = () => {
         doc.setFontSize(10);
         doc.text("Thank you for your payment!", 105, 115, null, null, "center");
 
-        doc.save(`Receipt_${feeData.childName}_${payment.month}_${payment.year}.pdf`);
+        if (action === 'view') {
+            window.open(doc.output('bloburl'), '_blank');
+        } else {
+            doc.save(`Receipt_${feeData.childName}_${payment.month}_${payment.year}.pdf`);
+        }
     };
 
     const generateProgressBar = (paid, total) => {
@@ -332,12 +336,22 @@ const ParentFees = () => {
                                          <p className="text-xs text-gray-500 font-medium">Recorded on {new Date(payment.date).toLocaleDateString()}</p>
                                      </div>
                                 </div>
-                                <button
-                                    onClick={() => generateReceipt(payment)}
-                                    className="w-full sm:w-auto px-4 py-2 bg-white text-gray-700 text-xs font-bold rounded-lg border border-gray-200 hover:border-purple-300 hover:text-purple-600 transition-colors shadow-sm flex items-center justify-center gap-2"
-                                >
-                                    <i className="fa-solid fa-download"></i> Receipt
-                                </button>
+                                <div className="flex gap-2 w-full sm:w-auto">
+                                    <button
+                                        onClick={() => generateReceipt(payment, 'view')}
+                                        className="flex-1 sm:flex-none px-3 py-2 bg-white text-purple-600 text-xs font-bold rounded-lg border border-purple-100 hover:bg-purple-50 transition-colors shadow-sm flex items-center justify-center gap-2"
+                                        title="View Receipt"
+                                    >
+                                        <i className="fa-solid fa-eye"></i> View
+                                    </button>
+                                    <button
+                                        onClick={() => generateReceipt(payment, 'download')}
+                                        className="flex-1 sm:flex-none px-3 py-2 bg-white text-gray-700 text-xs font-bold rounded-lg border border-gray-200 hover:border-purple-300 hover:text-purple-600 transition-colors shadow-sm flex items-center justify-center gap-2"
+                                        title="Download Receipt"
+                                    >
+                                        <i className="fa-solid fa-download"></i> Download
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
