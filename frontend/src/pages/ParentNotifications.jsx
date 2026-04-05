@@ -73,6 +73,21 @@ const ParentNotifications = () => {
         }
     };
 
+    const handleMarkAsRead = async (notificationId) => {
+        try {
+            const token = localStorage.getItem('token');
+            await fetch(`${apiUrl}/api/notifications/${notificationId}/read`, {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            setNotifications(prev => prev.map(n => n._id === notificationId ? { ...n, isRead: true } : n));
+            window.dispatchEvent(new Event('notificationUpdated'));
+        } catch (err) {
+            console.error('Error marking as read:', err);
+        }
+    };
+
     const filteredNotifications = filter === 'unread' 
         ? notifications.filter(n => !n.isRead) 
         : notifications;
@@ -152,13 +167,24 @@ const ParentNotifications = () => {
                                         </span>
                                     )}
                                 </div>
-                                <button 
-                                    onClick={() => handleDelete(n._id)}
-                                    className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
-                                    title="Delete notification"
-                                >
-                                    <Trash2 size={18} />
-                                </button>
+                                <div className="flex items-center gap-1">
+                                    {!n.isRead && (
+                                        <button 
+                                            onClick={() => handleMarkAsRead(n._id)}
+                                            className="p-2 text-gray-300 hover:text-green-500 hover:bg-green-50 rounded-xl transition-colors"
+                                            title="Mark as read"
+                                        >
+                                            <CheckCircle2 size={18} />
+                                        </button>
+                                    )}
+                                    <button 
+                                        onClick={() => handleDelete(n._id)}
+                                        className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                                        title="Delete notification"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                </div>
                             </div>
                             
                             <h4 className={`text-lg transition-colors mb-2 ${!n.isRead ? 'font-black text-gray-900 group-hover:text-purple-700' : 'font-bold text-gray-600'}`}>
