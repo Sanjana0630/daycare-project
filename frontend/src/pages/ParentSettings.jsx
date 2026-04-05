@@ -11,6 +11,7 @@ import {
     CheckCircle 
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import CropModal from '../components/CropModal';
 
 const ParentSettings = () => {
     const [loading, setLoading] = useState(true);
@@ -22,6 +23,8 @@ const ParentSettings = () => {
         address: '',
         profileImage: ''
     });
+    const [imageToCrop, setImageToCrop] = useState(null);
+    const [isCropModalOpen, setIsCropModalOpen] = useState(false);
 
     useEffect(() => {
         fetchProfile();
@@ -66,11 +69,18 @@ const ParentSettings = () => {
                 return;
             }
             const reader = new FileReader();
-            reader.onloadend = () => {
-                setProfile(prev => ({ ...prev, profileImage: reader.result }));
+            reader.onload = () => {
+                setImageToCrop(reader.result);
+                setIsCropModalOpen(true);
             };
             reader.readAsDataURL(file);
         }
+    };
+
+    const handleCropComplete = (croppedFile) => {
+        setProfile(prev => ({ ...prev, profileImage: croppedFile }));
+        setIsCropModalOpen(false);
+        setImageToCrop(null);
     };
 
     const handleUpdate = async (e) => {
@@ -78,18 +88,23 @@ const ParentSettings = () => {
         setSaving(true);
         try {
             const token = localStorage.getItem('token');
+            const formData = new FormData();
+            formData.append('fullName', profile.fullName);
+            formData.append('phoneNumber', profile.phoneNumber);
+            formData.append('address', profile.address);
+            
+            if (profile.profileImage instanceof File) {
+                formData.append('profileImage', profile.profileImage);
+            } else if (typeof profile.profileImage === 'string') {
+                formData.append('profileImage', profile.profileImage);
+            }
+
             const response = await fetch(`${BASE_URL}/api/parent/update`, {
                 method: 'PUT',
                 headers: {
-                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({
-                    fullName: profile.fullName,
-                    phoneNumber: profile.phoneNumber,
-                    address: profile.address,
-                    profileImage: profile.profileImage
-                })
+                body: formData
             });
             const data = await response.json();
             if (data.success) {
@@ -139,7 +154,15 @@ const ParentSettings = () => {
                             <div className="w-32 h-32 rounded-[2rem] overflow-hidden border-4 border-purple-50 shadow-inner bg-gray-50 flex items-center justify-center transition-all duration-500 group-hover:scale-95 group-hover:rotate-2">
                                 {profile.profileImage ? (
                                     <img 
-                                        src={profile.profileImage} 
+                                        src={
+                                            profile.profileImage instanceof File 
+                                                ? URL.createObjectURL(profile.profileImage)
+                                                : profile.profileImage.startsWith('data:') 
+                                                    ? profile.profileImage 
+                                                    : profile.profileImage.startsWith('/uploads')
+                                                        ? `${BASE_URL}${profile.profileImage}`
+                                                        : profile.profileImage
+                                        } 
                                         alt="Profile" 
                                         className="w-full h-full object-cover"
                                     />
@@ -165,6 +188,16 @@ const ParentSettings = () => {
                             Upload a high-quality photo to help staff recognize you during pick-ups.
                         </p>
                     </div>
+
+                    <CropModal 
+                        isOpen={isCropModalOpen}
+                        image={imageToCrop}
+                        onCropComplete={handleCropComplete}
+                        onCancel={() => {
+                            setIsCropModalOpen(false);
+                            setImageToCrop(null);
+                        }}
+                    />
                 </div>
 
                 {/* Form Card */}

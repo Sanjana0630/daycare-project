@@ -388,7 +388,7 @@ const getProfile = async (req, res) => {
 // @access  Private/Parent
 const updateProfile = async (req, res) => {
     try {
-        const { fullName, phoneNumber, address, profileImage } = req.body;
+        const { fullName, phoneNumber, address, profileImage } = req.body || {};
 
         const user = await User.findById(req.user._id);
 
@@ -399,7 +399,13 @@ const updateProfile = async (req, res) => {
         user.fullName = fullName || user.fullName;
         user.phoneNumber = phoneNumber || user.phoneNumber;
         user.address = address || user.address;
-        user.profileImage = profileImage || user.profileImage;
+        
+        // Handle file upload if present, otherwise handle base64/URL if provided in body
+        if (req.file) {
+            user.profileImage = `/uploads/${req.file.filename}`;
+        } else if (profileImage) {
+            user.profileImage = profileImage;
+        }
 
         await user.save();
 

@@ -14,6 +14,7 @@ const {
     updateProfile
 } = require("../controllers/parentController");
 const { protect, parent } = require("../middleware/authMiddleware");
+const upload = require("../middleware/uploadMiddleware");
 
 router.use(protect);
 router.use(parent);
@@ -28,6 +29,6 @@ router.post("/fees/pay", recordParentPayment);
 router.post("/feedback", submitFeedback);
 router.get("/feedback", getMyFeedback);
 router.get("/me", getProfile);
-router.put("/update", updateProfile);
+router.put("/update", upload.single("profileImage"), updateProfile);
 
 module.exports = router;
