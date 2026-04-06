@@ -236,22 +236,22 @@ const Fees = () => {
         return child; // normal data
     });
 
-    const filteredChildren = processedChildren.filter(child => {
-        // 1. GET SELECTED MONTH & YEAR
+    const baseMonthlyData = processedChildren.filter(child => {
         const month0Indexed = selectedMonth - 1;
-
-        // 2. GET CHILD ADMISSION DATE
         const admissionDate = new Date(child.admissionDate);
         const admissionMonth = admissionDate.getMonth();
         const admissionYear = admissionDate.getFullYear();
+        return (selectedYear > admissionYear) || (selectedYear === admissionYear && month0Indexed >= admissionMonth);
+    });
 
-        // 3. VALIDATION LOGIC (Allowing future months)
-        const isAfterAdmission = (selectedYear > admissionYear) || (selectedYear === admissionYear && month0Indexed >= admissionMonth);
+    const derivedSummary = {
+        totalCollected: baseMonthlyData.reduce((sum, c) => sum + (c.paidAmount || 0), 0),
+        pendingFees: baseMonthlyData.reduce((sum, c) => sum + (c.pendingAmount || 0), 0),
+        paidThisMonth: baseMonthlyData.reduce((sum, c) => sum + (c.paidAmount || 0), 0),
+        overdueCount: baseMonthlyData.filter(c => c.status === 'Overdue').length
+    };
 
-        // Show child ONLY if they were admitted on or before the selected month
-        if (!isAfterAdmission) return false;
-
-        // 4. APPLY STATUS FILTER (Existing logic)
+    const filteredChildren = baseMonthlyData.filter(child => {
         if (statusFilter === 'All') return true;
         return child.status === statusFilter;
     });
@@ -292,7 +292,7 @@ const Fees = () => {
                             <i className="fa-solid fa-wallet"></i>
                         </div>
                         <p className="text-sm font-semibold text-gray-500 mb-1">Total Collected</p>
-                        <h3 className="text-2xl font-black text-gray-900">₹{(selectedYear > currentDate.getFullYear() || (selectedYear === currentDate.getFullYear() && selectedMonth > currentDate.getMonth() + 1)) ? 0 : summary.totalCollected.toLocaleString()}</h3>
+                        <h3 className="text-2xl font-black text-gray-900">₹{derivedSummary.totalCollected.toLocaleString()}</h3>
                     </div>
                  </div>
 
@@ -304,7 +304,7 @@ const Fees = () => {
                             <i className="fa-solid fa-clock"></i>
                         </div>
                         <p className="text-sm font-semibold text-gray-500 mb-1">Pending Fees</p>
-                        <h3 className="text-2xl font-black text-gray-900">₹{(selectedYear > currentDate.getFullYear() || (selectedYear === currentDate.getFullYear() && selectedMonth > currentDate.getMonth() + 1)) ? 0 : summary.pendingFees.toLocaleString()}</h3>
+                        <h3 className="text-2xl font-black text-gray-900">₹{derivedSummary.pendingFees.toLocaleString()}</h3>
                     </div>
                  </div>
 
@@ -316,7 +316,7 @@ const Fees = () => {
                             <i className="fa-solid fa-calendar-check"></i>
                         </div>
                         <p className="text-sm font-semibold text-gray-500 mb-1">Paid This Month</p>
-                        <h3 className="text-2xl font-black text-gray-900">₹{(selectedYear > currentDate.getFullYear() || (selectedYear === currentDate.getFullYear() && selectedMonth > currentDate.getMonth() + 1)) ? 0 : summary.paidThisMonth.toLocaleString()}</h3>
+                        <h3 className="text-2xl font-black text-gray-900">₹{derivedSummary.paidThisMonth.toLocaleString()}</h3>
                     </div>
                  </div>
 
@@ -328,7 +328,7 @@ const Fees = () => {
                             <i className="fa-solid fa-circle-exclamation"></i>
                         </div>
                         <p className="text-sm font-semibold text-gray-500 mb-1">Overdue Payments</p>
-                        <h3 className="text-2xl font-black text-gray-900">{(selectedYear > currentDate.getFullYear() || (selectedYear === currentDate.getFullYear() && selectedMonth > currentDate.getMonth() + 1)) ? 0 : summary.overdueCount}</h3>
+                        <h3 className="text-2xl font-black text-gray-900">{derivedSummary.overdueCount}</h3>
                     </div>
                  </div>
             </div>
