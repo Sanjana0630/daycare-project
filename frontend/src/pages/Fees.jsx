@@ -468,39 +468,45 @@ const Fees = () => {
                             {recentPayments.length === 0 ? (
                                 <p className="text-sm text-gray-500 text-center py-4">No recent payments found.</p>
                             ) : (
-                                recentPayments.map(payment => (
-                                    <div key={payment._id} className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors group border border-transparent hover:border-gray-100">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-                                                <i className="fa-solid fa-indian-rupee-sign"></i>
+                                recentPayments
+                                    .filter(payment => {
+                                        const date = new Date(payment.date);
+                                        return (date.getMonth() + 1 === selectedMonth && date.getFullYear() === selectedYear);
+                                    })
+                                    .slice(0, 5)
+                                    .map(payment => (
+                                        <div key={payment._id} className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors group border border-transparent hover:border-gray-100">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                                                    <i className="fa-solid fa-indian-rupee-sign"></i>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-gray-900">{payment.child?.childName || 'Unknown Child'}</p>
+                                                    <p className="text-xs text-gray-500">{new Date(payment.date).toLocaleDateString()} • {payment.mode}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="text-sm font-bold text-gray-900">{payment.child?.childName || 'Unknown Child'}</p>
-                                                <p className="text-xs text-gray-500">{new Date(payment.date).toLocaleDateString()} • {payment.mode}</p>
+                                            <div className="text-right">
+                                                <p className="text-sm font-black text-emerald-600">+₹{payment.amount}</p>
+                                                <div className="flex items-center gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity mt-1">
+                                                    <button 
+                                                        onClick={() => generateReceipt(payment, 'view')}
+                                                        className="text-[10px] font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1"
+                                                        title="View Receipt"
+                                                    >
+                                                        <i className="fa-solid fa-eye"></i> View
+                                                    </button>
+                                                    <span className="text-gray-300 text-[10px]">|</span>
+                                                    <button 
+                                                        onClick={() => generateReceipt(payment, 'download')}
+                                                        className="text-[10px] font-bold text-blue-500 hover:text-blue-700 flex items-center gap-1"
+                                                        title="Download Receipt"
+                                                    >
+                                                        <i className="fa-solid fa-download"></i> Download
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="text-sm font-black text-emerald-600">+₹{payment.amount}</p>
-                                            <div className="flex items-center gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity mt-1">
-                                                <button 
-                                                    onClick={() => generateReceipt(payment, 'view')}
-                                                    className="text-[10px] font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1"
-                                                    title="View Receipt"
-                                                >
-                                                    <i className="fa-solid fa-eye"></i> View
-                                                </button>
-                                                <span className="text-gray-300 text-[10px]">|</span>
-                                                <button 
-                                                    onClick={() => generateReceipt(payment, 'download')}
-                                                    className="text-[10px] font-bold text-blue-500 hover:text-blue-700 flex items-center gap-1"
-                                                    title="Download Receipt"
-                                                >
-                                                    <i className="fa-solid fa-download"></i> Download
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
+                                    ))
                             )}
                         </div>
                     </div>
