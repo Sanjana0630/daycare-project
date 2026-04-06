@@ -52,10 +52,10 @@ const Header = ({ onMenuClick }) => {
         };
     }, [role, apiUrl]);
 
-    // Fetch searchable data for Admin/Staff
+    // Fetch searchable data for Admin/Staff/Parent
     useEffect(() => {
         const fetchSearchData = async () => {
-            if (role !== 'admin' && role !== 'staff') return;
+            if (role !== 'admin' && role !== 'staff' && role !== 'parent') return;
             try {
                 const token = localStorage.getItem('token');
                 const config = { headers: { 'Authorization': `Bearer ${token}` } };
@@ -77,6 +77,16 @@ const Header = ({ onMenuClick }) => {
 
                     setAllData({
                         children: childrenRes.data.data || [],
+                        parents: [],
+                        staff: []
+                    });
+                } else if (role === 'parent') {
+                    const childRes = await axios.get(`${apiUrl}/api/parent/child`, config);
+                    // Parent API returns a single object or null, wrap in array if present
+                    const children = childRes.data.data ? [childRes.data.data] : [];
+                    
+                    setAllData({
+                        children: children,
                         parents: [],
                         staff: []
                     });
@@ -128,6 +138,14 @@ const Header = ({ onMenuClick }) => {
             switch (type) {
                 case 'child':
                     navigate(`/staff/my-children`);
+                    break;
+                default:
+                    break;
+            }
+        } else if (role === 'parent') {
+            switch (type) {
+                case 'child':
+                    navigate(`/parent/dashboard`); // Parent has 1 child view usually
                     break;
                 default:
                     break;
@@ -199,13 +217,13 @@ const Header = ({ onMenuClick }) => {
                 </button>
 
                 {/* Search Bar */}
-                {(role === 'admin' || role === 'staff') && (
+                {(role === 'admin' || role === 'staff' || role === 'parent') && (
                     <div className="flex-1 max-w-xl hidden sm:block relative" ref={searchRef}>
                         <div className="relative">
                             <Search className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${isSearchFocused ? 'text-purple-500' : 'text-gray-400'}`} size={18} />
                             <input
                                 type="text"
-                                placeholder={role === 'admin' ? "Search children, parents, staff..." : "Search children..."}
+                                placeholder={role === 'admin' ? "Search children, parents, staff..." : (role === 'staff' ? "Search children..." : "Search your children...")}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 onFocus={() => setIsSearchFocused(true)}
