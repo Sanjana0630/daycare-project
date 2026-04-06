@@ -179,9 +179,17 @@ const getActiveStaff = async (req, res) => {
         const users = await User.find({ role: "staff", status: "active" }).select("-password").lean();
         const emails = users.map(u => u.email.toLowerCase().trim());
 
-        const profiles = await Staff.find({ email: { $in: emails.map(e => new RegExp('^' + e + '$', 'i')) } }).lean();
+        let staffQuery = { email: { $in: emails.map(e => new RegExp('^' + e + '$', 'i')) } };
+        
+        if (req.query.date) {
+            const selectedDate = new Date(req.query.date);
+            selectedDate.setHours(0, 0, 0, 0);
+            staffQuery.joiningDate = { $lte: selectedDate };
+        }
 
-        const mergedData = users.map(user => {
+        const profiles = await Staff.find(staffQuery).lean();
+
+        let mergedData = users.map(user => {
             const userEmail = user.email.toLowerCase().trim();
             const profile = profiles.find(p => p.email.toLowerCase().trim() === userEmail);
 
@@ -191,6 +199,18 @@ const getActiveStaff = async (req, res) => {
 
             return { ...profile, ...user, _id: user._id };
         });
+
+        // Apply fallback filter on merged data to ensure strictly correct results
+        if (req.query.date) {
+            const selectedDate = new Date(req.query.date);
+            selectedDate.setHours(0, 0, 0, 0);
+            mergedData = mergedData.filter(staff => {
+                if (!staff.joiningDate) return true;
+                const joiningDate = new Date(staff.joiningDate);
+                joiningDate.setHours(0, 0, 0, 0);
+                return joiningDate <= selectedDate;
+            });
+        }
 
         res.status(200).json({
             success: true,

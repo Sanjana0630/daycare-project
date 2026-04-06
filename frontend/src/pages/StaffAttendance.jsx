@@ -141,8 +141,8 @@ const StaffAttendance = () => {
             const token = localStorage.getItem('token');
             const headers = { 'Authorization': `Bearer ${token}` };
 
-            // Fetch only active staff
-            const staffRes = await fetch(`${BASE_URL}/api/admin/staff/active`, { headers });
+            // Fetch only active staff and pass date for backend filtering
+            const staffRes = await fetch(`${BASE_URL}/api/admin/staff/active?date=${selectedDate}`, { headers });
             const staffData = await staffRes.json();
 
             // Fetch attendance for selected date
@@ -152,16 +152,26 @@ const StaffAttendance = () => {
             if (staffData.success) {
                 const existingAttendance = attendanceData.success ? attendanceData.data : [];
 
-                // Initialize attendance state for each staff member
-                const staffWithAttendance = staffData.data.map(member => {
-                    const record = existingAttendance.find(a => a.staff === member._id);
-                    return {
-                        ...member,
-                        status: record ? record.status : '', // Empty if not marked
-                        remarks: record ? record.remarks : '',
-                        isMarked: !!record
-                    };
-                });
+                const parsedSelectedDate = new Date(selectedDate);
+                parsedSelectedDate.setHours(0, 0, 0, 0);
+
+                // Initialize attendance state for each staff member with frontend safety filter
+                const staffWithAttendance = staffData.data
+                    .filter(member => {
+                        if (!member.joiningDate) return true;
+                        const joiningDate = new Date(member.joiningDate);
+                        joiningDate.setHours(0, 0, 0, 0);
+                        return joiningDate <= parsedSelectedDate;
+                    })
+                    .map(member => {
+                        const record = existingAttendance.find(a => a.staff === member._id);
+                        return {
+                            ...member,
+                            status: record ? record.status : '', // Empty if not marked
+                            remarks: record ? record.remarks : '',
+                            isMarked: !!record
+                        };
+                    });
                 setStaff(staffWithAttendance);
             } else {
                 setError(staffData.message || 'Failed to fetch staff');
