@@ -117,38 +117,28 @@ const Header = ({ onMenuClick }) => {
     }, [searchQuery, allData]);
 
     const handleResultClick = (type, item) => {
+        // Clear search state first
         setSearchQuery("");
         setIsSearchFocused(false);
         
-        if (role === 'admin') {
+        const userRole = role.toLowerCase();
+        
+        if (userRole === 'admin') {
             switch (type) {
-                case 'child':
-                    navigate(`/children`);
-                    break;
-                case 'parent':
-                    navigate(`/parents`);
-                    break;
-                case 'staff':
-                    navigate(`/staff`);
-                    break;
-                default:
-                    break;
+                case 'child': navigate(`/children`); break;
+                case 'parent': navigate(`/parents`); break;
+                case 'staff': navigate(`/staff`); break;
+                default: break;
             }
-        } else if (role === 'staff') {
+        } else if (userRole === 'staff') {
             switch (type) {
-                case 'child':
-                    navigate(`/staff/my-children`);
-                    break;
-                default:
-                    break;
+                case 'child': navigate(`/staff/my-children`); break;
+                default: break;
             }
-        } else if (role === 'parent') {
-            switch (type) {
-                case 'child':
-                    navigate(`/parent/dashboard`); // Parent has 1 child view usually
-                    break;
-                default:
-                    break;
+        } else if (userRole === 'parent') {
+            if (type === 'child') {
+                // Navigate to the My Child details page
+                navigate(`/parent/child`);
             }
         }
     };
