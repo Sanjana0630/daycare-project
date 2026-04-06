@@ -20,7 +20,8 @@ const {
     addCustomScheduleActivity,
     deleteScheduleActivity,
     logChildDailyActivity,
-    getChildDailyActivity
+    getChildDailyActivity,
+    saveBulkChildAttendance
 } = require("../controllers/staffController");
 
 router.route("/")
@@ -31,6 +32,7 @@ router.get("/assigned-children", protect, getStaffChildren);
 router.get("/children-attendance", protect, getChildrenAttendance);
 router.get("/attendance-history", protect, getAttendanceHistory);
 router.post("/mark-attendance", protect, markChildAttendance);
+router.post("/bulk-attendance", protect, saveBulkChildAttendance);
 router.post("/add-activity", protect, addStaffActivity);
 router.get("/dashboard-stats", protect, getStaffDashboardSummary);
 router.get("/schedule", protect, getScheduleActivities);

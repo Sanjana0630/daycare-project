@@ -614,6 +614,47 @@ const getChildDailyActivity = async (req, res) => {
     }
 };
 
+const saveBulkChildAttendance = async (req, res) => {
+    try {
+        const { date, records } = req.body;
+        const Attendance = require("../models/Attendance");
+        const Staff = require("../models/Staff");
+
+        const staffMember = await Staff.findOne({ email: req.user.email });
+        if (!staffMember) {
+            return res.status(404).json({ success: false, message: "Staff record not found" });
+        }
+
+        const attendanceDate = getNormalizedDate(date);
+
+        const dateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(date ? new Date(date) : new Date());
+        const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+
+        if (dateStr !== todayStr) {
+            return res.status(400).json({ success: false, message: "Attendance can only be marked for today." });
+        }
+
+        for (const rec of records) {
+            await Attendance.findOneAndUpdate(
+                { child: rec.childId, date: attendanceDate },
+                {
+                    status: rec.status,
+                    checkIn: rec.checkIn,
+                    checkOut: rec.checkOut,
+                    remarks: rec.remarks,
+                    markedBy: staffMember._id,
+                    markedAt: new Date()
+                },
+                { new: true, upsert: true }
+            );
+        }
+
+        res.status(200).json({ success: true, message: "Attendance saved successfully" });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 module.exports = {
     registerStaff,
     getStaffMembers,
@@ -633,5 +674,6 @@ module.exports = {
     addCustomScheduleActivity,
     deleteScheduleActivity,
     logChildDailyActivity,
-    getChildDailyActivity
+    getChildDailyActivity,
+    saveBulkChildAttendance
 };

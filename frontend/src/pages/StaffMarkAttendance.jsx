@@ -109,28 +109,30 @@ const StaffMarkAttendance = () => {
         }));
     };
 
-    const handleSave = async (childId) => {
-        setSaving(childId);
+    const handleBulkSave = async () => {
+        setSaving('bulk');
         try {
             const token = localStorage.getItem('token');
-            const data = {
+            const records = Object.entries(attendance).map(([childId, data]) => ({
                 childId,
-                date,
-                ...attendance[childId]
-            };
+                ...data
+            }));
 
-            const response = await fetch(`${BASE_URL}/api/staff/mark-attendance`, {
+            const response = await fetch(`${BASE_URL}/api/staff/bulk-attendance`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify({
+                    date,
+                    records
+                })
             });
 
             const result = await response.json();
             if (result.success) {
-                toast.success(`Child attendance marked as ${attendance[childId].status}`);
+                toast.success('Attendance saved successfully');
             }
         } catch (error) {
             toast.error('Failed to save attendance. Please try again.');
@@ -138,6 +140,22 @@ const StaffMarkAttendance = () => {
         } finally {
             setSaving(null);
         }
+    };
+
+    const markAllPresent = () => {
+        const newAttendance = { ...attendance };
+        Object.keys(newAttendance).forEach(id => {
+            newAttendance[id].status = 'Present';
+        });
+        setAttendance(newAttendance);
+    };
+
+    const markAllAbsent = () => {
+        const newAttendance = { ...attendance };
+        Object.keys(newAttendance).forEach(id => {
+            newAttendance[id].status = 'Absent';
+        });
+        setAttendance(newAttendance);
     };
 
     const filteredChildren = children.filter(child =>
@@ -242,8 +260,8 @@ const StaffMarkAttendance = () => {
             </div>
 
             {/* Premium Search Bar */}
-            <div className="flex flex-col md:flex-row gap-4">
-                <div className="relative flex-1">
+            <div className="flex flex-col md:flex-row gap-4 items-center">
+                <div className="relative flex-1 w-full">
                     <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400" size={24} />
                     <input
                         type="text"
@@ -253,6 +271,34 @@ const StaffMarkAttendance = () => {
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
+                {isToday && (
+                    <div className="flex gap-3">
+                        <button
+                            onClick={markAllPresent}
+                            className="px-6 py-4 bg-green-50 text-green-700 border border-green-200 rounded-2xl font-black hover:bg-green-100 transition-all active:scale-95 text-xs uppercase tracking-widest whitespace-nowrap"
+                        >
+                            Mark All Present
+                        </button>
+                        <button
+                            onClick={markAllAbsent}
+                            className="px-6 py-4 bg-rose-50 text-rose-700 border border-rose-200 rounded-2xl font-black hover:bg-rose-100 transition-all active:scale-95 text-xs uppercase tracking-widest whitespace-nowrap"
+                        >
+                            Mark All Absent
+                        </button>
+                        <button
+                            onClick={handleBulkSave}
+                            disabled={saving === 'bulk'}
+                            className="flex items-center gap-2 px-8 py-4 bg-gray-900 border border-gray-900 text-white rounded-2xl font-black shadow-xl hover:bg-purple-700 hover:border-purple-700 transition-all active:scale-95 uppercase tracking-widest text-xs whitespace-nowrap disabled:opacity-50 disabled:scale-100"
+                        >
+                            {saving === 'bulk' ? (
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            ) : (
+                                <Save size={18} />
+                            )}
+                            Save All Attendance
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Table Section or Locked Message */}
@@ -266,7 +312,6 @@ const StaffMarkAttendance = () => {
                                     <th className="px-10 py-8 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] text-center">Status</th>
                                     <th className="px-10 py-8 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Time Log</th>
                                     <th className="px-10 py-8 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Internal Remarks</th>
-                                    <th className="px-10 py-8 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">Commit</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
@@ -356,20 +401,6 @@ const StaffMarkAttendance = () => {
                                                 onChange={(e) => handleInputChange(child._id, 'remarks', e.target.value)}
                                                 className={`w-full px-5 py-4 bg-gray-50/50 border border-gray-100 rounded-2xl text-sm font-medium outline-none transition-all placeholder:text-gray-300 italic ${!isToday ? 'cursor-not-allowed opacity-70' : 'focus:bg-white focus:ring-4 focus:ring-purple-50 focus:border-purple-200'}`}
                                             />
-                                        </td>
-                                        <td className="px-10 py-8 text-right">
-                                            <button
-                                                onClick={() => isToday && handleSave(child._id)}
-                                                disabled={saving === child._id || !isToday}
-                                                className={`inline-flex items-center gap-2 px-8 py-4 bg-gray-900 text-white text-xs font-black rounded-2xl shadow-xl shadow-gray-200 hover:bg-purple-700 hover:shadow-purple-200 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 uppercase tracking-widest ${!isToday ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                            >
-                                                {saving === child._id ? (
-                                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                                ) : (
-                                                    <Save size={18} />
-                                                )}
-                                                {saving === child._id ? 'Syncing' : isToday ? 'Commit' : 'Locked'}
-                                            </button>
                                         </td>
                                     </tr>
                                 ))}
