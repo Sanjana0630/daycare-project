@@ -5,6 +5,7 @@ import jsPDF from 'jspdf';
 import SetFeeStructureModal from '../components/SetFeeStructureModal';
 import AddPaymentModal from '../components/AddPaymentModal';
 import FeeDetailsModal from '../components/FeeDetailsModal';
+import ViewFeeStructureModal from '../components/ViewFeeStructureModal';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5005';
 const API_URL = `${API_BASE_URL}/api`;
@@ -33,6 +34,7 @@ const Fees = () => {
 
     // Modals
     const [isFeeStructureModalOpen, setFeeStructureModalOpen] = useState(false);
+    const [isViewStructureModalOpen, setViewStructureModalOpen] = useState(false);
     const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
     const [isDetailsModalOpen, setDetailsModalOpen] = useState(false);
     const [selectedChild, setSelectedChild] = useState(null);
@@ -263,7 +265,14 @@ const Fees = () => {
                     <p className="text-gray-500 font-medium mt-1">Track and manage student fee records</p>
                 </div>
                 <div className="flex items-center gap-3">
-                     <button
+                    <button
+                        onClick={() => setViewStructureModalOpen(true)}
+                        className="px-5 py-2.5 bg-gray-200 text-black text-sm font-bold rounded-xl hover:bg-gray-300 transition-all flex items-center gap-2"
+                    >
+                        <i className="fa-solid fa-eye"></i>
+                        View Fee Structure
+                    </button>
+                    <button
                         onClick={() => setFeeStructureModalOpen(true)}
                         className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm font-bold rounded-xl shadow-lg shadow-purple-200 hover:shadow-purple-300 transform hover:-translate-y-0.5 transition-all flex items-center gap-2"
                     >
@@ -503,6 +512,13 @@ const Fees = () => {
                 isOpen={isFeeStructureModalOpen}
                 onClose={() => setFeeStructureModalOpen(false)}
                 onSubmit={handleSetFeeStructure}
+            />
+
+            <ViewFeeStructureModal
+                isOpen={isViewStructureModalOpen}
+                onClose={() => setViewStructureModalOpen(false)}
+                month={selectedMonth}
+                year={selectedYear}
             />
             
             <AddPaymentModal

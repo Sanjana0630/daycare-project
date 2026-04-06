@@ -29,7 +29,18 @@ const setFeeStructure = async (req, res) => {
 // Get All Fee Structures
 const getFeeStructures = async (req, res) => {
     try {
+        const { month, year } = req.query;
         const structures = await FeeStructure.find();
+        
+        // If specific month/year is requested, return in the specialized format
+        if (month && year) {
+            const formattedData = structures.map(s => ({
+                className: s.class,
+                amount: s.monthlyFee
+            }));
+            return res.status(200).json(formattedData);
+        }
+
         res.status(200).json({ success: true, data: structures });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
