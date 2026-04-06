@@ -101,7 +101,7 @@ const updateStaff = async (req, res) => {
         }
 
         staff = await Staff.findByIdAndUpdate(req.params.id, req.body, {
-            new: true,
+            returnDocument: 'after',
             runValidators: true,
         });
 
@@ -195,7 +195,7 @@ const markChildAttendance = async (req, res) => {
         const attendance = await Attendance.findOneAndUpdate(
             { child: childId, date: attendanceDate },
             updateData,
-            { new: true, upsert: true }
+            { returnDocument: 'after', upsert: true }
         );
 
         res.status(200).json({ success: true, data: attendance });
@@ -371,13 +371,13 @@ const markScheduleActivityCompleted = async (req, res) => {
             activity = await ScheduleActivity.findByIdAndUpdate(
                 _id,
                 { status: "Completed" },
-                { new: true }
+                { returnDocument: 'after' }
             );
         } else {
             activity = await ScheduleActivity.findOneAndUpdate(
                 { name, date: activityDate, createdBy: req.user._id, isDefault: true },
                 { name, date: activityDate, startTime, endTime, status: "Completed", isDefault: true, createdBy: req.user._id },
-                { new: true, upsert: true }
+                { returnDocument: 'after', upsert: true }
             );
         }
 
@@ -558,7 +558,7 @@ const updateMyProfile = async (req, res) => {
         const staff = await Staff.findOneAndUpdate(
             { email: req.user.email },
             { ...req.body, email: req.user.email },
-            { new: true, runValidators: true, upsert: true }
+            { returnDocument: 'after', runValidators: true, upsert: true }
         );
         res.status(200).json({ success: true, data: staff });
     } catch (error) {
@@ -586,7 +586,7 @@ const logChildDailyActivity = async (req, res) => {
                 activities,
                 recordedBy: staffMember._id
             },
-            { new: true, upsert: true }
+            { returnDocument: 'after', upsert: true }
         );
 
         res.status(200).json({ success: true, data: dailyLog, message: "Daily activity report saved successfully." });
@@ -645,7 +645,7 @@ const saveBulkChildAttendance = async (req, res) => {
                     markedBy: staffMember._id,
                     markedAt: new Date()
                 },
-                { new: true, upsert: true }
+                { returnDocument: 'after', upsert: true }
             );
         }
 

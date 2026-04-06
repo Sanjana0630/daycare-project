@@ -11,10 +11,14 @@ const {
 const upload = require("../middleware/uploadMiddleware");
 const Child = require("../models/Child");
 
+const getClassFromAge = require("../utils/getClassFromAge");
+
 router.post("/add-child", upload.single("photo"), async (req, res) => {
     try {
+        const className = getClassFromAge(req.body.dob);
         const child = new Child({
             ...req.body,
+            class: className, // User's snippet used className: className, but model uses 'class'
             photo: req.file ? `/uploads/${req.file.filename}` : ""
         });
 
