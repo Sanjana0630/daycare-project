@@ -29,7 +29,7 @@ const StaffMarkAttendance = () => {
                 const token = localStorage.getItem('token');
 
                 // Fetch assigned children
-                const childrenRes = await fetch(`${BASE_URL}/api/staff/assigned-children`, {
+                const childrenRes = await fetch(`${BASE_URL}/api/staff/assigned-children?date=${date}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const childrenData = await childrenRes.json();
@@ -43,9 +43,20 @@ const StaffMarkAttendance = () => {
 
                     const existingAttendance = attendanceData.success ? attendanceData.data : [];
 
+                    const parsedSelectedDate = new Date(date);
+                    parsedSelectedDate.setHours(0, 0, 0, 0);
+
                     // Initialize attendance state taking existing DB records into account
                     const initialAttendance = {};
-                    childrenData.data.forEach(child => {
+                    
+                    const safeChildren = childrenData.data.filter(child => {
+                        if (!child.admissionDate) return true;
+                        const admissionDate = new Date(child.admissionDate);
+                        admissionDate.setHours(0, 0, 0, 0);
+                        return admissionDate <= parsedSelectedDate;
+                    });
+                    
+                    safeChildren.forEach(child => {
                         const record = existingAttendance.find(a => a.child === child._id);
                         if (record) {
                             initialAttendance[child._id] = {
@@ -65,7 +76,7 @@ const StaffMarkAttendance = () => {
                         }
                     });
                     setAttendance(initialAttendance);
-                    setChildren(childrenData.data);
+                    setChildren(safeChildren);
                 }
             } catch (error) {
                 console.error('Error fetching data:', error);

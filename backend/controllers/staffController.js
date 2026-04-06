@@ -144,7 +144,15 @@ const getStaffChildren = async (req, res) => {
         }
 
         const Child = require("../models/Child");
-        const children = await Child.find({ class: staffMember.assignedClass });
+        let query = { class: staffMember.assignedClass };
+
+        if (req.query.date) {
+            const selectedDate = new Date(req.query.date);
+            selectedDate.setHours(0, 0, 0, 0);
+            query.admissionDate = { $lte: selectedDate };
+        }
+
+        const children = await Child.find(query);
 
         console.log("Staff Class:", staffMember.assignedClass);
         console.log("Child Classes:", children.map(c => c.class));
