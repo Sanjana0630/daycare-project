@@ -52,25 +52,38 @@ const Header = ({ onMenuClick }) => {
         };
     }, [role, apiUrl]);
 
-    // Fetch searchable data for Admin
+    // Fetch searchable data for Admin/Staff
     useEffect(() => {
         const fetchSearchData = async () => {
-            if (role !== 'admin') return;
+            if (role !== 'admin' && role !== 'staff') return;
             try {
                 const token = localStorage.getItem('token');
                 const config = { headers: { 'Authorization': `Bearer ${token}` } };
                 
-                const [childrenRes, parentsRes, staffRes] = await Promise.all([
-                    axios.get(`${apiUrl}/api/children`, config),
-                    axios.get(`${apiUrl}/api/admin/parents`, config),
-                    axios.get(`${apiUrl}/api/admin/staff/active`, config)
-                ]);
+                if (role === 'admin') {
+                    const [childrenRes, parentsRes, staffRes] = await Promise.all([
+                        axios.get(`${apiUrl}/api/children`, config),
+                        axios.get(`${apiUrl}/api/admin/parents`, config),
+                        axios.get(`${apiUrl}/api/admin/staff/active`, config)
+                    ]);
 
-                setAllData({
-                    children: childrenRes.data.data || [],
-                    parents: parentsRes.data.data || [],
-                    staff: staffRes.data.data || []
-                });
+                    setAllData({
+                        children: childrenRes.data.data || [],
+                        parents: parentsRes.data.data || [],
+                        staff: staffRes.data.data || []
+                    });
+                } else if (role === 'staff') {
+                    const [childrenRes, staffRes] = await Promise.all([
+                        axios.get(`${apiUrl}/api/staff/assigned-children`, config),
+                        axios.get(`${apiUrl}/api/staff`, config)
+                    ]);
+
+                    setAllData({
+                        children: childrenRes.data.data || [],
+                        parents: [],
+                        staff: staffRes.data.data || []
+                    });
+                }
             } catch (err) {
                 console.error('Error fetching search data:', err);
             }
@@ -100,18 +113,31 @@ const Header = ({ onMenuClick }) => {
         setSearchQuery("");
         setIsSearchFocused(false);
         
-        switch (type) {
-            case 'child':
-                navigate(`/children`); // Simplified navigation
-                break;
-            case 'parent':
-                navigate(`/parents`);
-                break;
-            case 'staff':
-                navigate(`/staff`);
-                break;
-            default:
-                break;
+        if (role === 'admin') {
+            switch (type) {
+                case 'child':
+                    navigate(`/children`);
+                    break;
+                case 'parent':
+                    navigate(`/parents`);
+                    break;
+                case 'staff':
+                    navigate(`/staff`);
+                    break;
+                default:
+                    break;
+            }
+        } else if (role === 'staff') {
+            switch (type) {
+                case 'child':
+                    navigate(`/staff/my-children`);
+                    break;
+                case 'staff':
+                    navigate(`/staff/dashboard`); // Staff doesn't have a staff list page
+                    break;
+                default:
+                    break;
+            }
         }
     };
 
@@ -179,13 +205,13 @@ const Header = ({ onMenuClick }) => {
                 </button>
 
                 {/* Search Bar */}
-                {role === 'admin' && (
+                {(role === 'admin' || role === 'staff') && (
                     <div className="flex-1 max-w-xl hidden sm:block relative" ref={searchRef}>
                         <div className="relative">
                             <Search className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${isSearchFocused ? 'text-purple-500' : 'text-gray-400'}`} size={18} />
                             <input
                                 type="text"
-                                placeholder="Search children, parents, staff..."
+                                placeholder={role === 'admin' ? "Search children, parents, staff..." : "Search children, staff..."}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 onFocus={() => setIsSearchFocused(true)}
