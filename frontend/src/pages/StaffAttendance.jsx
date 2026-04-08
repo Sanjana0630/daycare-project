@@ -267,7 +267,7 @@ const StaffAttendance = () => {
 
             const data = await response.json();
             if (data.success) {
-                toast.success('Bulk staff attendance saved successfully');
+                toast.success('Attendance saved successfully');
             } else {
                 toast.error(data.message || 'Failed to save bulk attendance.');
             }

@@ -155,7 +155,7 @@ const saveBulkStaffAttendance = async (req, res) => {
             }
         }
 
-        res.status(200).json({ success: true, message: "Bulk staff attendance saved successfully" });
+        res.status(200).json({ success: true, message: "Attendance saved successfully" });
     } catch (error) {
         console.error('Error in saveBulkStaffAttendance:', error);
         res.status(500).json({ success: false, message: "Server error" });
