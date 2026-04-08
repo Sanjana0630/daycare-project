@@ -19,7 +19,8 @@ const {
     getParents,
     getParentFeedback,
     toggleFeedbackVisibility,
-    deleteFeedbackEntry
+    deleteFeedbackEntry,
+    saveBulkStaffAttendance
 } = require("../controllers/adminController");
 
 router.get("/staff", protect, admin, getStaffUsers);
@@ -29,6 +30,7 @@ router.patch("/staff/approve/:id", protect, admin, approveStaff);
 router.patch("/staff/reject/:id", protect, admin, rejectStaff);
 router.delete("/staff/:id", protect, admin, deleteStaff);
 router.post("/staff-attendance", protect, admin, upsertStaffAttendance);
+router.post("/staff-attendance/bulk", protect, admin, saveBulkStaffAttendance);
 router.get("/staff-attendance", protect, admin, getStaffAttendance);
 router.get("/children-attendance", protect, admin, getChildrenAttendance);
 router.get("/attendance-history/:childId", protect, admin, getChildAttendanceHistory);

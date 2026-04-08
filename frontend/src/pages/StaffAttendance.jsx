@@ -101,6 +101,7 @@ const StaffAttendance = () => {
 
     const [selectedDate, setSelectedDate] = useState(getTodayString());
     const [savingId, setSavingId] = useState(null);
+    const [savingBulk, setSavingBulk] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
 
     const [historyModal, setHistoryModal] = useState({ isOpen: false, staffName: '', staffId: '' });
@@ -223,6 +224,57 @@ const StaffAttendance = () => {
             toast.error('Failed to save attendance. Please try again.');
         } finally {
             setSavingId(null);
+        }
+    };
+
+    const markAllPresent = () => {
+        const updated = staff.map(member => ({
+            ...member,
+            status: 'present'
+        }));
+        setStaff(updated);
+    };
+
+    const markAllAbsent = () => {
+        const updated = staff.map(member => ({
+            ...member,
+            status: 'absent'
+        }));
+        setStaff(updated);
+    };
+
+    const handleBulkSave = async () => {
+        setSavingBulk(true);
+        try {
+            const token = localStorage.getItem('token');
+            const records = staff.map(member => ({
+                staffId: member._id,
+                status: member.status,
+                remarks: member.remarks
+            }));
+
+            const response = await fetch(`${BASE_URL}/api/admin/staff-attendance/bulk`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    date: selectedDate,
+                    records
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                toast.success('Bulk staff attendance saved successfully');
+            } else {
+                toast.error(data.message || 'Failed to save bulk attendance.');
+            }
+        } catch (err) {
+            toast.error('Failed to save bulk attendance.');
+        } finally {
+            setSavingBulk(false);
         }
     };
 
@@ -393,6 +445,34 @@ const StaffAttendance = () => {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
+                    {isToday && (
+                        <div className="flex gap-3">
+                            <button
+                                onClick={markAllPresent}
+                                className="px-6 py-4 bg-green-50 text-green-700 border border-green-200 rounded-2xl font-black hover:bg-green-100 transition-all active:scale-95 text-xs uppercase tracking-widest whitespace-nowrap"
+                            >
+                                Mark All Present
+                            </button>
+                            <button
+                                onClick={markAllAbsent}
+                                className="px-6 py-4 bg-rose-50 text-rose-700 border border-rose-200 rounded-2xl font-black hover:bg-rose-100 transition-all active:scale-95 text-xs uppercase tracking-widest whitespace-nowrap"
+                            >
+                                Mark All Absent
+                            </button>
+                            <button
+                                onClick={handleBulkSave}
+                                disabled={savingBulk}
+                                className="flex items-center gap-2 px-8 py-4 bg-gray-900 border border-gray-900 text-white rounded-2xl font-black shadow-xl hover:bg-purple-700 hover:border-purple-700 transition-all active:scale-95 uppercase tracking-widest text-xs whitespace-nowrap disabled:opacity-50 disabled:scale-100"
+                            >
+                                {savingBulk ? (
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                ) : (
+                                    <Save size={18} />
+                                )}
+                                Save All Attendance
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 

@@ -123,6 +123,45 @@ const getChildrenAttendance = async (req, res) => {
     }
 };
 
+// @desc    Save bulk staff attendance
+// @route   POST /api/admin/staff-attendance/bulk
+// @access  Private/Admin
+const saveBulkStaffAttendance = async (req, res) => {
+    try {
+        const { date, records } = req.body;
+        
+        const attendanceDate = new Date(date);
+        attendanceDate.setHours(0, 0, 0, 0);
+
+        const getTodayString = () => {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        };
+
+        const dateStr = date.split('T')[0];
+        const todayStr = getTodayString();
+
+        if (dateStr !== todayStr) {
+            return res.status(400).json({ success: false, message: "Staff attendance can only be marked for today." });
+        }
+
+        for (const rec of records) {
+            if (rec.status) {
+                await StaffAttendance.findOneAndUpdate(
+                    { staff: rec.staffId, date: attendanceDate },
+                    { status: rec.status, remarks: rec.remarks || '' },
+                    { returnDocument: 'after', upsert: true, runValidators: true }
+                );
+            }
+        }
+
+        res.status(200).json({ success: true, message: "Bulk staff attendance saved successfully" });
+    } catch (error) {
+        console.error('Error in saveBulkStaffAttendance:', error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
 // @desc    Get staff attendance by date
 // @route   GET /api/admin/staff-attendance
 // @access  Private/Admin
@@ -584,5 +623,6 @@ module.exports = {
     getParents,
     getParentFeedback,
     toggleFeedbackVisibility,
-    deleteFeedbackEntry
+    deleteFeedbackEntry,
+    saveBulkStaffAttendance
 };
