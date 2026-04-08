@@ -27,7 +27,6 @@ const ParentProfile = () => {
     const [feedback, setFeedback] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [activeTab, setActiveTab] = useState('feedback');
     const [categoryFilter, setCategoryFilter] = useState('All');
 
     useEffect(() => {
@@ -197,33 +196,8 @@ const ParentProfile = () => {
                 </div>
             </div>
 
-            {/* Content Tabs */}
             <div className="space-y-6">
-                <div className="flex gap-2 p-1.5 bg-gray-100/50 rounded-2xl w-fit">
-                    <button 
-                        onClick={() => setActiveTab('feedback')}
-                        className={`px-6 py-3 rounded-xl text-sm font-black transition-all ${
-                            activeTab === 'feedback' 
-                            ? 'bg-white text-purple-700 shadow-sm' 
-                            : 'text-gray-500 hover:text-gray-700'
-                        }`}
-                    >
-                        Feedback ({feedback.length})
-                    </button>
-                    <button 
-                        onClick={() => setActiveTab('details')}
-                        className={`px-6 py-3 rounded-xl text-sm font-black transition-all ${
-                            activeTab === 'details' 
-                            ? 'bg-white text-purple-700 shadow-sm' 
-                            : 'text-gray-500 hover:text-gray-700'
-                        }`}
-                    >
-                        Children Info
-                    </button>
-                </div>
-
-                {activeTab === 'feedback' ? (
-                    <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+                <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
                         {/* Feedback Filters & Actions */}
                         <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
                             <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto">
@@ -349,43 +323,6 @@ const ParentProfile = () => {
                             </div>
                         )}
                     </div>
-                ) : (
-                    <div className="animate-in slide-in-from-bottom-4 duration-500">
-                        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
-                            <div className="p-8 border-b border-gray-50 flex items-center justify-between">
-                                <h3 className="text-xl font-black text-gray-900">Linked Children</h3>
-                                <Baby className="text-purple-200" size={32} />
-                            </div>
-                            <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {parent.children?.map(child => (
-                                    <div 
-                                        key={child._id}
-                                        onClick={() => navigate(`/admin/children/progress/${child._id}`)}
-                                        className="p-6 bg-gray-50/50 rounded-3xl border border-gray-100 hover:border-purple-200 hover:bg-white transition-all cursor-pointer group flex items-center justify-between"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-purple-600 shadow-sm border border-gray-50 group-hover:scale-110 transition-transform">
-                                                <Baby size={24} />
-                                            </div>
-                                            <div>
-                                                <h4 className="font-black text-lg text-gray-900 tracking-tight group-hover:text-purple-700">{child.childName}</h4>
-                                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">View Progress Summary</p>
-                                            </div>
-                                        </div>
-                                        <div className="w-8 h-8 rounded-full bg-white text-gray-300 flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-all">
-                                            <ChevronRight size={18} />
-                                        </div>
-                                    </div>
-                                ))}
-                                {(!parent.children || parent.children.length === 0) && (
-                                    <div className="md:col-span-2 p-10 text-center text-gray-400 font-bold italic">
-                                        No children currently linked to this parent account.
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
         </div>
     );
