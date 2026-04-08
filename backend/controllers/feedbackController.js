@@ -6,7 +6,7 @@ const Feedback = require("../models/Feedback");
 const getPublicFeedback = async (req, res) => {
     try {
         const feedback = await Feedback.find({ isHidden: false })
-            .populate("parent", "fullName")
+            .populate("parent", "fullName profileImage")
             .populate("child", "childName")
             .sort({ createdAt: -1 })
             .lean();
@@ -15,6 +15,7 @@ const getPublicFeedback = async (req, res) => {
         const formattedFeedback = feedback.map(item => ({
             _id: item._id,
             parentName: item.parent?.fullName || "Parent",
+            parentPhoto: item.parent?.profileImage,
             childName: item.child?.childName,
             rating: item.rating,
             message: item.message,

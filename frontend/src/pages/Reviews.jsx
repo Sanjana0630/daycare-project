@@ -166,8 +166,18 @@ const Reviews = () => {
                                         "{review.message}"
                                     </p>
                                     <div className="flex items-center gap-4 relative z-10">
-                                        <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center text-purple-600 shadow-inner group-hover:rotate-6 transition-transform">
-                                            <User size={24} />
+                                        <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center text-purple-600 shadow-inner group-hover:rotate-6 transition-transform overflow-hidden">
+                                            {review.parentPhoto ? (
+                                                <img 
+                                                    src={review.parentPhoto.startsWith('http') || review.parentPhoto.startsWith('data:') 
+                                                        ? review.parentPhoto 
+                                                        : `${BASE_URL}${review.parentPhoto}`} 
+                                                    alt={review.parentName}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <User size={24} />
+                                            )}
                                         </div>
                                         <div>
                                             <h4 className="font-semibold text-gray-800 tracking-tight">{review.parentName || "Parent"}</h4>
