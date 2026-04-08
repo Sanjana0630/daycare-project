@@ -175,8 +175,18 @@ const Staff = () => {
                                 <tr key={member._id} className="hover:bg-purple-50/30 transition-colors">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold text-xs">
-                                                {member.name ? member.name[0].toUpperCase() : (member.fullName ? member.fullName[0].toUpperCase() : 'S')}
+                                            <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden border-2 border-white shadow-sm shrink-0">
+                                                {member.profileImage ? (
+                                                    <img
+                                                        src={member.profileImage.startsWith('data:') ? member.profileImage : (member.profileImage.startsWith('/uploads') ? `${BASE_URL}${member.profileImage}` : member.profileImage)}
+                                                        alt={member.name || member.fullName}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-xs uppercase">
+                                                        {member.name ? member.name[0] : (member.fullName ? member.fullName[0] : 'S')}
+                                                    </div>
+                                                )}
                                             </div>
                                             <div>
                                                 <div className="font-bold text-gray-900">{member.name || member.fullName || 'N/A'}</div>
@@ -252,7 +262,52 @@ const Staff = () => {
                             <h3 className="text-lg font-bold">Staff Profile</h3>
                             <button onClick={() => setIsViewModalOpen(false)}><X size={20} /></button>
                         </div>
-                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="p-6">
+                            <div className="flex flex-col md:flex-row gap-8 mb-8 border-b border-gray-50 pb-8">
+                                <div className="flex flex-col items-center gap-4">
+                                    <div className="w-32 h-32 rounded-[2.5rem] overflow-hidden border-4 border-purple-50 shadow-md bg-gray-50 flex items-center justify-center transition-all duration-500 hover:scale-105">
+                                        {selectedMember.profileImage ? (
+                                            <img
+                                                src={selectedMember.profileImage.startsWith('data:') ? selectedMember.profileImage : (selectedMember.profileImage.startsWith('/uploads') ? `${BASE_URL}${selectedMember.profileImage}` : selectedMember.profileImage)}
+                                                alt={selectedMember.name || selectedMember.fullName}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="text-purple-200">
+                                                <User size={64} strokeWidth={1} />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="text-center">
+                                        <h3 className="text-xl font-black text-gray-900 capitalize">{selectedMember.name || selectedMember.fullName || 'N/A'}</h3>
+                                        <p className="text-xs font-bold text-purple-600 uppercase tracking-widest">{selectedMember.role || 'N/A'}</p>
+                                    </div>
+                                </div>
+                                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                                    <div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Email Address</label>
+                                        <p className="font-bold text-gray-700 flex items-center gap-2"><Mail size={14} className="text-purple-400" /> {selectedMember.email}</p>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Phone Number</label>
+                                        <p className="font-bold text-gray-700 flex items-center gap-2"><Phone size={14} className="text-purple-400" /> {selectedMember.phone}</p>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Assigned Class</label>
+                                        <p className="font-bold text-purple-700 bg-purple-50 inline-block px-3 py-1 rounded-full text-xs mt-1 border border-purple-100">{selectedMember.assignedClass || 'Unassigned'}</p>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</label>
+                                        <p className="mt-1">
+                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${selectedMember.status?.toLowerCase() === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                                                {selectedMember.status || 'Pending'}
+                                            </span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-4">
                                 <h4 className="text-primary font-bold border-b pb-2 flex items-center gap-2"><User size={18} /> Personal Info</h4>
                                 <div className="space-y-2">
@@ -272,18 +327,14 @@ const Staff = () => {
                                     <p><span className="text-gray-400 text-sm">Joining Date:</span> <br /><span className="font-medium">{selectedMember.joiningDate && !isNaN(new Date(selectedMember.joiningDate)) ? new Date(selectedMember.joiningDate).toLocaleDateString() : 'N/A'}</span></p>
                                 </div>
                             </div>
-                            <div className="md:col-span-2 space-y-4 bg-purple-50 p-4 rounded-2xl border border-purple-100">
-                                <h4 className="text-purple-600 font-bold flex items-center gap-2"><Phone size={18} /> Contact & Status</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <p><span className="text-purple-400 text-sm">Email:</span> <br /><span className="font-medium text-purple-900">{selectedMember.email}</span></p>
-                                    <p><span className="text-purple-400 text-sm">Phone:</span> <br /><span className="font-medium text-purple-900">{selectedMember.phone}</span></p>
-                                    <p><span className="text-purple-400 text-sm">Status:</span> <br /><span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${selectedMember.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                                        }`}>{selectedMember.status}</span></p>
-                                </div>
+                            <div className="md:col-span-2 space-y-4 bg-gray-50 p-6 rounded-[2rem] border border-gray-100">
+                                <h4 className="text-gray-900 font-black text-sm uppercase tracking-widest flex items-center gap-2"><MapPin size={18} className="text-purple-600" /> Current Address</h4>
+                                <p className="text-gray-600 font-medium text-sm leading-relaxed">{selectedMember.address || 'Address information not provided.'}</p>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
             )}
 
             {/* Delete Modal */}
