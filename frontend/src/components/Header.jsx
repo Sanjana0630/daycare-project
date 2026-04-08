@@ -245,8 +245,16 @@ const Header = ({ onMenuClick }) => {
                                                         onClick={() => handleResultClick('child', child)}
                                                         className="flex items-center gap-3 px-3 py-2 hover:bg-purple-50 rounded-xl cursor-pointer group transition-colors"
                                                     >
-                                                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                                                            {child.childName.charAt(0)}
+                                                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 overflow-hidden">
+                                                            {child.photo ? (
+                                                                <img 
+                                                                    src={child.photo.startsWith('http') ? child.photo : `${apiUrl}${child.photo}`} 
+                                                                    alt={child.childName}
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                <span className="font-bold">{child.childName.charAt(0)}</span>
+                                                            )}
                                                         </div>
                                                         <div>
                                                             <p className="text-sm font-bold text-gray-700 group-hover:text-purple-700">{child.childName}</p>
@@ -269,8 +277,16 @@ const Header = ({ onMenuClick }) => {
                                                         onClick={() => handleResultClick('staff', member)}
                                                         className="flex items-center gap-3 px-3 py-2 hover:bg-purple-50 rounded-xl cursor-pointer group transition-colors"
                                                     >
-                                                        <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
-                                                            {member.fullName.charAt(0)}
+                                                        <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 overflow-hidden">
+                                                            {member.profileImage ? (
+                                                                <img 
+                                                                    src={member.profileImage.startsWith('http') ? member.profileImage : `${apiUrl}${member.profileImage}`} 
+                                                                    alt={member.fullName}
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                <span className="font-bold">{member.fullName.charAt(0)}</span>
+                                                            )}
                                                         </div>
                                                         <div>
                                                             <p className="text-sm font-bold text-gray-700 group-hover:text-purple-700">{member.fullName}</p>
@@ -293,8 +309,16 @@ const Header = ({ onMenuClick }) => {
                                                         onClick={() => handleResultClick('parent', parent)}
                                                         className="flex items-center gap-3 px-3 py-2 hover:bg-purple-50 rounded-xl cursor-pointer group transition-colors"
                                                     >
-                                                        <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
-                                                            {parent.fullName.charAt(0)}
+                                                        <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 overflow-hidden">
+                                                            {parent.profileImage ? (
+                                                                <img 
+                                                                    src={parent.profileImage.startsWith('http') ? parent.profileImage : `${apiUrl}${parent.profileImage}`} 
+                                                                    alt={parent.fullName}
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                <span className="font-bold">{parent.fullName.charAt(0)}</span>
+                                                            )}
                                                         </div>
                                                         <div>
                                                             <p className="text-sm font-bold text-gray-700 group-hover:text-purple-700">{parent.fullName}</p>
