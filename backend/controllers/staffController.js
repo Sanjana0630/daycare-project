@@ -155,9 +155,6 @@ const getStaffChildren = async (req, res) => {
 
         const children = await Child.find(query);
 
-        console.log("Staff Class:", staffMember.assignedClass);
-        console.log("Child Classes:", children.map(c => c.class));
-
         res.status(200).json({ 
             success: true, 
             count: children.length, 

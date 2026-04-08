@@ -16,6 +16,7 @@ const StaffMarkAttendance = () => {
 
     const [date, setDate] = useState(getTodayString());
     const [currentTime, setCurrentTime] = useState(new Date());
+    const lastFetchedDate = React.useRef(null);
 
     // Live Clock Effect
     useEffect(() => {
@@ -25,6 +26,8 @@ const StaffMarkAttendance = () => {
 
     useEffect(() => {
         const fetchData = async () => {
+            if (lastFetchedDate.current === date) return;
+            lastFetchedDate.current = date;
             try {
                 const token = localStorage.getItem('token');
 
