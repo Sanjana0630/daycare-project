@@ -143,6 +143,10 @@ const StaffProfile = () => {
             const result = await response.json();
             if (result.success) {
                 setMessage({ type: 'success', text: 'Profile updated successfully!' });
+                
+                // Dispatch event to update Header
+                window.dispatchEvent(new Event('profileUpdated'));
+
                 // Update localStorage name if changed
                 localStorage.setItem('fullName', formData.name);
                 setTimeout(() => window.location.href = '#/staff/dashboard', 2000);

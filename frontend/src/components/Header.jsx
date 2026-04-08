@@ -9,6 +9,7 @@ const Header = ({ onMenuClick }) => {
     const role = localStorage.getItem('role') || 'admin';
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [userProfile, setUserProfile] = useState(null);
     const dropdownRef = useRef(null);
     const searchRef = useRef(null);
 
@@ -51,6 +52,32 @@ const Header = ({ onMenuClick }) => {
             window.removeEventListener('notificationUpdated', handleNotificationUpdate);
         };
     }, [role, apiUrl]);
+
+    const fetchUserProfile = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${apiUrl}/api/auth/me`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (data.success) {
+                setUserProfile(data.data);
+            }
+        } catch (err) {
+            console.error('Error fetching user profile:', err);
+        }
+    };
+
+    useEffect(() => {
+        fetchUserProfile();
+        
+        const handleProfileUpdate = () => {
+            fetchUserProfile();
+        };
+
+        window.addEventListener('profileUpdated', handleProfileUpdate);
+        return () => window.removeEventListener('profileUpdated', handleProfileUpdate);
+    }, [apiUrl]);
 
     // Fetch searchable data for Admin/Staff/Parent
     useEffect(() => {
@@ -355,8 +382,16 @@ const Header = ({ onMenuClick }) => {
                         onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                         className="flex items-center gap-2 sm:gap-3 pl-4 sm:pl-6 border-l border-gray-100 cursor-pointer group"
                     >
-                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-semibold border-2 border-white shadow-sm shrink-0">
-                            {avatarInitial}
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-black border-2 border-white shadow-sm shrink-0 overflow-hidden transition-all duration-300 group-hover:scale-105 group-hover:shadow-purple-200/50 group-hover:border-purple-200">
+                            {userProfile?.profileImage ? (
+                                <img 
+                                    src={userProfile.profileImage.startsWith('http') ? userProfile.profileImage : `${apiUrl}${userProfile.profileImage}`} 
+                                    alt={fullName}
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <span className="text-sm uppercase tracking-tighter">{avatarInitial}</span>
+                            )}
                         </div>
                         <div className="hidden md:block">
                             <p className="text-sm font-semibold text-gray-700 group-hover:text-purple-700 transition-colors capitalize truncate max-w-[100px]">{fullName}</p>

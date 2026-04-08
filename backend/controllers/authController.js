@@ -99,4 +99,44 @@ const getParents = async (req, res) => {
     }
 };
 
-module.exports = { loginUser, registerUser, getParents };
+const getMe = async (req, res) => {
+    try {
+        const adminEmail = process.env.ADMIN_EMAIL;
+        const adminId = "65f1a2b2c3d4e5f6a7b8c9d0";
+
+        // Check if current user is the hardcoded Admin
+        if (req.user._id.toString() === adminId || req.user.email === adminEmail) {
+            return res.json({
+                success: true,
+                data: {
+                    _id: adminId,
+                    fullName: "Administrator",
+                    email: adminEmail,
+                    role: "admin",
+                    profileImage: null
+                }
+            });
+        }
+
+        const user = await User.findById(req.user._id).select("-password");
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.json({
+            success: true,
+            data: {
+                _id: user._id,
+                fullName: user.fullName,
+                email: user.email,
+                role: user.role,
+                profileImage: user.profileImage
+            }
+        });
+    } catch (error) {
+        console.error('Error in getMe:', error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+module.exports = { loginUser, registerUser, getParents, getMe };
