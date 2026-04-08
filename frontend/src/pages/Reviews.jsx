@@ -176,7 +176,9 @@ const Reviews = () => {
                                                     className="w-full h-full object-cover"
                                                 />
                                             ) : (
-                                                <User size={24} />
+                                                <span className="text-xl font-black uppercase">
+                                                    {(review.parentName || "Parent").charAt(0)}
+                                                </span>
                                             )}
                                         </div>
                                         <div>
