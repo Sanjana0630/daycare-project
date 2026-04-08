@@ -1,4 +1,5 @@
 const Staff = require("../models/Staff");
+const User = require("../models/User");
 
 // Timezone helpers to ensure Render server matches Localhost behavior
 const getCurrentTimeIST = () => {
@@ -555,13 +556,41 @@ const updateMyProfile = async (req, res) => {
             delete req.body.assignedClass;
         }
 
-        const staff = await Staff.findOneAndUpdate(
+        const staff = await Staff.findOne({ email: req.user.email });
+        if (!staff) {
+            return res.status(404).json({ success: false, message: "Staff record not found" });
+        }
+
+        let profileImage = staff.profileImage;
+        if (req.file) {
+            profileImage = `/uploads/${req.file.filename}`;
+        } else if (req.body.profileImage) {
+            profileImage = req.body.profileImage;
+        }
+
+        const staffData = { ...req.body, email: req.user.email, profileImage };
+
+        const updatedStaff = await Staff.findOneAndUpdate(
             { email: req.user.email },
-            { ...req.body, email: req.user.email },
+            staffData,
             { returnDocument: 'after', runValidators: true, upsert: true }
         );
-        res.status(200).json({ success: true, data: staff });
+
+        // Synchronize with User account for consistent display across platform
+        if (profileImage || req.body.name) {
+            const userUpdate = {};
+            if (profileImage) userUpdate.profileImage = profileImage;
+            if (req.body.name) userUpdate.fullName = req.body.name;
+            
+            await User.findOneAndUpdate(
+                { email: req.user.email },
+                userUpdate
+            );
+        }
+
+        res.status(200).json({ success: true, data: updatedStaff });
     } catch (error) {
+        console.error('Error in updateMyProfile:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };

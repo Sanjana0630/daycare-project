@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Phone, MapPin, GraduationCap, Briefcase, Save, Calendar, UserCheck, ArrowLeft } from 'lucide-react';
+import { User, Mail, Phone, MapPin, GraduationCap, Briefcase, Save, Calendar, UserCheck, ArrowLeft, Camera, Loader2, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BASE_URL } from '../config';
 import AlertModal from '../components/AlertModal';
+import CropModal from '../components/CropModal';
 
 const StaffProfile = () => {
     const navigate = useNavigate();
@@ -21,8 +22,12 @@ const StaffProfile = () => {
         joiningDate: new Date().toISOString().split('T')[0],
         qualification: '',
         experience: '',
-        address: ''
+        address: '',
+        profileImage: ''
     });
+
+    const [imageToCrop, setImageToCrop] = useState(null);
+    const [isCropModalOpen, setIsCropModalOpen] = useState(false);
 
     useEffect(() => {
         fetchProfile();
@@ -53,6 +58,28 @@ const StaffProfile = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                setImageToCrop(reader.result);
+                setIsCropModalOpen(true);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleCropComplete = (croppedFile) => {
+        setFormData(prev => ({ ...prev, profileImage: croppedFile }));
+        setIsCropModalOpen(false);
+        setImageToCrop(null);
+    };
+
+    const handleRemovePhoto = () => {
+        setFormData(prev => ({ ...prev, profileImage: '' }));
     };
 
     const handleSubmit = async (e) => {
@@ -89,18 +116,35 @@ const StaffProfile = () => {
 
         try {
             const token = localStorage.getItem('token');
+            const data = new FormData();
+            
+            // Append all form fields
+            Object.keys(formData).forEach(key => {
+                if (key === 'profileImage') {
+                    if (formData[key] instanceof File) {
+                        data.append('profileImage', formData[key]);
+                    } else if (typeof formData[key] === 'string') {
+                        data.append('profileImage', formData[key]);
+                    }
+                } else {
+                    data.append(key, formData[key]);
+                }
+            });
+            data.set('status', 'Active');
+
             const response = await fetch(`${BASE_URL}/api/staff/me`, {
                 method: 'PUT',
                 headers: {
-                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ ...formData, status: 'Active' })
+                body: data
             });
 
             const result = await response.json();
             if (result.success) {
                 setMessage({ type: 'success', text: 'Profile updated successfully!' });
+                // Update localStorage name if changed
+                localStorage.setItem('fullName', formData.name);
                 setTimeout(() => window.location.href = '#/staff/dashboard', 2000);
             } else {
                 setMessage({ type: 'error', text: result.message || 'Failed to update profile.' });
@@ -150,6 +194,89 @@ const StaffProfile = () => {
             )}
 
             <form onSubmit={handleSubmit} className="bg-white p-10 rounded-[3.5rem] border border-gray-100 shadow-xl shadow-gray-100/50 space-y-10">
+                {/* Profile Photo Section */}
+                <div className="flex flex-col items-center justify-center space-y-4 pb-4 border-b border-gray-50">
+                    <div className="relative group">
+                        <div className="w-32 h-32 rounded-[2.5rem] overflow-hidden border-4 border-purple-50 shadow-inner bg-gray-50 flex items-center justify-center transition-all duration-500 group-hover:scale-95 group-hover:rotate-2 group-hover:shadow-purple-100/50">
+                            {formData.profileImage ? (
+                                <img 
+                                    src={
+                                        formData.profileImage instanceof File 
+                                            ? URL.createObjectURL(formData.profileImage)
+                                            : formData.profileImage.startsWith('data:') 
+                                                ? formData.profileImage 
+                                                : formData.profileImage.startsWith('/uploads')
+                                                    ? `${BASE_URL}${formData.profileImage}`
+                                                    : formData.profileImage
+                                    } 
+                                    alt="Profile" 
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <div className="text-purple-200">
+                                    <User size={64} strokeWidth={1} />
+                                </div>
+                            )}
+                            
+                            {/* Hover Overlay */}
+                            <label className="absolute inset-0 bg-purple-600/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer text-white">
+                                <Camera size={24} className="mb-1" />
+                                <span className="text-[10px] font-black uppercase tracking-tighter">Change</span>
+                                <input 
+                                    type="file" 
+                                    className="hidden" 
+                                    accept="image/*"
+                                    onChange={handleImageUpload}
+                                />
+                            </label>
+                        </div>
+                        
+                        {/* Status Batch */}
+                        <div className="absolute -top-2 -right-2 w-8 h-8 bg-white rounded-xl shadow-lg border border-gray-100 flex items-center justify-center text-purple-600 animate-bounce">
+                            <UserCheck size={16} />
+                        </div>
+                    </div>
+
+                    <div className="text-center space-y-2">
+                        <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">Profile Photo</h3>
+                        <div className="flex items-center gap-3">
+                            <label className="px-4 py-2 bg-purple-50 text-purple-700 text-xs font-black rounded-xl hover:bg-purple-100 transition-all cursor-pointer flex items-center gap-2">
+                                <Camera size={14} />
+                                Upload Photo
+                                <input 
+                                    type="file" 
+                                    className="hidden" 
+                                    accept="image/*"
+                                    onChange={handleImageUpload}
+                                />
+                            </label>
+                            {formData.profileImage && (
+                                <button 
+                                    type="button" 
+                                    onClick={handleRemovePhoto}
+                                    className="p-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-all"
+                                    title="Remove Photo"
+                                >
+                                    <Trash2 size={14} />
+                                </button>
+                            )}
+                        </div>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter mt-1 italic">
+                            Help parents and staff recognize you.
+                        </p>
+                    </div>
+                </div>
+
+                <CropModal 
+                    isOpen={isCropModalOpen}
+                    image={imageToCrop}
+                    onCropComplete={handleCropComplete}
+                    onCancel={() => {
+                        setIsCropModalOpen(false);
+                        setImageToCrop(null);
+                    }}
+                />
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Basic Info */}
                     <div className="space-y-2">

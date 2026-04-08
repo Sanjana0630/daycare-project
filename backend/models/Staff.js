@@ -53,6 +53,9 @@ const staffSchema = new mongoose.Schema({
         type: String,
         default: null,
     },
+    profileImage: {
+        type: String, // String (URL or Base64)
+    },
 }, { timestamps: true });
 
 const Staff = mongoose.model("Staff", staffSchema);

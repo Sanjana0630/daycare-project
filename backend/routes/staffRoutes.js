@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { protect } = require("../middleware/authMiddleware");
+const upload = require("../middleware/uploadMiddleware");
 const {
     registerStaff,
     getStaffMembers,
@@ -40,7 +41,7 @@ router.post("/schedule/mark", protect, markScheduleActivityCompleted);
 router.post("/schedule/custom", protect, addCustomScheduleActivity);
 router.delete("/schedule/:id", protect, deleteScheduleActivity);
 router.get("/me", protect, getMyProfile);
-router.put("/me", protect, updateMyProfile);
+router.put("/me", protect, upload.single("profileImage"), updateMyProfile);
 
 router.get("/activity-log/:childId", protect, getChildDailyActivity);
 router.post("/log-activity", protect, logChildDailyActivity);
