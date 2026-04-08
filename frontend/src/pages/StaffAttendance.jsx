@@ -415,10 +415,20 @@ const StaffAttendance = () => {
                                     <td className="px-10 py-6">
                                         <div className="flex items-center gap-4">
                                             <div className="relative">
-                                                <div className="w-14 h-14 bg-gradient-to-tr from-purple-100 to-indigo-100 rounded-2xl flex items-center justify-center text-purple-700 font-black text-xl shadow-inner group-hover:scale-105 transition-transform">
-                                                    {member.fullName[0].toUpperCase()}
+                                                <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white shadow-sm shrink-0 flex items-center justify-center group-hover:scale-105 transition-transform bg-gradient-to-tr from-purple-100 to-indigo-100">
+                                                    {member.profileImage ? (
+                                                        <img
+                                                            src={member.profileImage.startsWith('data:') ? member.profileImage : (member.profileImage.startsWith('/uploads') ? `${BASE_URL}${member.profileImage}` : member.profileImage)}
+                                                            alt={member.fullName}
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <div className="text-purple-700 font-black text-xl uppercase">
+                                                            {member.fullName[0].toUpperCase()}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-4 border-white ${member.status === 'present' ? 'bg-green-500' : member.status === 'absent' ? 'bg-red-500' : 'bg-gray-300'}`}></div>
+                                                <div className={`absolute -bottom-1 -right-1 z-10 w-4 h-4 rounded-full border-4 border-white ${member.status === 'present' ? 'bg-green-500' : member.status === 'absent' ? 'bg-red-500' : 'bg-gray-300'}`}></div>
                                             </div>
                                             <div>
                                                 <div className="font-black text-gray-900 text-lg leading-tight">{member.fullName}</div>
