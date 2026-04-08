@@ -103,8 +103,20 @@ const Parents = () => {
                         className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm hover:shadow-xl hover:border-purple-100 transition-all cursor-pointer group relative overflow-hidden"
                     >
                         <div className="flex items-start justify-between mb-4">
-                            <div className="w-14 h-14 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl flex items-center justify-center text-purple-600 shadow-inner group-hover:scale-110 transition-transform duration-500">
-                                <User size={28} />
+                            <div className="w-14 h-14 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl flex items-center justify-center text-purple-600 shadow-inner group-hover:scale-110 transition-transform duration-500 overflow-hidden">
+                                {parent.profileImage ? (
+                                    <img 
+                                        src={parent.profileImage.startsWith('http') || parent.profileImage.startsWith('data:') 
+                                            ? parent.profileImage 
+                                            : `${BASE_URL}${parent.profileImage}`} 
+                                        alt={parent.fullName}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <span className="text-2xl font-black uppercase">
+                                        {(parent.fullName || "Parent").charAt(0)}
+                                    </span>
+                                )}
                             </div>
                             <div className="flex items-center gap-2">
                                 <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
