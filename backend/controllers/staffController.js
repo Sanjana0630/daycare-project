@@ -595,6 +595,7 @@ const updateMyProfile = async (req, res) => {
 const logChildDailyActivity = async (req, res) => {
     try {
         const ChildDailyActivity = require("../models/ChildDailyActivity");
+        const ScheduleActivity = require("../models/ScheduleActivity");
         const { childId, date, activities } = req.body;
 
         const staffMember = await Staff.findOne({ email: req.user.email });
@@ -603,6 +604,27 @@ const logChildDailyActivity = async (req, res) => {
         }
 
         const activityDate = getNormalizedDate(date);
+
+        // Validation: Rating ONLY allowed if activity status is COMPLETED
+        const endOfToday = new Date(activityDate.getTime() + 24 * 60 * 60 * 1000);
+        const storedSchedule = await ScheduleActivity.find({
+            date: { $gte: activityDate, $lt: endOfToday },
+            createdBy: req.user._id
+        });
+
+        const isActivityCompleted = (name) => {
+            const stored = storedSchedule.find(s => s.name === name);
+            return stored && stored.status === "Completed";
+        };
+
+        for (const activity of activities) {
+            if (activity.rating > 0 && !isActivityCompleted(activity.activityName)) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Complete "${activity.activityName}" before giving a rating.`
+                });
+            }
+        }
 
         const dailyLog = await ChildDailyActivity.findOneAndUpdate(
             { childId, date: activityDate },
@@ -624,17 +646,81 @@ const logChildDailyActivity = async (req, res) => {
 const getChildDailyActivity = async (req, res) => {
     try {
         const ChildDailyActivity = require("../models/ChildDailyActivity");
+        const ScheduleActivity = require("../models/ScheduleActivity");
         const { childId } = req.params;
         const { date } = req.query;
 
         const queryDate = getNormalizedDate(date);
+        const staffMember = await Staff.findOne({ email: req.user.email });
+
+        if (!staffMember) {
+            return res.status(404).json({ success: false, message: "Staff not found" });
+        }
 
         const dailyLog = await ChildDailyActivity.findOne({
             childId,
             date: queryDate
         });
 
-        res.status(200).json({ success: true, data: dailyLog });
+        // Fetch schedule to get statuses for each activity
+        const endOfDay = new Date(queryDate.getTime() + 24 * 60 * 60 * 1000);
+        const storedSchedule = await ScheduleActivity.find({
+            date: { $gte: queryDate, $lt: endOfDay },
+            createdBy: req.user._id
+        });
+
+        const defaultActivities = [
+            { name: "Morning Prayer", endTime: "09:30" },
+            { name: "Learning Session", endTime: "10:30" },
+            { name: "Snack Time", endTime: "11:00" },
+            { name: "Play Time", endTime: "12:00" },
+            { name: "Story Time", endTime: "12:30" },
+            { name: "Lunch Time", endTime: "13:00" },
+            { name: "Nap Time", endTime: "15:00" }
+        ];
+
+        const currentTimeStr = getCurrentTimeIST();
+        const todayStart = getNormalizedDate();
+        const isToday = queryDate.getTime() === todayStart.getTime();
+
+        const getActivityStatus = (name) => {
+            const stored = storedSchedule.find(s => s.name === name);
+            if (stored) return stored.status;
+
+            const def = defaultActivities.find(d => d.name === name);
+            if (def) {
+                if (isToday && currentTimeStr > def.endTime) return "Missed";
+                if (!isToday && queryDate < todayStart) return "Missed";
+                return "Pending";
+            }
+            return "Pending";
+        };
+
+        // Ensure we always return a structure with statuses even if dailyLog is empty
+        let responseActivities = [];
+        if (dailyLog && dailyLog.activities) {
+            responseActivities = dailyLog.activities.map(a => ({
+                ...a.toObject(),
+                status: getActivityStatus(a.activityName)
+            }));
+        } else {
+            // If no log yet, return default statuses for dashboard sync
+            responseActivities = defaultActivities.map(d => ({
+                activityName: d.name,
+                completed: false,
+                rating: 0,
+                notes: "",
+                status: getActivityStatus(d.name)
+            }));
+        }
+
+        res.status(200).json({ 
+            success: true, 
+            data: { 
+                ...(dailyLog ? dailyLog.toObject() : {}),
+                activities: responseActivities 
+            } 
+        });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

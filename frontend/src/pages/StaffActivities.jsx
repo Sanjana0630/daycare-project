@@ -93,14 +93,9 @@ const StaffActivities = () => {
             });
             const result = await response.json();
 
-            if (result.success && result.data) {
-                // Merge default activities with saved data to ensure all are present
-                const savedActivities = result.data.activities;
-                const merged = DEFAULT_ACTIVITIES.map(name => {
-                    const saved = savedActivities.find(a => a.activityName === name);
-                    return saved || { activityName: name, completed: false, rating: 0, notes: "" };
-                });
-                setActivities(merged);
+            if (result.success && result.data && result.data.activities) {
+                // Backend now returns pre-merged activities with status from the dashboard schedule
+                setActivities(result.data.activities);
             } else {
                 resetForm();
             }
@@ -115,7 +110,8 @@ const StaffActivities = () => {
             activityName: name,
             completed: false,
             rating: 0,
-            notes: ""
+            notes: "",
+            status: "Pending"
         })));
     };
 
@@ -279,11 +275,16 @@ const StaffActivities = () => {
                                                     </button>
                                                 </td>
                                                 <td className="py-5">
-                                                    <StarRating
-                                                        rating={activity.rating}
-                                                        disabled={!activity.completed}
-                                                        onRate={(val) => handleActivityChange(index, 'rating', val)}
-                                                    />
+                                                    <div 
+                                                        className={activity.status !== 'Completed' ? "opacity-40 cursor-not-allowed" : ""}
+                                                        title={activity.status !== 'Completed' ? "Complete activity first to give rating" : ""}
+                                                    >
+                                                        <StarRating
+                                                            rating={activity.rating}
+                                                            disabled={activity.status !== 'Completed'}
+                                                            onRate={(val) => handleActivityChange(index, 'rating', val)}
+                                                        />
+                                                    </div>
                                                 </td>
                                                 <td className="py-5">
                                                     <input
