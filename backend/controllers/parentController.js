@@ -372,6 +372,23 @@ const submitFeedback = async (req, res) => {
             message
         });
 
+        // --- NEW: Trigger Admin Notification ---
+        try {
+            await Notification.create({
+                isAdmin: true,
+                type: "FEEDBACK",
+                feedbackId: feedback._id,
+                parentId: req.user._id,
+                childId: childId,
+                generatedBy: req.user._id,
+                message: `New feedback received from ${req.user.fullName || 'a Parent'}`
+            });
+        } catch (notifErr) {
+            console.error("Failed to create admin notification for feedback:", notifErr.message);
+            // Don't fail the feedback submission if notification fails
+        }
+        // --- End Notification logic ---
+
         res.status(201).json({
             success: true,
             message: "Feedback submitted successfully",

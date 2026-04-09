@@ -64,8 +64,16 @@ const sendReportNotification = async (req, res) => {
  */
 const getUnreadCount = async (req, res) => {
     try {
-        const parentId = req.query.parentId || req.user._id;
-        const count = await Notification.countDocuments({ parentId, isRead: false });
+        let query = { isRead: false };
+        
+        if (req.user.role === 'admin') {
+            query.isAdmin = true;
+        } else {
+            query.parentId = req.user._id;
+            query.isAdmin = { $ne: true }; // Ensure parents don't see admin notifications
+        }
+
+        const count = await Notification.countDocuments(query);
 
         res.status(200).json({
             success: true,
@@ -84,8 +92,19 @@ const getUnreadCount = async (req, res) => {
  */
 const getNotifications = async (req, res) => {
     try {
-        const parentId = req.user._id;
-        const notifications = await Notification.find({ parentId })
+        let query = {};
+        
+        if (req.user.role === 'admin') {
+            query.isAdmin = true;
+        } else {
+            query.parentId = req.user._id;
+            query.isAdmin = { $ne: true };
+        }
+
+        const notifications = await Notification.find(query)
+            .populate("parentId", "fullName email profileImage")
+            .populate("childId", "childName")
+            .populate("feedbackId", "rating category message")
             .sort({ createdAt: -1 });
 
         res.status(200).json({

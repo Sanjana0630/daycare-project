@@ -21,10 +21,10 @@ const Header = ({ onMenuClick }) => {
 
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005';
 
-    // Fetch unread notifications count if parent
+    // Fetch unread notifications count
     useEffect(() => {
         const fetchUnreadCount = async () => {
-            if (role !== 'parent') return;
+            if (role !== 'parent' && role !== 'admin') return;
             try {
                 const token = localStorage.getItem('token');
                 const res = await fetch(`${apiUrl}/api/notifications/unread-count`, {
@@ -216,6 +216,8 @@ const Header = ({ onMenuClick }) => {
             navigate('/parent/notifications');
         } else if (role === 'staff') {
             navigate('/staff/notifications');
+        } else if (role === 'admin') {
+            navigate('/admin/notifications');
         }
     };
 

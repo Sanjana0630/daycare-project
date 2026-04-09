@@ -29,6 +29,7 @@ import Fees from './pages/Fees';
 import ParentFees from './pages/ParentFees';
 import ParentFeedback from './pages/ParentFeedback';
 import ParentNotifications from './pages/ParentNotifications';
+import AdminNotifications from './pages/AdminNotifications';
 import ParentReportView from './pages/ParentReportView';
 import ParentSettings from './pages/ParentSettings';
 import About from './pages/About';
@@ -130,6 +131,7 @@ function App() {
                   <Route path="/reports" element={<RoleBasedRoute allowedRoles={["admin"]}><Reports /></RoleBasedRoute>} />
                   <Route path="/settings" element={<RoleBasedRoute allowedRoles={["admin"]}><div className="p-8 text-gray-500 font-medium">Admin Settings</div></RoleBasedRoute>} />
                   <Route path="/admin/profile" element={<RoleBasedRoute allowedRoles={["admin"]}><Placeholder title="Admin Profile" /></RoleBasedRoute>} />
+                   <Route path="/admin/notifications" element={<RoleBasedRoute allowedRoles={["admin"]}><AdminNotifications /></RoleBasedRoute>} />
 
                   {/* Staff Routes */}
                   <Route path="/staff/dashboard" element={<RoleBasedRoute allowedRoles={["staff", "admin"]}><StaffDashboard /></RoleBasedRoute>} />

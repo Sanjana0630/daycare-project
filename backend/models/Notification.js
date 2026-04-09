@@ -4,12 +4,10 @@ const notificationSchema = new mongoose.Schema({
     parentId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        required: true,
     },
     childId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Child",
-        required: true,
     },
     reportId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -19,6 +17,14 @@ const notificationSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Fee",
     },
+    feedbackId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Feedback",
+    },
+    isAdmin: {
+        type: Boolean,
+        default: false,
+    },
     generatedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
@@ -26,7 +32,7 @@ const notificationSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ["REPORT", "GENERAL", "FEE"],
+        enum: ["REPORT", "GENERAL", "FEE", "FEEDBACK"],
         default: "REPORT",
     },
     message: {
