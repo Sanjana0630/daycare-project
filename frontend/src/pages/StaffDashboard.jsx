@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, CalendarCheck, Activity, TrendingUp, Clock, CheckCircle2, AlertCircle, Plus, Layout, Save, X, Trash2 } from 'lucide-react';
+import { Users, CalendarCheck, Activity, TrendingUp, Clock, CheckCircle2, AlertCircle, Plus, Layout, Save, X, Trash2, Star } from 'lucide-react';
 
 const StaffDashboard = () => {
     const navigate = useNavigate();
@@ -356,13 +356,19 @@ const StaffDashboard = () => {
 
                                         <div className="mt-auto pt-4">
                                             {item.status === 'Completed' ? (
-                                                <button
-                                                    disabled
-                                                    className="w-full py-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all bg-green-50 text-green-600 border border-green-200 flex items-center justify-center gap-2 cursor-default"
-                                                >
-                                                    <CheckCircle2 size={18} />
-                                                    Completed
-                                                </button>
+                                                <div className="space-y-2">
+                                                    <div className="w-full py-3 rounded-2xl font-black text-sm uppercase tracking-widest bg-green-50 text-green-600 border border-green-200 flex items-center justify-center gap-2 cursor-default">
+                                                        <CheckCircle2 size={18} />
+                                                        Completed
+                                                    </div>
+                                                    <button
+                                                        onClick={() => navigate('/staff/activities')}
+                                                        className="w-full py-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all bg-indigo-600 text-white shadow-lg shadow-indigo-100 hover:bg-indigo-700 active:scale-95 flex items-center justify-center gap-2"
+                                                    >
+                                                        <Star size={16} />
+                                                        Give Rating
+                                                    </button>
+                                                </div>
                                             ) : (
                                                 <button
                                                     disabled={!canComplete}
