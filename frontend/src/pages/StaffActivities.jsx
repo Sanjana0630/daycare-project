@@ -259,6 +259,7 @@ const StaffActivities = () => {
                                                 </td>
                                                 <td className="py-5 text-center">
                                                     <button
+                                                        disabled={activity.status !== 'Completed'}
                                                         onClick={() => {
                                                             const newCompleted = !activity.completed;
                                                             const updated = [...activities];
@@ -269,7 +270,8 @@ const StaffActivities = () => {
                                                             };
                                                             setActivities(updated);
                                                         }}
-                                                        className={`transition-all ${activity.completed ? 'text-green-500 scale-110' : 'text-gray-200 hover:text-gray-300'}`}
+                                                        className={`transition-all ${activity.status !== 'Completed' ? 'opacity-40 cursor-not-allowed' : 'hover:scale-110 active:scale-95'} ${activity.completed ? 'text-green-500 scale-110' : 'text-gray-200 hover:text-gray-300'}`}
+                                                        title={activity.status !== 'Completed' ? "Complete activity first to mark child completion" : ""}
                                                     >
                                                         {activity.completed ? <CheckCircle2 size={24} /> : <XCircle size={24} />}
                                                     </button>

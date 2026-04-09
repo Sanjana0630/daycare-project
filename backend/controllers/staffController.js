@@ -618,10 +618,10 @@ const logChildDailyActivity = async (req, res) => {
         };
 
         for (const activity of activities) {
-            if (activity.rating > 0 && !isActivityCompleted(activity.activityName)) {
+            if ((activity.rating > 0 || activity.completed) && !isActivityCompleted(activity.activityName)) {
                 return res.status(400).json({
                     success: false,
-                    message: `Complete "${activity.activityName}" before giving a rating.`
+                    message: `Complete "${activity.activityName}" before marking child activity.`
                 });
             }
         }
