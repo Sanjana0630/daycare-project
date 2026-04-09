@@ -278,12 +278,12 @@ const StaffActivities = () => {
                                                 </td>
                                                 <td className="py-5">
                                                     <div 
-                                                        className={activity.status !== 'Completed' ? "opacity-40 cursor-not-allowed" : ""}
-                                                        title={activity.status !== 'Completed' ? "Complete activity first to give rating" : ""}
+                                                        className={(activity.status !== 'Completed' || !activity.completed) ? "opacity-40 cursor-not-allowed" : ""}
+                                                        title={activity.status !== 'Completed' ? "Complete activity on dashboard first" : (!activity.completed ? "Mark child completion first to give rating" : "")}
                                                     >
                                                         <StarRating
                                                             rating={activity.rating}
-                                                            disabled={activity.status !== 'Completed'}
+                                                            disabled={activity.status !== 'Completed' || !activity.completed}
                                                             onRate={(val) => handleActivityChange(index, 'rating', val)}
                                                         />
                                                     </div>

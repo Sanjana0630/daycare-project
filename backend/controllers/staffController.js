@@ -618,10 +618,19 @@ const logChildDailyActivity = async (req, res) => {
         };
 
         for (const activity of activities) {
-            if ((activity.rating > 0 || activity.completed) && !isActivityCompleted(activity.activityName)) {
+            // Restriction 1: Cannot mark completed or give rating if dashboard status is not Completed
+            if ((activity.completed || activity.rating > 0) && !isActivityCompleted(activity.activityName)) {
                 return res.status(400).json({
                     success: false,
-                    message: `Complete "${activity.activityName}" before marking child activity.`
+                    message: `Complete "${activity.activityName}" on the dashboard first.`
+                });
+            }
+            
+            // Restriction 2: Cannot give rating if the individual child's completion mark is not checked
+            if (activity.rating > 0 && !activity.completed) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Mark "${activity.activityName}" as completed for this child before giving a rating.`
                 });
             }
         }
