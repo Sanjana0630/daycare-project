@@ -10,6 +10,7 @@ const reportRoutes = require("./routes/reportRoutes");
 const feeRoutes = require("./routes/feeRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const feedbackRoutes = require("./routes/feedbackRoutes");
+const contactRoutes = require("./routes/contactRoutes");
 const initFeeCron = require("./jobs/feeCron");
 
 dotenv.config();
@@ -46,6 +47,7 @@ app.use("/api/reports", reportRoutes);
 app.use("/api/fees", feeRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/feedback", feedbackRoutes);
+app.use("/api/contact", contactRoutes);
 
 // Database Connection
 connectDB();

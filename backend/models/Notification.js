@@ -21,6 +21,10 @@ const notificationSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Feedback",
     },
+    contactId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "ContactMessage",
+    },
     isAdmin: {
         type: Boolean,
         default: false,
@@ -28,11 +32,11 @@ const notificationSchema = new mongoose.Schema({
     generatedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        required: true,
+        required: false,
     },
     type: {
         type: String,
-        enum: ["REPORT", "GENERAL", "FEE", "FEEDBACK"],
+        enum: ["REPORT", "GENERAL", "FEE", "FEEDBACK", "CONTACT"],
         default: "REPORT",
     },
     message: {

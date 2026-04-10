@@ -17,7 +17,8 @@ import ContactHero from '../assets/contact_hero.png';
 const Contact = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
-    const [formStatus, setFormStatus] = useState('idle'); // idle, sending, success
+    const [formStatus, setFormStatus] = useState('idle'); // idle, sending, success, error
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005';
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -67,15 +68,33 @@ const Contact = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setFormStatus('sending');
-        // Simulate API call
-        setTimeout(() => {
-            setFormStatus('success');
-            setFormData({ name: '', email: '', subject: '', message: '' });
-            setTimeout(() => setFormStatus('idle'), 5000);
-        }, 1500);
+        try {
+            const response = await fetch(`${apiUrl}/api/contact`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+            const data = await response.json();
+            if (data.success) {
+                setFormStatus('success');
+                setFormData({ name: '', email: '', subject: '', message: '' });
+                setTimeout(() => setFormStatus('idle'), 5000);
+            } else {
+                setFormStatus('error');
+                alert(data.message || 'Failed to send message.');
+                setTimeout(() => setFormStatus('idle'), 3000);
+            }
+        } catch (error) {
+            console.error('Error sending message:', error);
+            setFormStatus('error');
+            alert('An error occurred while sending the message.');
+            setTimeout(() => setFormStatus('idle'), 3000);
+        }
     };
 
     return (
