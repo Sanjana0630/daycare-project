@@ -370,7 +370,7 @@ const Reports = () => {
                                     <Clock size={16} /> SECTION 3: ATTENDANCE
                                 </h3>
                                 <div className="border border-gray-100 rounded-3xl overflow-hidden bg-gray-50/20">
-                                    <div className="overflow-x-auto max-h-[400px]">
+                                    <div className="overflow-x-auto max-h-[400px] print:max-h-none print:overflow-visible">
                                         <table className="w-full text-left relative">
                                             <thead className="bg-gray-100/50 sticky top-0 backdrop-blur z-10">
                                                 <tr>
@@ -409,7 +409,7 @@ const Reports = () => {
                                     <Activity size={16} /> SECTION 4: ACTIVITY
                                 </h3>
                                 <div className="border border-gray-100 rounded-3xl overflow-hidden bg-gray-50/20">
-                                    <div className="overflow-x-auto max-h-[400px]">
+                                    <div className="overflow-x-auto max-h-[400px] print:max-h-none print:overflow-visible">
                                         <table className="w-full text-left relative">
                                             <thead className="bg-gray-100/50 sticky top-0 backdrop-blur z-10">
                                                 <tr>

@@ -82,7 +82,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
     return (
         <aside
-            className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 transition-transform duration-300 lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'
+            className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 transition-transform duration-300 lg:translate-x-0 print:hidden ${isOpen ? 'translate-x-0' : '-translate-x-full'
                 }`}
         >
             {/* Sidebar Header */}

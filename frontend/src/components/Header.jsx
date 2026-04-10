@@ -226,7 +226,7 @@ const Header = ({ onMenuClick }) => {
                      filteredResults.staff.length > 0;
 
     return (
-        <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-4 sm:px-8 sticky top-0 z-40">
+        <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-4 sm:px-8 sticky top-0 z-40 print:hidden">
             <div className="flex items-center gap-4 flex-1">
                 <button
                     onClick={onMenuClick}
