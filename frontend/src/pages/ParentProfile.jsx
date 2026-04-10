@@ -104,7 +104,6 @@ const ParentProfile = () => {
             const data = await response.json();
             if (data.success) {
                 setFeedback(feedback.filter(f => f._id !== feedbackId));
-                setMessageDialog({ isOpen: true, message: 'Feedback deleted successfully!', type: 'success' });
             } else {
                 setMessageDialog({ isOpen: true, message: data.message || 'Failed to delete feedback', type: 'error' });
             }
