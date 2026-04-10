@@ -28,6 +28,8 @@ const ParentProfile = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('All');
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [feedbackToDelete, setFeedbackToDelete] = useState(null);
 
     useEffect(() => {
         fetchParentData();
@@ -84,17 +86,24 @@ const ParentProfile = () => {
         }
     };
 
-    const handleDeleteFeedback = async (feedbackId) => {
-        if (!window.confirm('Are you sure you want to delete this feedback?')) return;
+    const confirmDelete = (feedbackId) => {
+        setFeedbackToDelete(feedbackId);
+        setDeleteModalOpen(true);
+    };
+
+    const handleDeleteFeedback = async () => {
+        if (!feedbackToDelete) return;
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`${BASE_URL}/api/admin/feedback/${feedbackId}`, {
+            const response = await fetch(`${BASE_URL}/api/admin/feedback/${feedbackToDelete}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
             if (data.success) {
-                setFeedback(feedback.filter(f => f._id !== feedbackId));
+                setFeedback(feedback.filter(f => f._id !== feedbackToDelete));
+                setDeleteModalOpen(false);
+                setFeedbackToDelete(null);
             }
         } catch (err) {
             alert('Failed to delete feedback');
@@ -293,7 +302,7 @@ const ParentProfile = () => {
                                             </button>
                                         </div>
                                         <button 
-                                            onClick={() => handleDeleteFeedback(f._id)}
+                                            onClick={() => confirmDelete(f._id)}
                                             className="p-2 text-gray-300 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
                                             title="Delete permanently"
                                         >
@@ -324,6 +333,38 @@ const ParentProfile = () => {
                         )}
                     </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {deleteModalOpen && (
+                <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-300">
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-6">
+                                <AlertCircle size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Feedback?</h3>
+                            <p className="text-gray-500 mb-8">Are you sure you want to delete this feedback? This action cannot be undone.</p>
+                            <div className="flex gap-4 w-full">
+                                <button 
+                                    onClick={() => {
+                                        setDeleteModalOpen(false);
+                                        setFeedbackToDelete(null);
+                                    }}
+                                    className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    onClick={handleDeleteFeedback}
+                                    className="flex-1 py-3 px-4 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-200"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
