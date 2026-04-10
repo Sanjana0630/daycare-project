@@ -18,7 +18,7 @@ const ParentFeedback = () => {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
-    const [success, setSuccess] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     // Form State
     const [rating, setRating] = useState(0);
@@ -68,7 +68,6 @@ const ParentFeedback = () => {
 
         setSubmitting(true);
         setError(null);
-        setSuccess(null);
 
         try {
             const response = await fetch(`${BASE_URL}/api/parent/feedback`, {
@@ -87,7 +86,7 @@ const ParentFeedback = () => {
 
             const data = await response.json();
             if (data.success) {
-                setSuccess('Feedback submitted successfully!');
+                setShowSuccessModal(true);
                 setRating(0);
                 setMessage('');
                 setCategory('Overall Experience');
@@ -207,12 +206,6 @@ const ParentFeedback = () => {
                             <p className="text-sm font-bold">{error}</p>
                         </div>
                     )}
-                    {success && (
-                        <div className="flex items-center gap-3 p-4 bg-green-50 text-green-600 rounded-2xl border border-green-100 animate-in slide-in-from-top-2">
-                            <CheckCircle size={20} />
-                            <p className="text-sm font-bold">{success}</p>
-                        </div>
-                    )}
 
                     {/* Submit Button */}
                     <button
@@ -286,6 +279,29 @@ const ParentFeedback = () => {
                     )}
                 </div>
             </div>
+
+            {/* Success Modal */}
+            {showSuccessModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-purple-900/10 border border-gray-100 max-w-sm w-full text-center space-y-6 animate-in zoom-in-95 duration-300">
+                        <div className="w-20 h-20 bg-green-50 rounded-3xl flex items-center justify-center mx-auto text-green-500 shadow-inner">
+                            <CheckCircle size={48} strokeWidth={2.5} />
+                        </div>
+                        <div>
+                            <h3 className="text-2xl font-black text-gray-900 mb-2">Success!</h3>
+                            <p className="text-gray-500 font-medium leading-relaxed">
+                                Your feedback has been submitted successfully to the administration.
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setShowSuccessModal(false)}
+                            className="w-full py-4 bg-gray-900 text-white font-black rounded-2xl shadow-xl shadow-gray-200 hover:bg-purple-600 hover:shadow-purple-100 transition-all uppercase tracking-widest text-sm active:scale-95"
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
