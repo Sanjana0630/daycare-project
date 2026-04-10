@@ -44,20 +44,20 @@ const Contact = () => {
     const contactInfo = [
         {
             title: "Email Us",
-            value: "hello@tinytots.com",
+            value: "contact@tinytots.in",
             desc: "Response within 24 hours",
             icon: <Mail className="text-purple-600" size={24} />
         },
         {
             title: "Call Us",
-            value: "+1 (555) 000-0000",
-            desc: "Mon - Fri, 8am - 6pm",
+            value: "+91 98765 43210",
+            desc: "Mon - Fri, 9:00 AM - 6:00 PM",
             icon: <Phone className="text-pink-600" size={24} />
         },
         {
             title: "Visit Us",
-            value: "123 Daycare Ave, Suite 100",
-            desc: "New York, NY 10001",
+            value: "TinyTots Daycare Center",
+            desc: "Baner Road, Pune, Maharashtra – 411045",
             icon: <MapPin className="text-indigo-600" size={24} />
         }
     ];
@@ -233,7 +233,7 @@ const Contact = () => {
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-center text-sm">
                                             <span className="text-gray-400">Mon - Fri:</span>
-                                            <span className="font-bold">8:00 AM - 6:00 PM</span>
+                                            <span className="font-bold">9:00 AM - 6:00 PM</span>
                                         </div>
                                         <div className="flex justify-between items-center text-sm border-t border-white/5 pt-2">
                                             <span className="text-gray-400">Sat - Sun:</span>
