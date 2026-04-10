@@ -28,6 +28,8 @@ const ParentProfile = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('All');
+    const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, feedbackId: null });
+    const [messageDialog, setMessageDialog] = useState({ isOpen: false, message: '', type: 'error' });
 
     useEffect(() => {
         fetchParentData();
@@ -78,14 +80,21 @@ const ParentProfile = () => {
             const data = await response.json();
             if (data.success) {
                 setFeedback(feedback.map(f => f._id === feedbackId ? { ...f, isHidden: data.data.isHidden } : f));
+            } else {
+                setMessageDialog({ isOpen: true, message: data.message || 'Failed to toggle visibility', type: 'error' });
             }
         } catch (err) {
-            alert('Failed to toggle visibility');
+            setMessageDialog({ isOpen: true, message: 'Failed to toggle visibility', type: 'error' });
         }
     };
 
-    const handleDeleteFeedback = async (feedbackId) => {
-        if (!window.confirm('Are you sure you want to delete this feedback?')) return;
+    const triggerDelete = (feedbackId) => {
+        setConfirmDialog({ isOpen: true, feedbackId });
+    };
+
+    const confirmDeleteFeedback = async () => {
+        const feedbackId = confirmDialog.feedbackId;
+        setConfirmDialog({ isOpen: false, feedbackId: null });
         try {
             const token = localStorage.getItem('token');
             const response = await fetch(`${BASE_URL}/api/admin/feedback/${feedbackId}`, {
@@ -95,9 +104,12 @@ const ParentProfile = () => {
             const data = await response.json();
             if (data.success) {
                 setFeedback(feedback.filter(f => f._id !== feedbackId));
+                setMessageDialog({ isOpen: true, message: 'Feedback deleted successfully!', type: 'success' });
+            } else {
+                setMessageDialog({ isOpen: true, message: data.message || 'Failed to delete feedback', type: 'error' });
             }
         } catch (err) {
-            alert('Failed to delete feedback');
+            setMessageDialog({ isOpen: true, message: 'Failed to delete feedback', type: 'error' });
         }
     };
 
@@ -293,7 +305,7 @@ const ParentProfile = () => {
                                             </button>
                                         </div>
                                         <button 
-                                            onClick={() => handleDeleteFeedback(f._id)}
+                                            onClick={() => triggerDelete(f._id)}
                                             className="p-2 text-gray-300 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
                                             title="Delete permanently"
                                         >
@@ -324,6 +336,60 @@ const ParentProfile = () => {
                         )}
                     </div>
             </div>
+
+            {/* Confirmation Modal */}
+            {confirmDialog.isOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl border border-gray-100 max-w-sm w-full text-center space-y-6">
+                        <div className="w-20 h-20 bg-red-50 rounded-3xl flex items-center justify-center mx-auto text-red-500 shadow-inner">
+                            <AlertCircle size={48} strokeWidth={2.5} />
+                        </div>
+                        <div>
+                            <h3 className="text-2xl font-black text-gray-900 mb-2">Confirm Delete</h3>
+                            <p className="text-gray-500 font-medium leading-relaxed">
+                                Are you sure you want to delete this feedback?
+                            </p>
+                        </div>
+                        <div className="flex gap-4">
+                            <button
+                                onClick={() => setConfirmDialog({ isOpen: false, feedbackId: null })}
+                                className="flex-1 py-4 bg-gray-100 text-gray-600 font-black rounded-2xl hover:bg-gray-200 transition-all uppercase tracking-widest text-sm"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmDeleteFeedback}
+                                className="flex-1 py-4 bg-red-600 text-white font-black rounded-2xl shadow-xl shadow-red-200 hover:bg-red-700 transition-all uppercase tracking-widest text-sm"
+                            >
+                                Okay
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Message/Alert Modal */}
+            {messageDialog.isOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl border border-gray-100 max-w-sm w-full text-center space-y-6">
+                        <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mx-auto shadow-inner ${messageDialog.type === 'success' ? 'bg-green-50 text-green-500' : 'bg-red-50 text-red-500'}`}>
+                            {messageDialog.type === 'success' ? <CheckCircle size={48} strokeWidth={2.5} /> : <AlertCircle size={48} strokeWidth={2.5} />}
+                        </div>
+                        <div>
+                            <h3 className="text-2xl font-black text-gray-900 mb-2">{messageDialog.type === 'success' ? 'Success' : 'Error'}</h3>
+                            <p className="text-gray-500 font-medium leading-relaxed">
+                                {messageDialog.message}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setMessageDialog({ isOpen: false, message: '', type: 'error' })}
+                            className="w-full py-4 bg-gray-900 text-white font-black rounded-2xl shadow-xl shadow-gray-200 hover:bg-purple-600 hover:shadow-purple-100 transition-all uppercase tracking-widest text-sm"
+                        >
+                            Okay
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
