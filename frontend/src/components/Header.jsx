@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Bell, ChevronDown, Menu as MenuIcon, User, Users, GraduationCap, Briefcase, X, MessageSquare, Clock } from 'lucide-react';
+import { Search, Bell, ChevronDown, Menu as MenuIcon, User, Users, GraduationCap, Briefcase } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -8,13 +8,9 @@ const Header = ({ onMenuClick }) => {
     const fullName = localStorage.getItem('fullName') || 'Administrator';
     const role = localStorage.getItem('role') || 'admin';
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-    const [isNotificationMenuOpen, setIsNotificationMenuOpen] = useState(false);
-    const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [userProfile, setUserProfile] = useState(null);
-    const [selectedContactModal, setSelectedContactModal] = useState(null);
     const dropdownRef = useRef(null);
-    const notificationDropdownRef = useRef(null);
     const searchRef = useRef(null);
 
     // Search functionality state
@@ -25,41 +21,29 @@ const Header = ({ onMenuClick }) => {
 
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005';
 
-    // Fetch unread notifications count and details
+    // Fetch unread notifications count
     useEffect(() => {
-        const fetchNotificationsData = async () => {
+        const fetchUnreadCount = async () => {
             if (role !== 'parent' && role !== 'admin') return;
             try {
                 const token = localStorage.getItem('token');
-                // unread count
-                const unreadRes = await fetch(`${apiUrl}/api/notifications/unread-count`, {
+                const res = await fetch(`${apiUrl}/api/notifications/unread-count`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                const unreadData = await unreadRes.json();
-                if (unreadData.success) {
-                    setUnreadCount(unreadData.count);
-                }
-
-                // get detailed notifications for admin
-                if (role === 'admin') {
-                    const notifRes = await fetch(`${apiUrl}/api/notifications`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    const notifData = await notifRes.json();
-                    if (notifData.success) {
-                        setNotifications(notifData.data.slice(0, 5));
-                    }
+                const data = await res.json();
+                if (data.success) {
+                    setUnreadCount(data.count);
                 }
             } catch (err) {
-                console.error('Error fetching notifications:', err);
+                console.error('Error fetching unread count:', err);
             }
         };
 
-        fetchNotificationsData();
-        const interval = setInterval(fetchNotificationsData, 30000); // every 30 seconds
+        fetchUnreadCount();
+        const interval = setInterval(fetchUnreadCount, 30000); // every 30 seconds
 
         const handleNotificationUpdate = () => {
-            fetchNotificationsData();
+            fetchUnreadCount();
         };
         window.addEventListener('notificationUpdated', handleNotificationUpdate);
 
@@ -208,19 +192,16 @@ const Header = ({ onMenuClick }) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setIsProfileMenuOpen(false);
             }
-            if (notificationDropdownRef.current && !notificationDropdownRef.current.contains(event.target)) {
-                setIsNotificationMenuOpen(false);
-            }
         };
 
-        if (isProfileMenuOpen || isNotificationMenuOpen) {
+        if (isProfileMenuOpen) {
             document.addEventListener('mousedown', handleClickOutside);
         }
 
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [isProfileMenuOpen, isNotificationMenuOpen]);
+    }, [isProfileMenuOpen]);
 
     const handleProfileClick = () => {
         setIsProfileMenuOpen(false);
@@ -230,34 +211,14 @@ const Header = ({ onMenuClick }) => {
         navigate(profilePath);
     };
 
-    const handleBellClick = () => {
-        if (role === 'admin') {
-            setIsNotificationMenuOpen(!isNotificationMenuOpen);
-            setIsProfileMenuOpen(false);
-        } else {
-            if (role === 'parent') {
-                navigate('/parent/notifications');
-            } else if (role === 'staff') {
-                navigate('/staff/notifications');
-            }
+    const handleNotificationClick = () => {
+        if (role === 'parent') {
+            navigate('/parent/notifications');
+        } else if (role === 'staff') {
+            navigate('/staff/notifications');
+        } else if (role === 'admin') {
+            navigate('/admin/notifications');
         }
-    };
-
-    const handleOpenContactModal = async (notif) => {
-        setIsNotificationMenuOpen(false);
-        if (!notif.isRead) {
-            try {
-                const token = localStorage.getItem('token');
-                await fetch(`${apiUrl}/api/notifications/${notif._id}/read`, {
-                    method: 'PATCH',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                window.dispatchEvent(new Event('notificationUpdated'));
-            } catch (err) {
-                console.error('Error marking as read:', err);
-            }
-        }
-        setSelectedContactModal(notif);
     };
 
     const hasResults = filteredResults.children.length > 0 || 
@@ -406,82 +367,17 @@ const Header = ({ onMenuClick }) => {
 
             {/* Right Actions */}
             <div className="flex items-center gap-4 sm:gap-6">
-                <div className="relative" ref={notificationDropdownRef}>
-                    <button 
-                        onClick={handleBellClick}
-                        className={`relative p-2 rounded-full transition-colors ${isNotificationMenuOpen ? 'bg-purple-50 text-purple-600' : 'hover:bg-gray-50 text-gray-500 hover:text-gray-700'}`}
-                    >
-                        <Bell size={20} />
-                        {unreadCount > 0 && (
-                            <span className="absolute top-0.5 right-0.5 min-w-[20px] h-5 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full border-2 border-white flex items-center justify-center">
-                                {unreadCount}
-                            </span>
-                        )}
-                    </button>
-
-                    {/* Notification Dropdown */}
-                    {isNotificationMenuOpen && role === 'admin' && (
-                        <div className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                            <div className="px-4 py-3 border-b border-gray-50 flex justify-between items-center">
-                                <h3 className="font-bold text-gray-900">Notifications</h3>
-                                {unreadCount > 0 && (
-                                    <span className="text-xs font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded-lg">{unreadCount} unread</span>
-                                )}
-                            </div>
-                            
-                            <div className="max-h-80 overflow-y-auto">
-                                {notifications.length === 0 ? (
-                                    <div className="p-4 text-center text-sm font-medium text-gray-500">
-                                        No new notifications
-                                    </div>
-                                ) : (
-                                    notifications.map(notif => (
-                                        <div 
-                                            key={notif._id} 
-                                            onClick={() => notif.type === 'CONTACT' ? handleOpenContactModal(notif) : navigate('/admin/notifications')}
-                                            className={`flex items-start gap-3 p-4 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0 ${!notif.isRead ? 'bg-purple-50/30' : ''}`}
-                                        >
-                                            <div className={`w-10 h-10 rounded-full flex shrink-0 items-center justify-center ${notif.type === 'CONTACT' ? 'bg-blue-100 text-blue-600' : 'bg-amber-100 text-amber-600'}`}>
-                                                {notif.type === 'CONTACT' ? <MessageSquare size={18} /> : <Bell size={18} />}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className={`text-sm font-bold truncate ${!notif.isRead ? 'text-gray-900' : 'text-gray-700'}`}>
-                                                    {notif.type === 'CONTACT' && notif.contactId 
-                                                        ? `New message from ${notif.contactId.name}`
-                                                        : notif.type === 'FEEDBACK' ? 'New Parent Feedback' : 'System Notification'}
-                                                </p>
-                                                <p className="text-xs text-gray-500 truncate mt-0.5">
-                                                    {notif.type === 'CONTACT' && notif.contactId 
-                                                        ? notif.contactId.subject 
-                                                        : notif.message}
-                                                </p>
-                                                <div className="flex items-center gap-1 mt-1 text-[10px] font-bold text-gray-400">
-                                                    <Clock size={10} />
-                                                    {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </div>
-                                            </div>
-                                            {!notif.isRead && (
-                                                <div className="w-2 h-2 rounded-full bg-purple-600 mt-2 shrink-0"></div>
-                                            )}
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                            
-                            <div className="px-4 py-2 border-t border-gray-50">
-                                <button
-                                    onClick={() => {
-                                        setIsNotificationMenuOpen(false);
-                                        navigate('/admin/notifications');
-                                    }}
-                                    className="w-full text-center text-sm font-bold text-gray-500 hover:text-purple-600 transition-colors py-2"
-                                >
-                                    View All Notifications
-                                </button>
-                            </div>
-                        </div>
+                <button 
+                    onClick={handleNotificationClick}
+                    className="relative p-2 rounded-full hover:bg-gray-50 transition-colors text-gray-500 hover:text-gray-700"
+                >
+                    <Bell size={20} />
+                    {unreadCount > 0 && (
+                        <span className="absolute top-0.5 right-0.5 min-w-[20px] h-5 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full border-2 border-white flex items-center justify-center">
+                            {unreadCount}
+                        </span>
                     )}
-                </div>
+                </button>
 
                 <div className="relative" ref={dropdownRef}>
                     <div
@@ -526,49 +422,6 @@ const Header = ({ onMenuClick }) => {
                     )}
                 </div>
             </div>
-
-            {/* Contact Modal */}
-            {selectedContactModal && selectedContactModal.contactId && (
-                <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-[2rem] w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
-                        <div className="bg-blue-600 p-6 text-white flex justify-between items-start">
-                            <div>
-                                <h2 className="text-2xl font-black">{selectedContactModal.contactId.subject}</h2>
-                                <p className="text-blue-100 mt-1 font-medium text-sm">New inquiry from {selectedContactModal.contactId.name}</p>
-                            </div>
-                            <button onClick={() => setSelectedContactModal(null)} className="p-2 hover:bg-white/20 rounded-xl transition-colors">
-                                <X size={24} />
-                            </button>
-                        </div>
-                        <div className="p-6 space-y-6">
-                            <div className="flex justify-between items-center pb-4 border-b border-gray-100">
-                                <div>
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Email Address</p>
-                                    <p className="font-bold text-gray-900">{selectedContactModal.contactId.email}</p>
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Received</p>
-                                    <p className="font-bold text-gray-900 text-sm">
-                                        {new Date(selectedContactModal.createdAt).toLocaleDateString()} {new Date(selectedContactModal.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </p>
-                                </div>
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Message</p>
-                                <div className="p-4 bg-gray-50 rounded-2xl text-gray-700 text-sm font-medium leading-relaxed whitespace-pre-wrap">
-                                    {selectedContactModal.contactId.message}
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => setSelectedContactModal(null)}
-                                className="w-full py-4 bg-gray-100 text-gray-700 font-bold rounded-2xl hover:bg-gray-200 transition-colors"
-                            >
-                                Close
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </header>
     );
 };

@@ -20,6 +20,24 @@ const AdminNotifications = () => {
                 const result = await res.json();
                 if (result.success) {
                     setNotifications(result.data);
+                    
+                    // Mark as read in background to clear bell
+                    const unreadIds = result.data.filter(n => !n.isRead).map(n => n._id);
+                    if (unreadIds.length > 0) {
+                        Promise.all(unreadIds.map(id =>
+                            fetch(`${apiUrl}/api/notifications/${id}/read`, {
+                                method: 'PATCH',
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            })
+                        )).then(() => {
+                            window.dispatchEvent(new Event('notificationUpdated'));
+                            // Update local state gently so UI reflects they are now read status visually
+                            setTimeout(() => {
+                                setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+                            }, 5000); // 5 sec delay so admin can see which ones *were* unread
+                        }).catch(console.error);
+                    }
+
                 } else {
                     setError(result.message || 'Failed to fetch notifications');
                 }
@@ -34,7 +52,7 @@ const AdminNotifications = () => {
         fetchNotifications();
     }, [apiUrl]);
 
-    const handleViewFeedback = async (notificationId) => {
+    const handleViewFeedback = async (notificationId, type, item) => {
         try {
             const token = localStorage.getItem('token');
             // Mark as read
@@ -47,11 +65,15 @@ const AdminNotifications = () => {
             setNotifications(prev => prev.map(n => n._id === notificationId ? { ...n, isRead: true } : n));
             window.dispatchEvent(new Event('notificationUpdated'));
             
-            // Navigate to reviews/feedback page
-            navigate(`/reviews`);
+            if (type === 'CONTACT' && item.contactId) {
+                alert(`Subject: ${item.contactId.subject}\n\nMessage:\n${item.contactId.message}\n\nFrom: ${item.contactId.name} (${item.contactId.email})`);
+            } else {
+                // Navigate to reviews/feedback page
+                navigate(`/reviews`);
+            }
         } catch (err) {
             console.error('Error marking as read:', err);
-            navigate(`/reviews`);
+            if (type !== 'CONTACT') navigate(`/reviews`);
         }
     };
 
@@ -156,7 +178,8 @@ const AdminNotifications = () => {
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex items-center gap-3">
                                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${!n.isRead ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-gray-400'}`}>
-                                        {n.type === 'FEEDBACK' ? <MessageSquare size={20} /> : <Bell size={20} />}
+                                        {n.type === 'FEEDBACK' ? <MessageSquare size={20} /> : 
+                                         n.type === 'CONTACT' ? <User size={20} /> : <Bell size={20} />}
                                     </div>
                                     {!n.isRead && (
                                         <span className="px-2 py-1 bg-amber-600 text-white text-[10px] font-black uppercase tracking-widest rounded-lg animate-pulse">
@@ -185,11 +208,12 @@ const AdminNotifications = () => {
                             </div>
                             
                             <h4 className={`text-lg transition-colors mb-2 ${!n.isRead ? 'font-black text-gray-900 group-hover:text-amber-700' : 'font-bold text-gray-600'}`}>
-                                {n.type === 'FEEDBACK' ? 'New Parent Feedback' : 'System Notification'}
+                                {n.type === 'FEEDBACK' ? 'New Parent Feedback' : 
+                                 n.type === 'CONTACT' ? 'New Contact Inquiry' : 'System Notification'}
                             </h4>
                             
                             <p className={`${!n.isRead ? 'text-gray-500' : 'text-gray-400'} text-sm font-medium mb-6 line-clamp-2`}>
-                                {n.message}
+                                {n.type === 'CONTACT' && n.contactId ? n.contactId.subject : n.message}
                             </p>
 
                             {n.parentId && (
@@ -214,6 +238,22 @@ const AdminNotifications = () => {
                                     )}
                                 </div>
                             )}
+
+                            {n.contactId && n.type === 'CONTACT' && (
+                                <div className="flex items-center gap-2 mb-4 p-3 bg-blue-50/50 rounded-2xl border border-blue-100/50">
+                                    <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-blue-500 border border-blue-100 overflow-hidden shrink-0">
+                                        <User size={14} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Sender</p>
+                                        <p className="text-xs font-bold text-gray-700 truncate">{n.contactId.name}</p>
+                                    </div>
+                                    <div className="text-right min-w-0 mt-0">
+                                        <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Email</p>
+                                        <p className="text-xs font-bold text-gray-700 truncate max-w-[100px]" title={n.contactId.email}>{n.contactId.email}</p>
+                                    </div>
+                                </div>
+                            )}
                             
                             <div className="flex items-center gap-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-6">
                                 <div className="flex items-center gap-1.5">
@@ -227,7 +267,7 @@ const AdminNotifications = () => {
                             </div>
                             
                             <button 
-                                onClick={() => handleViewFeedback(n._id)}
+                                onClick={() => handleViewFeedback(n._id, n.type, n)}
                                 className="w-full py-3 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-black transition-all active:scale-95 shadow-lg shadow-gray-200"
                             >
                                 <Eye size={16} />
