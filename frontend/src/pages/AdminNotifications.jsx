@@ -311,14 +311,16 @@ const AdminNotifications = () => {
                                         {selectedContact.email}
                                     </a>
                                 </div>
-                                {selectedContact.phone && (
-                                    <div className="space-y-1 md:col-span-2 border-t border-gray-100 pt-4">
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Contact Number</p>
+                                <div className="space-y-1 md:col-span-2 border-t border-gray-100 pt-4">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Contact Number</p>
+                                    {selectedContact.phone ? (
                                         <a href={`tel:${selectedContact.phone}`} className="text-sm font-bold text-gray-800 hover:text-gray-900 block">
                                             {selectedContact.phone}
                                         </a>
-                                    </div>
-                                )}
+                                    ) : (
+                                        <span className="text-sm font-bold text-gray-400 italic block">Not Provided</span>
+                                    )}
+                                </div>
                             </div>
                             
                             <div className="space-y-1">
