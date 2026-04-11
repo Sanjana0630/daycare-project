@@ -105,7 +105,7 @@ const getNotifications = async (req, res) => {
             .populate("parentId", "fullName email profileImage")
             .populate("childId", "childName")
             .populate("feedbackId", "rating category message")
-            .populate("contactId", "name email subject message")
+            .populate("contactId", "name email phone subject message")
             .sort({ createdAt: -1 });
 
         res.status(200).json({
