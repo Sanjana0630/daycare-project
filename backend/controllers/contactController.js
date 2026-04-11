@@ -8,7 +8,7 @@ const Notification = require('../models/Notification');
  */
 const submitContact = async (req, res) => {
     try {
-        const { name, email, subject, message } = req.body;
+        const { name, email, phone, subject, message } = req.body;
 
         if (!name || !email || !subject || !message) {
             return res.status(400).json({ success: false, message: 'All fields are required.' });
@@ -18,6 +18,7 @@ const submitContact = async (req, res) => {
         const newContact = await ContactMessage.create({
             name,
             email,
+            phone,
             subject,
             message,
         });

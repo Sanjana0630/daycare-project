@@ -300,7 +300,7 @@ const AdminNotifications = () => {
                         </div>
                         
                         <div className="p-8 space-y-6">
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Name</p>
                                     <p className="text-sm font-bold text-gray-800">{selectedContact.name}</p>
@@ -311,6 +311,14 @@ const AdminNotifications = () => {
                                         {selectedContact.email}
                                     </a>
                                 </div>
+                                {selectedContact.phone && (
+                                    <div className="space-y-1 md:col-span-2 border-t border-gray-100 pt-4">
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Contact Number</p>
+                                        <a href={`tel:${selectedContact.phone}`} className="text-sm font-bold text-gray-800 hover:text-gray-900 block">
+                                            {selectedContact.phone}
+                                        </a>
+                                    </div>
+                                )}
                             </div>
                             
                             <div className="space-y-1">

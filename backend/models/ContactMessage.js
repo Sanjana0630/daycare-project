@@ -9,6 +9,10 @@ const contactMessageSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    phone: {
+        type: String,
+        required: false,
+    },
     subject: {
         type: String,
         required: true,
