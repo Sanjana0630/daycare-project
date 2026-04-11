@@ -7,6 +7,7 @@ const AdminNotifications = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [filter, setFilter] = useState('all');
+    const [selectedContact, setSelectedContact] = useState(null);
     const navigate = useNavigate();
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005';
 
@@ -66,7 +67,10 @@ const AdminNotifications = () => {
             window.dispatchEvent(new Event('notificationUpdated'));
             
             if (type === 'CONTACT' && item.contactId) {
-                alert(`Subject: ${item.contactId.subject}\n\nMessage:\n${item.contactId.message}\n\nFrom: ${item.contactId.name} (${item.contactId.email})`);
+                setSelectedContact({
+                    ...item.contactId,
+                    createdAt: item.createdAt
+                });
             } else {
                 // Navigate to reviews/feedback page
                 navigate(`/reviews`);
@@ -275,6 +279,75 @@ const AdminNotifications = () => {
                             </button>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {/* Custom Contact Message Modal */}
+            {selectedContact && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setSelectedContact(null)}>
+                    <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
+                        <div className="p-8 pb-6 border-b border-gray-100 flex items-center justify-between">
+                            <div>
+                                <h3 className="text-xl font-black text-gray-900">Contact Message Details</h3>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Inquiry Information</p>
+                            </div>
+                            <button 
+                                onClick={() => setSelectedContact(null)}
+                                className="w-10 h-10 bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 rounded-full flex items-center justify-center transition-all"
+                            >
+                                <span className="font-black">✕</span>
+                            </button>
+                        </div>
+                        
+                        <div className="p-8 space-y-6">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Name</p>
+                                    <p className="text-sm font-bold text-gray-800">{selectedContact.name}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Email</p>
+                                    <a href={`mailto:${selectedContact.email}`} className="text-sm font-bold text-blue-600 hover:text-blue-700 hover:underline break-all block">
+                                        {selectedContact.email}
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Subject</p>
+                                <p className="text-sm font-bold text-gray-900">{selectedContact.subject}</p>
+                            </div>
+                            
+                            <div className="space-y-1 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Message</p>
+                                <p className="text-sm font-medium text-gray-700 whitespace-pre-wrap">{selectedContact.message}</p>
+                            </div>
+                            
+                            <div className="flex items-center gap-4 pt-2 border-t border-gray-100">
+                                <div className="flex items-center gap-2 mt-4">
+                                    <Calendar size={14} className="text-gray-400" />
+                                    <span className="text-xs font-bold text-gray-600">
+                                        {new Date(selectedContact.createdAt).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' })}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2 mt-4">
+                                    <Clock size={14} className="text-gray-400" />
+                                    <span className="text-xs font-bold text-gray-600">
+                                        {new Date(selectedContact.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+                            <button 
+                                onClick={() => setSelectedContact(null)}
+                                className="px-6 py-2.5 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-black transition-all shadow-md shadow-gray-200"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
