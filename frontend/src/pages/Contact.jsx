@@ -314,12 +314,13 @@ const Contact = () => {
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                             <div className="space-y-3">
-                                                <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-4">Contact Number (Optional)</label>
+                                                <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-4">Contact Number</label>
                                                 <input
                                                     type="tel"
                                                     name="phone"
                                                     value={formData.phone}
                                                     onChange={handleInputChange}
+                                                    required
                                                     placeholder="+91 98765 43210"
                                                     className="w-full px-6 py-4 rounded-2xl bg-gray-50 border-2 border-transparent focus:bg-white focus:border-purple-100 focus:ring-4 focus:ring-purple-50 transition-all outline-none font-medium"
                                                 />
