@@ -4,6 +4,7 @@ import { FileText, Download, Filter, X, Search, CalendarDays, User, BookOpen, Cl
 const Reports = () => {
     // Dropdown Data
     const [childrenList, setChildrenList] = useState([]);
+    const role = localStorage.getItem('role');
     
     // Filter States
     const [selectedChildId, setSelectedChildId] = useState('all');
@@ -53,8 +54,9 @@ const Reports = () => {
                 });
                 const data = await res.json();
                 if (data.success || Array.isArray(data)) {
-                    const list = Array.isArray(data) ? data : data.data || [];
-                    setChildrenList(list);
+                    const children = Array.isArray(data) ? data : data.data || [];
+                    console.log("Filtered Children:", children);
+                    setChildrenList(children);
                 }
             } catch (err) {
                 console.error('Error fetching children:', err);
@@ -65,6 +67,10 @@ const Reports = () => {
     }, [apiUrl]);
 
     const handleGenerateReport = async () => {
+        if (role === 'staff' && childrenList.length === 0) {
+            setError('No children assigned to your class');
+            return;
+        }
         setLoading(true);
         setError(null);
         setReportResult(null);
@@ -195,21 +201,29 @@ const Reports = () => {
                                             />
                                         </div>
                                     </div>
-                                    <div 
-                                        onClick={() => { setSelectedChildId('all'); setShowDropdown(false); }}
-                                        className={`px-4 py-3 cursor-pointer hover:bg-purple-50 transition-colors font-bold ${selectedChildId === 'all' ? 'text-purple-600 bg-purple-50/50' : 'text-gray-700'}`}
-                                    >
-                                        All Children
-                                    </div>
-                                    {filteredChildren.map(child => (
-                                        <div 
-                                            key={child._id}
-                                            onClick={() => { setSelectedChildId(child._id); setShowDropdown(false); }}
-                                            className={`px-4 py-3 cursor-pointer hover:bg-purple-50 transition-colors font-bold ${selectedChildId === child._id ? 'text-purple-600 bg-purple-50/50' : 'text-gray-700'}`}
-                                        >
-                                            {child.childName}
+                                    {role === 'staff' && childrenList.length === 0 ? (
+                                        <div className="px-4 py-3 text-red-500 font-bold">
+                                            No children assigned to your class
                                         </div>
-                                    ))}
+                                    ) : (
+                                        <>
+                                            <div 
+                                                onClick={() => { setSelectedChildId('all'); setShowDropdown(false); }}
+                                                className={`px-4 py-3 cursor-pointer hover:bg-purple-50 transition-colors font-bold ${selectedChildId === 'all' ? 'text-purple-600 bg-purple-50/50' : 'text-gray-700'}`}
+                                            >
+                                                All Children
+                                            </div>
+                                            {filteredChildren.map(child => (
+                                                <div 
+                                                    key={child._id}
+                                                    onClick={() => { setSelectedChildId(child._id); setShowDropdown(false); }}
+                                                    className={`px-4 py-3 cursor-pointer hover:bg-purple-50 transition-colors font-bold ${selectedChildId === child._id ? 'text-purple-600 bg-purple-50/50' : 'text-gray-700'}`}
+                                                >
+                                                    {child.childName}
+                                                </div>
+                                            ))}
+                                        </>
+                                    )}
                                 </div>
                             )}
                         </div>

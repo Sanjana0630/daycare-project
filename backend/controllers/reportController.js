@@ -34,7 +34,8 @@ const getReportById = async (req, res) => {
         const reportData = await getUnifiedReportData(
             reportConfig.childId.toString(),
             reportConfig.range,
-            reportConfig.date
+            reportConfig.date,
+            req.user
         );
 
         res.status(200).json({
@@ -54,7 +55,7 @@ const getReportById = async (req, res) => {
  * Core Logic: Generates unified report data from multiple models
  * Reusable helper to avoid code duplication
  */
-async function getUnifiedReportData(childId, range, date) {
+async function getUnifiedReportData(childId, range, date, user) {
     let startDate, endDate;
 
     // 1. Parse dates based on range
@@ -103,7 +104,22 @@ async function getUnifiedReportData(childId, range, date) {
 
     // 3. Fetch Attendance
     let attendanceQuery = { ...childQuery };
-    if (childId && childId !== 'all') attendanceQuery.child = childId;
+    if (childId && childId !== 'all') {
+        attendanceQuery.child = childId;
+    } else if (user && user.role === 'staff') {
+        // Find staff details to filter attendance for their assigned children
+        const Staff = require('../models/Staff');
+        const staffDoc = await Staff.findOne({ email: user.email });
+        if (staffDoc) {
+            const assignedChildren = await Child.find({
+                $or: [
+                    { class: staffDoc.assignedClass },
+                    { assignedStaffId: staffDoc._id }
+                ]
+            }).select('_id');
+            attendanceQuery.child = { $in: assignedChildren.map(c => c._id) };
+        }
+    }
 
     const attendanceRecords = await Attendance.find(attendanceQuery)
         .populate("child", "childName")
@@ -127,7 +143,21 @@ async function getUnifiedReportData(childId, range, date) {
 
     // 4. Fetch Activities
     let activityQuery = { date: { $gte: startDate, $lte: endDate } };
-    if (childId && childId !== 'all') activityQuery.childId = childId;
+    if (childId && childId !== 'all') {
+        activityQuery.childId = childId;
+    } else if (user && user.role === 'staff') {
+        const Staff = require('../models/Staff');
+        const staffDoc = await Staff.findOne({ email: user.email });
+        if (staffDoc) {
+            const assignedChildren = await Child.find({
+                $or: [
+                    { class: staffDoc.assignedClass },
+                    { assignedStaffId: staffDoc._id }
+                ]
+            }).select('_id');
+            activityQuery.childId = { $in: assignedChildren.map(c => c._id) };
+        }
+    }
 
     const activityRecords = await ChildDailyActivity.find(activityQuery)
         .populate("childId", "childName")
@@ -435,7 +465,7 @@ const generateFullReport = async (req, res) => {
     const { childId, range, date } = req.query;
 
     try {
-        const reportData = await getUnifiedReportData(childId, range, date);
+        const reportData = await getUnifiedReportData(childId, range, date, req.user);
 
         // Save the report configuration to return an ID for notifications (Only if it's a specific child)
         let savedReportId = null;

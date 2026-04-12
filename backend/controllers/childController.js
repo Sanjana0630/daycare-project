@@ -41,12 +41,40 @@ const registerChild = async (req, res) => {
     }
 };
 
-// @desc    Get all children
+// @desc    Get all children or assigned children if staff
 // @route   GET /api/children
-// @access  Public
+// @access  Private
 const getChildren = async (req, res) => {
     try {
-        const children = await Child.find({});
+        let query = {};
+
+        // Detect logged-in user role
+        if (req.user && req.user.role === "staff") {
+            const staff = await Staff.findOne({ email: req.user.email });
+            if (staff) {
+                query = {
+                    $or: [
+                        { assignedStaffId: staff._id },
+                        { class: staff.assignedClass }
+                    ]
+                };
+            } else {
+                query = { _id: null }; // No staff found, return empty
+            }
+        }
+
+        const children = await Child.find(query);
+
+        // Debug Check
+        if (req.user && req.user.role === "staff") {
+            const staff = await Staff.findOne({ email: req.user.email });
+            if (staff) {
+                console.log("Staff:", staff._id);
+                console.log("Assigned Class:", staff.assignedClass);
+                console.log("Filtered Children Count:", children.length);
+            }
+        }
+
         res.status(200).json({
             success: true,
             count: children.length,

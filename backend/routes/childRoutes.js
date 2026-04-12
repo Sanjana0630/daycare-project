@@ -8,6 +8,7 @@ const {
     deleteChild,
 } = require("../controllers/childController");
 
+const { protect } = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
 const Child = require("../models/Child");
 
@@ -32,7 +33,7 @@ router.post("/add-child", upload.single("photo"), async (req, res) => {
 
 router.route("/")
     .post(upload.single("photo"), registerChild)
-    .get(getChildren);
+    .get(protect, getChildren);
 
 router.route("/:id")
     .get(getChildById)
