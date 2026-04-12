@@ -65,13 +65,14 @@ const getChildren = async (req, res) => {
 
         const children = await Child.find(query);
 
-        // Debug Check
-        if (req.user && req.user.role === "staff") {
+        // Debug Check - wrapped in development mode check
+        if (process.env.NODE_ENV === "development" && req.user && req.user.role === "staff") {
             const staff = await Staff.findOne({ email: req.user.email });
-            if (staff) {
-                console.log("Staff:", staff._id);
-                console.log("Assigned Class:", staff.assignedClass);
-                console.log("Filtered Children Count:", children.length);
+            if (staff && staff.assignedClass) {
+                // Debug logs suppressed by default to prevent spam
+                // console.log("Staff:", staff._id);
+                // console.log("Assigned Class:", staff.assignedClass);
+                // console.log("Filtered Children Count:", children.length);
             }
         }
 

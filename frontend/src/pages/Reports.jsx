@@ -62,7 +62,9 @@ const Reports = () => {
                 const data = await res.json();
                 if (data.success || Array.isArray(data)) {
                     const children = Array.isArray(data) ? data : data.data || [];
-                    console.log("Filtered Children:", children);
+                    // if (process.env.NODE_ENV === 'development') {
+                    //     console.log("Filtered Children:", children);
+                    // }
                     setChildrenList(children);
                 }
             } catch (err) {
