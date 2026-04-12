@@ -13,6 +13,13 @@ const Reports = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [showDropdown, setShowDropdown] = useState(false);
 
+    // Auto-select first child for staff as "All Children" is disabled
+    useEffect(() => {
+        if (role === 'staff' && childrenList.length > 0 && selectedChildId === 'all') {
+            setSelectedChildId(childrenList[0]._id);
+        }
+    }, [childrenList, role, selectedChildId]);
+
     // Result States
     const [loading, setLoading] = useState(false);
     const [reportResult, setReportResult] = useState(null); // Will hold { childInfo, attendance, activities, summary }
@@ -207,12 +214,14 @@ const Reports = () => {
                                         </div>
                                     ) : (
                                         <>
-                                            <div 
-                                                onClick={() => { setSelectedChildId('all'); setShowDropdown(false); }}
-                                                className={`px-4 py-3 cursor-pointer hover:bg-purple-50 transition-colors font-bold ${selectedChildId === 'all' ? 'text-purple-600 bg-purple-50/50' : 'text-gray-700'}`}
-                                            >
-                                                All Children
-                                            </div>
+                                            {role !== 'staff' && (
+                                                <div 
+                                                    onClick={() => { setSelectedChildId('all'); setShowDropdown(false); }}
+                                                    className={`px-4 py-3 cursor-pointer hover:bg-purple-50 transition-colors font-bold ${selectedChildId === 'all' ? 'text-purple-600 bg-purple-50/50' : 'text-gray-700'}`}
+                                                >
+                                                    All Children
+                                                </div>
+                                            )}
                                             {filteredChildren.map(child => (
                                                 <div 
                                                     key={child._id}
