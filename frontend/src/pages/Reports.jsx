@@ -187,27 +187,38 @@ const Reports = () => {
                     <div className="space-y-2 relative">
                         <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Select Child</label>
                         <div className="relative">
-                            <div 
-                                onClick={() => setShowDropdown(!showDropdown)}
-                                className="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-700 cursor-pointer flex justify-between items-center"
-                            >
-                                <span>{getSelectedChildName()}</span>
+                            <div className="relative">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                <input
+                                    type="text"
+                                    placeholder="Search children..."
+                                    value={showDropdown ? searchQuery : (selectedChildId ? getSelectedChildName() : '')}
+                                    onChange={(e) => {
+                                        setSearchQuery(e.target.value);
+                                        setShowDropdown(true);
+                                    }}
+                                    onFocus={() => setShowDropdown(true)}
+                                    onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                                    className="w-full pl-11 pr-10 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-700 outline-none focus:ring-2 focus:ring-purple-100 placeholder-gray-400"
+                                />
+                                {selectedChildId && !showDropdown && (
+                                    <button 
+                                        type="button"
+                                        onMouseDown={(e) => e.preventDefault()}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedChildId('');
+                                            setSearchQuery('');
+                                        }}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 hover:bg-red-50 p-1 rounded-full transition-colors"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                )}
                             </div>
                             
                             {showDropdown && (
                                 <div className="absolute z-10 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl max-h-60 overflow-y-auto">
-                                    <div className="p-3">
-                                        <div className="relative">
-                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                                            <input 
-                                                type="text" 
-                                                placeholder="Search children..."
-                                                value={searchQuery}
-                                                onChange={(e) => setSearchQuery(e.target.value)}
-                                                className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm font-medium outline-none"
-                                            />
-                                        </div>
-                                    </div>
                                     {role === 'staff' && childrenList.length === 0 ? (
                                         <div className="px-4 py-3 text-red-500 font-bold">
                                             No children assigned to your class
@@ -216,7 +227,12 @@ const Reports = () => {
                                         <>
                                             {role !== 'staff' && (
                                                 <div 
-                                                    onClick={() => { setSelectedChildId('all'); setShowDropdown(false); }}
+                                                    onMouseDown={(e) => e.preventDefault()}
+                                                    onClick={() => { 
+                                                        setSelectedChildId('all');
+                                                        setSearchQuery('');
+                                                        setShowDropdown(false); 
+                                                    }}
                                                     className={`px-4 py-3 cursor-pointer hover:bg-purple-50 transition-colors font-bold ${selectedChildId === 'all' ? 'text-purple-600 bg-purple-50/50' : 'text-gray-700'}`}
                                                 >
                                                     All Children
@@ -225,7 +241,12 @@ const Reports = () => {
                                             {filteredChildren.map(child => (
                                                 <div 
                                                     key={child._id}
-                                                    onClick={() => { setSelectedChildId(child._id); setShowDropdown(false); }}
+                                                    onMouseDown={(e) => e.preventDefault()}
+                                                    onClick={() => { 
+                                                        setSelectedChildId(child._id);
+                                                        setSearchQuery('');
+                                                        setShowDropdown(false); 
+                                                    }}
                                                     className={`px-4 py-3 cursor-pointer hover:bg-purple-50 transition-colors font-bold ${selectedChildId === child._id ? 'text-purple-600 bg-purple-50/50' : 'text-gray-700'}`}
                                                 >
                                                     {child.childName}
