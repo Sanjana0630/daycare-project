@@ -5,6 +5,9 @@ const Attendance = require("../models/Attendance");
 const Child = require("../models/Child");
 const ChildDailyActivity = require("../models/ChildDailyActivity");
 const Feedback = require("../models/Feedback");
+const Payment = require("../models/Payment");
+const Fee = require("../models/Fee");
+const Notification = require("../models/Notification");
 
 // Consistent date normalization helper (matches staffController)
 const getNormalizedDate = (dateParam) => {
@@ -605,6 +608,56 @@ const deleteFeedbackEntry = async (req, res) => {
     }
 };
 
+// @desc    Delete parent and all associated records
+// @route   DELETE /api/admin/parents/:id
+// @access  Private/Admin
+const deleteParent = async (req, res) => {
+    try {
+        const parentId = req.params.id;
+        const parent = await User.findById(parentId);
+
+        if (!parent || parent.role !== 'parent') {
+            return res.status(404).json({ success: false, message: "Parent not found" });
+        }
+
+        // 1. Find all children associated with this parent
+        const children = await Child.find({ parent: parentId });
+        const childIds = children.map(c => c._id);
+
+        // 2. Delete all records associated with these children
+        if (childIds.length > 0) {
+            await Promise.all([
+                Attendance.deleteMany({ child: { $in: childIds } }),
+                ChildDailyActivity.deleteMany({ childId: { $in: childIds.map(id => id.toString()) } }),
+                Payment.deleteMany({ child: { $in: childIds } }),
+                Fee.deleteMany({ child: { $in: childIds } }),
+                Feedback.deleteMany({ child: { $in: childIds } }),
+                Notification.deleteMany({ childId: { $in: childIds } })
+            ]);
+
+            // 3. Delete the children records
+            await Child.deleteMany({ _id: { $in: childIds } });
+        }
+
+        // 4. Delete feedback by the parent directly (if any not tied to children)
+        await Feedback.deleteMany({ parent: parentId });
+
+        // 5. Delete all notifications for the parent
+        await Notification.deleteMany({ parentId: parentId });
+
+        // 6. Finally, delete the parent user
+        await User.findByIdAndDelete(parentId);
+
+        res.status(200).json({
+            success: true,
+            message: "Parent and all associated records deleted successfully"
+        });
+    } catch (error) {
+        console.error('Error in deleteParent:', error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
 module.exports = {
     getStaffUsers,
     upsertStaffAttendance,
@@ -624,5 +677,6 @@ module.exports = {
     getParentFeedback,
     toggleFeedbackVisibility,
     deleteFeedbackEntry,
+    deleteParent,
     saveBulkStaffAttendance
 };

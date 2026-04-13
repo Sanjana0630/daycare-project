@@ -3,7 +3,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
-const GoogleAuthButton = ({ text = "Continue with Google" }) => {
+const GoogleAuthButton = ({ text = "Continue with Google", role = "parent" }) => {
     const navigate = useNavigate();
     const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -19,15 +19,18 @@ const GoogleAuthButton = ({ text = "Continue with Google" }) => {
                     }
                 );
 
-                const user = await res.json();
+                const googleUser = await res.json();
 
-                // send to backend
+                // send to backend with role
                 const response = await fetch(`${apiUrl}/api/auth/google`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify(user),
+                    body: JSON.stringify({
+                        ...googleUser,
+                        role: role
+                    }),
                 });
 
                 const data = await response.json();

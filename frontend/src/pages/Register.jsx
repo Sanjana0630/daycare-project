@@ -255,7 +255,7 @@ const Register = () => {
                     </div>
                 </div>
 
-                <GoogleAuthButton text="Sign up with Google" />
+                <GoogleAuthButton text="Sign up with Google" role={formData.role} />
 
                 <p className="mt-8 text-center text-sm text-gray-600">
                     Already have an account?{' '}

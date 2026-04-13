@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../components/AuthLayout';
 import GoogleAuthButton from '../components/GoogleAuthButton';
-import { Mail, Lock } from 'lucide-react';
+import { Mail, Lock, User, Baby } from 'lucide-react';
 
 
 // Modifying Login to fit the AuthLayout structure correctly
@@ -10,6 +10,7 @@ import { Mail, Lock } from 'lucide-react';
 const LoginPage = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({ email: '', password: '' });
+    const [selectedRole, setSelectedRole] = useState('parent');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -128,7 +129,36 @@ const LoginPage = () => {
                     </div>
                 </div>
 
-                <GoogleAuthButton />
+                {/* Role Selection for Google Login */}
+                <div className="mb-4">
+                    <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 text-center">Continue as</label>
+                    <div className="grid grid-cols-2 gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setSelectedRole('staff')}
+                            className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border transition-all ${selectedRole === 'staff'
+                                ? 'border-purple-500 bg-purple-50 text-purple-700 ring-2 ring-purple-100'
+                                : 'border-gray-100 hover:bg-gray-50 text-gray-500'
+                                }`}
+                        >
+                            <User size={16} />
+                            <span className="text-xs font-semibold">Staff</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setSelectedRole('parent')}
+                            className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border transition-all ${selectedRole === 'parent'
+                                ? 'border-purple-500 bg-purple-50 text-purple-700 ring-2 ring-purple-100'
+                                : 'border-gray-100 hover:bg-gray-50 text-gray-500'
+                                }`}
+                        >
+                            <Baby size={16} />
+                            <span className="text-xs font-semibold">Parent</span>
+                        </button>
+                    </div>
+                </div>
+
+                <GoogleAuthButton text="Continue with Google" role={selectedRole} />
 
                 <p className="mt-8 text-center text-sm text-gray-600">
                     Don't have an account?{' '}

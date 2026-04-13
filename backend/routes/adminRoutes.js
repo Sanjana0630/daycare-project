@@ -20,6 +20,7 @@ const {
     getParentFeedback,
     toggleFeedbackVisibility,
     deleteFeedbackEntry,
+    deleteParent,
     saveBulkStaffAttendance
 } = require("../controllers/adminController");
 
@@ -42,6 +43,7 @@ router.get("/child-activity/yearly/:childId", protect, admin, getChildYearlyActi
 // Parent Management & Feedback
 router.get("/parents", protect, admin, getParents);
 router.get("/parents/:id/feedback", protect, admin, getParentFeedback);
+router.delete("/parents/:id", protect, admin, deleteParent);
 router.patch("/feedback/:id/toggle-visibility", protect, admin, toggleFeedbackVisibility);
 router.delete("/feedback/:id", protect, admin, deleteFeedbackEntry);
 

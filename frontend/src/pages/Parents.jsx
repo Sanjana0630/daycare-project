@@ -9,8 +9,10 @@ import {
     Phone,
     ChevronRight,
     Loader2,
-    Baby
+    Baby,
+    Trash2
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const Parents = () => {
     const navigate = useNavigate();
@@ -18,6 +20,9 @@ const Parents = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [error, setError] = useState('');
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [parentToDelete, setParentToDelete] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         fetchParents();
@@ -42,6 +47,41 @@ const Parents = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleDeleteParent = async () => {
+        if (!parentToDelete) return;
+
+        setIsDeleting(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${BASE_URL}/api/admin/parents/${parentToDelete._id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                toast.success('Parent deleted successfully');
+                setParents(parents.filter(p => p._id !== parentToDelete._id));
+                setIsDeleteModalOpen(false);
+            } else {
+                toast.error(data.message || 'Failed to delete parent');
+            }
+        } catch (err) {
+            console.error('Error deleting parent:', err);
+            toast.error('Connection failed');
+        } finally {
+            setIsDeleting(false);
+            setParentToDelete(null);
+        }
+    };
+
+    const openDeleteModal = (e, parent) => {
+        e.stopPropagation();
+        setParentToDelete(parent);
+        setIsDeleteModalOpen(true);
     };
 
     const filteredParents = parents.filter(parent => {
@@ -124,6 +164,13 @@ const Parents = () => {
                                 }`}>
                                     {parent.status}
                                 </span>
+                                <button 
+                                    onClick={(e) => openDeleteModal(e, parent)}
+                                    className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                                    title="Delete Parent"
+                                >
+                                    <Trash2 size={18} />
+                                </button>
                             </div>
                         </div>
 
@@ -161,6 +208,51 @@ const Parents = () => {
                     </div>
                 ))}
             </div>
+
+            {/* Custom Delete Confirmation Modal */}
+            {isDeleteModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
+                    <div className="absolute inset-0 bg-white/40 backdrop-blur-md" onClick={() => !isDeleting && setIsDeleteModalOpen(false)}></div>
+                    <div className="relative bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl border border-red-50 overflow-hidden transform animate-in zoom-in-95 duration-300">
+                        <div className="h-2 bg-red-500"></div>
+                        <div className="p-8 text-center">
+                            <div className="w-20 h-20 bg-red-50 text-red-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner">
+                                <Trash2 size={40} />
+                            </div>
+                            <h3 className="text-2xl font-black text-gray-900 mb-2 tracking-tight uppercase">Delete Parent?</h3>
+                            <p className="text-gray-500 font-bold mb-8 px-4 leading-relaxed">
+                                Are you sure you want to delete <span className="text-red-600 italic">"{parentToDelete?.fullName}"</span>? 
+                                <br />
+                                <span className="text-sm font-black text-red-500 block mt-2">
+                                    WARNING: This will permanently remove all associated children, 
+                                    attendance records, fees, and activity logs.
+                                </span>
+                            </p>
+                            <div className="grid grid-cols-2 gap-4">
+                                <button
+                                    onClick={() => setIsDeleteModalOpen(false)}
+                                    disabled={isDeleting}
+                                    className="py-4 bg-gray-50 text-gray-500 font-black rounded-2xl hover:bg-gray-100 transition-all uppercase tracking-widest text-xs"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleDeleteParent}
+                                    disabled={isDeleting}
+                                    className="py-4 bg-red-600 text-white font-black rounded-2xl shadow-xl shadow-red-200 hover:bg-red-700 transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2"
+                                >
+                                    {isDeleting ? (
+                                        <>
+                                            <Loader2 size={16} className="animate-spin" />
+                                            Deleting...
+                                        </>
+                                    ) : 'Delete All'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {filteredParents.length === 0 && !loading && (
                 <div className="bg-white rounded-[2rem] p-12 text-center border border-gray-100 shadow-sm">
