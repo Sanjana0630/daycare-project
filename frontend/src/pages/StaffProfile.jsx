@@ -217,8 +217,8 @@ const StaffProfile = () => {
                                     className="w-full h-full object-cover"
                                 />
                             ) : (
-                                <div className="text-purple-200">
-                                    <User size={64} strokeWidth={1} />
+                                <div className="text-purple-300 font-black text-5xl uppercase">
+                                    {formData.name ? formData.name[0] : 'S'}
                                 </div>
                             )}
                             

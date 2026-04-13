@@ -273,8 +273,8 @@ const Staff = () => {
                                                 className="w-full h-full object-cover"
                                             />
                                         ) : (
-                                            <div className="text-purple-200">
-                                                <User size={64} strokeWidth={1} />
+                                            <div className="text-purple-300 font-black text-5xl uppercase">
+                                                {selectedMember.name ? selectedMember.name[0] : (selectedMember.fullName ? selectedMember.fullName[0] : 'S')}
                                             </div>
                                         )}
                                     </div>
