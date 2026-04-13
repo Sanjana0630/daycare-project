@@ -138,5 +138,43 @@ const getMe = async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 };
+// @desc    Auth with Google
+// @route   POST /api/auth/google
+// @access  Public
+const googleAuth = async (req, res) => {
+    const { name, email, picture } = req.body;
 
-module.exports = { loginUser, registerUser, getParents, getMe };
+    try {
+        let user = await User.findOne({ email });
+
+        if (!user) {
+            // Create user if they don't exist
+            // Generate a random password since they use Google to login
+            const randomPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+            
+            user = await User.create({
+                fullName: name,
+                email,
+                password: randomPassword,
+                role: "parent", // default role
+                status: "active",
+                profileImage: picture
+            });
+        }
+
+        res.json({
+            _id: user._id,
+            fullName: user.fullName,
+            email: user.email,
+            role: user.role,
+            status: user.status,
+            profileImage: user.profileImage,
+            token: generateToken(user._id),
+        });
+    } catch (error) {
+        console.error('Google Auth error:', error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+module.exports = { loginUser, registerUser, getParents, getMe, googleAuth };

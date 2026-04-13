@@ -1,9 +1,81 @@
 import React from 'react';
+import { useGoogleLogin } from '@react-oauth/google';
+import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const GoogleAuthButton = ({ text = "Continue with Google" }) => {
+    const navigate = useNavigate();
+    const apiUrl = import.meta.env.VITE_API_URL;
+
+    const login = useGoogleLogin({
+        onSuccess: async (tokenResponse) => {
+            try {
+                const res = await fetch(
+                    `https://www.googleapis.com/oauth2/v3/userinfo`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${tokenResponse.access_token}`,
+                        },
+                    }
+                );
+
+                const user = await res.json();
+
+                // send to backend
+                const response = await fetch(`${apiUrl}/api/auth/google`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(user),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Store JWT and role in localStorage
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('role', data.role);
+                    localStorage.setItem('email', data.email);
+                    localStorage.setItem('fullName', data.fullName);
+                    localStorage.setItem('status', data.status);
+                    if (data.profileImage) {
+                        localStorage.setItem('profileImage', data.profileImage);
+                    }
+
+                    toast.success('Logged in successfully!');
+
+                    // Role-based navigation
+                    if (data.role === 'admin') {
+                        navigate('/admin/dashboard');
+                    } else if (data.role === 'staff') {
+                        navigate('/staff/dashboard');
+                    } else if (data.role === 'parent') {
+                        navigate('/parent/dashboard');
+                    } else {
+                        navigate('/');
+                    }
+                } else {
+                    toast.error(data.message || 'Login failed');
+                }
+            } catch (error) {
+                console.error('Google Login Error:', error);
+                toast.error('Google Login failed. Please try again.');
+            }
+        },
+        onError: () => {
+            toast.error('Login Failed');
+        }
+    });
+
+    const handleGoogleLogin = () => {
+        login();
+    };
+
     return (
         <button
             type="button"
+            onClick={handleGoogleLogin}
             className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-200 rounded-xl bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-all shadow-sm"
         >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
