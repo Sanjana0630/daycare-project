@@ -7,18 +7,11 @@ const Reports = () => {
     const role = localStorage.getItem('role');
     
     // Filter States
-    const [selectedChildId, setSelectedChildId] = useState('all');
+    const [selectedChildId, setSelectedChildId] = useState('');
     const [timeRange, setTimeRange] = useState('daily');
     const [reportDate, setReportDate] = useState(getInitialDate('daily'));
     const [searchQuery, setSearchQuery] = useState('');
     const [showDropdown, setShowDropdown] = useState(false);
-
-    // Auto-select first child for staff as "All Children" is disabled
-    useEffect(() => {
-        if (role === 'staff' && childrenList.length > 0 && selectedChildId === 'all') {
-            setSelectedChildId(childrenList[0]._id);
-        }
-    }, [childrenList, role, selectedChildId]);
 
     // Result States
     const [loading, setLoading] = useState(false);
@@ -78,6 +71,10 @@ const Reports = () => {
     const handleGenerateReport = async () => {
         if (role === 'staff' && childrenList.length === 0) {
             setError('No children assigned to your class');
+            return;
+        }
+        if (!selectedChildId) {
+            setError('Please select a child or "All Children" first.');
             return;
         }
         setLoading(true);
@@ -163,9 +160,10 @@ const Reports = () => {
     );
 
     const getSelectedChildName = () => {
+        if (!selectedChildId) return 'Select a child...';
         if (selectedChildId === 'all') return 'All Children';
         const child = childrenList.find(c => c._id === selectedChildId);
-        return child ? child.childName : 'Unknown Child';
+        return child ? child.childName : 'Select a child...';
     };
 
     const isResultEmpty = !reportResult || (reportResult.attendance.length === 0 && reportResult.activities.length === 0);
