@@ -43,7 +43,12 @@ const Children = () => {
 
     const fetchParents = async () => {
         try {
-            const response = await fetch(`${BASE_URL}/api/auth/parents`);
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${BASE_URL}/api/auth/parents`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             const data = await response.json();
             if (data.success) {
                 setParents(data.data);
@@ -56,7 +61,12 @@ const Children = () => {
     const fetchChildren = async () => {
         setLoading(true);
         try {
-            const response = await fetch(`${BASE_URL}/api/children`);
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${BASE_URL}/api/children`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             const data = await response.json();
             if (data.success) {
                 setChildren(data.data);
@@ -72,8 +82,12 @@ const Children = () => {
 
     const handleDelete = async () => {
         try {
+            const token = localStorage.getItem('token');
             const response = await fetch(`${BASE_URL}/api/children/${selectedChild._id}`, {
                 method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
             });
             const data = await response.json();
             if (data.success) {
@@ -91,9 +105,13 @@ const Children = () => {
     const handleUpdate = async (e) => {
         e.preventDefault();
         try {
+            const token = localStorage.getItem('token');
             const response = await fetch(`${BASE_URL}/api/children/${selectedChild._id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify(selectedChild),
             });
             const data = await response.json();
