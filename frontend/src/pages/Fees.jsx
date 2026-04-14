@@ -259,24 +259,29 @@ const Fees = () => {
     return (
         <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
             {/* Header Section */}
-             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
-                    <h1 className="text-3xl font-black text-gray-900 tracking-tight">Fee Management</h1>
-                    <p className="text-gray-500 font-medium mt-1">Track and manage student fee records</p>
+                    <h1 className="text-4xl font-black text-gray-900 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-gray-800 to-gray-600">
+                        Fee Management
+                    </h1>
+                    <p className="text-gray-500 font-medium mt-2 flex items-center gap-2">
+                        <span className="w-8 h-px bg-purple-200"></span>
+                        Track and manage student fee records
+                    </p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                     <button
                         onClick={() => setViewStructureModalOpen(true)}
-                        className="px-5 py-2.5 bg-gray-200 text-black text-sm font-bold rounded-xl hover:bg-gray-300 transition-all flex items-center gap-2"
+                        className="px-6 py-3 bg-white text-gray-700 text-sm font-bold rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:bg-gray-50 transition-all flex items-center gap-3 group"
                     >
-                        <i className="fa-solid fa-eye"></i>
+                        <i className="fa-solid fa-eye text-purple-500 group-hover:scale-110 transition-transform"></i>
                         View Fee Structure
                     </button>
                     <button
                         onClick={() => setFeeStructureModalOpen(true)}
-                        className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm font-bold rounded-xl shadow-lg shadow-purple-200 hover:shadow-purple-300 transform hover:-translate-y-0.5 transition-all flex items-center gap-2"
+                        className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm font-bold rounded-2xl shadow-xl shadow-purple-200 hover:shadow-purple-300 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3"
                     >
-                        <i className="fa-solid fa-gear"></i>
+                        <i className="fa-solid fa-gear animate-spin-slow"></i>
                         Set Monthly Fees
                     </button>
                 </div>
@@ -285,50 +290,66 @@ const Fees = () => {
             {/* Top Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                  {/* Card 1: Total Collected */}
-                 <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-full translate-x-8 -translate-y-8 transition-transform group-hover:scale-110"></div>
+                 <div className="bg-white rounded-[2rem] p-7 border border-gray-100 shadow-sm relative overflow-hidden group hover:shadow-xl hover:shadow-purple-500/5 transition-all duration-500">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50/50 rounded-full translate-x-12 -translate-y-12 transition-transform duration-700 group-hover:scale-125"></div>
                     <div className="relative">
-                        <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-xl mb-4 shadow-inner">
+                        <div className="w-14 h-14 bg-gradient-to-br from-emerald-50 to-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl mb-5 shadow-sm group-hover:rotate-12 transition-transform">
                             <i className="fa-solid fa-wallet"></i>
                         </div>
-                        <p className="text-sm font-semibold text-gray-500 mb-1">Total Collected</p>
-                        <h3 className="text-2xl font-black text-gray-900">₹{derivedSummary.totalCollected.toLocaleString()}</h3>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Total Collected</p>
+                        <h3 className="text-3xl font-black text-gray-900">₹{derivedSummary.totalCollected.toLocaleString()}</h3>
+                        <div className="mt-4 flex items-center gap-2">
+                            <span className="flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                            <span className="text-[10px] font-bold text-emerald-600 uppercase">Live Update</span>
+                        </div>
                     </div>
                  </div>
 
                  {/* Card 2: Pending Fees */}
-                 <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-amber-50 rounded-full translate-x-8 -translate-y-8 transition-transform group-hover:scale-110"></div>
+                 <div className="bg-white rounded-[2rem] p-7 border border-gray-100 shadow-sm relative overflow-hidden group hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-500">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-amber-50/50 rounded-full translate-x-12 -translate-y-12 transition-transform duration-700 group-hover:scale-125"></div>
                     <div className="relative">
-                        <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-xl mb-4 shadow-inner">
-                            <i className="fa-solid fa-clock"></i>
+                        <div className="w-14 h-14 bg-gradient-to-br from-amber-50 to-amber-100 text-amber-600 rounded-2xl flex items-center justify-center text-2xl mb-5 shadow-sm group-hover:-rotate-12 transition-transform">
+                            <i className="fa-solid fa-clock-rotate-left"></i>
                         </div>
-                        <p className="text-sm font-semibold text-gray-500 mb-1">Pending Fees</p>
-                        <h3 className="text-2xl font-black text-gray-900">₹{derivedSummary.pendingFees.toLocaleString()}</h3>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Pending Fees</p>
+                        <h3 className="text-3xl font-black text-gray-900">₹{derivedSummary.pendingFees.toLocaleString()}</h3>
+                        <div className="mt-4 flex items-center gap-2">
+                            <span className="flex h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span>
+                            <span className="text-[10px] font-bold text-amber-600 uppercase">Action Required</span>
+                        </div>
                     </div>
                  </div>
 
                  {/* Card 3: Paid This Month */}
-                 <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-full translate-x-8 -translate-y-8 transition-transform group-hover:scale-110"></div>
+                 <div className="bg-white rounded-[2rem] p-7 border border-gray-100 shadow-sm relative overflow-hidden group hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-500">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50/50 rounded-full translate-x-12 -translate-y-12 transition-transform duration-700 group-hover:scale-125"></div>
                     <div className="relative">
-                        <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-xl mb-4 shadow-inner">
+                        <div className="w-14 h-14 bg-gradient-to-br from-blue-50 to-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-2xl mb-5 shadow-sm group-hover:scale-110 transition-transform">
                             <i className="fa-solid fa-calendar-check"></i>
                         </div>
-                        <p className="text-sm font-semibold text-gray-500 mb-1">Paid This Month</p>
-                        <h3 className="text-2xl font-black text-gray-900">₹{derivedSummary.paidThisMonth.toLocaleString()}</h3>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Paid This Month</p>
+                        <h3 className="text-3xl font-black text-gray-900">₹{derivedSummary.paidThisMonth.toLocaleString()}</h3>
+                        <div className="mt-4 flex items-center gap-2">
+                            <span className="flex h-2 w-2 rounded-full bg-blue-500"></span>
+                            <span className="text-[10px] font-bold text-blue-600 uppercase">Current Month</span>
+                        </div>
                     </div>
                  </div>
 
                  {/* Card 4: Overdue Count */}
-                 <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-red-50 rounded-full translate-x-8 -translate-y-8 transition-transform group-hover:scale-110"></div>
+                 <div className="bg-white rounded-[2rem] p-7 border border-gray-100 shadow-sm relative overflow-hidden group hover:shadow-xl hover:shadow-red-500/5 transition-all duration-500">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-red-50/50 rounded-full translate-x-12 -translate-y-12 transition-transform duration-700 group-hover:scale-125"></div>
                     <div className="relative">
-                        <div className="w-12 h-12 bg-red-100 text-red-600 rounded-xl flex items-center justify-center text-xl mb-4 shadow-inner">
-                            <i className="fa-solid fa-circle-exclamation"></i>
+                        <div className="w-14 h-14 bg-gradient-to-br from-red-50 to-red-100 text-red-600 rounded-2xl flex items-center justify-center text-2xl mb-5 shadow-sm group-hover:animate-bounce transition-transform">
+                            <i className="fa-solid fa-triangle-exclamation"></i>
                         </div>
-                        <p className="text-sm font-semibold text-gray-500 mb-1">Overdue Payments</p>
-                        <h3 className="text-2xl font-black text-gray-900">{derivedSummary.overdueCount}</h3>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Overdue Payments</p>
+                        <h3 className="text-3xl font-black text-gray-900">{derivedSummary.overdueCount}</h3>
+                        <div className="mt-4 flex items-center gap-2">
+                            <span className="flex h-2 w-2 rounded-full bg-red-500 animate-ping"></span>
+                            <span className="text-[10px] font-bold text-red-600 uppercase">Urgent</span>
+                        </div>
                     </div>
                  </div>
             </div>
@@ -338,25 +359,25 @@ const Fees = () => {
                 {/* Left Side: Child Fees List */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Filters Row */}
-                    <div className="flex flex-col sm:flex-row justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100 gap-4">
-                        <div className="flex items-center gap-3 w-full sm:w-auto">
-                            <div className="relative flex-1 sm:w-40">
-                                <i className="fa-solid fa-calendar-days text-gray-400 absolute left-4 top-1/2 -translate-y-1/2"></i>
+                    <div className="flex flex-col sm:flex-row justify-between items-center bg-white p-5 rounded-[1.5rem] shadow-sm border border-gray-100 gap-6">
+                        <div className="flex items-center gap-4 w-full sm:w-auto">
+                            <div className="relative flex-1 sm:w-48">
+                                <i className="fa-solid fa-calendar-alt text-purple-400 absolute left-4 top-1/2 -translate-y-1/2 text-sm"></i>
                                 <select 
                                     value={selectedMonth}
                                     onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 font-medium appearance-none"
+                                    className="w-full pl-11 pr-4 py-3 bg-gray-50/50 border border-gray-100 text-gray-700 text-sm font-bold rounded-2xl focus:ring-4 focus:ring-purple-500/10 focus:border-purple-300 transition-all appearance-none cursor-pointer hover:bg-gray-50"
                                 >
                                     {Array.from({ length: 12 }, (_, i) => (
                                         <option key={i+1} value={i+1}>{new Date(0, i).toLocaleString('default', { month: 'long' })}</option>
                                     ))}
                                 </select>
                             </div>
-                            <div className="relative flex-1 sm:w-32">
+                            <div className="relative flex-1 sm:w-36">
                                 <select 
                                     value={selectedYear}
                                     onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 font-medium appearance-none"
+                                    className="w-full px-4 py-3 bg-gray-50/50 border border-gray-100 text-gray-700 text-sm font-bold rounded-2xl focus:ring-4 focus:ring-purple-500/10 focus:border-purple-300 transition-all appearance-none cursor-pointer hover:bg-gray-50"
                                 >
                                     {[currentDate.getFullYear() - 1, currentDate.getFullYear(), currentDate.getFullYear() + 1].map(y => (
                                         <option key={y} value={y}>{y}</option>
@@ -365,11 +386,26 @@ const Fees = () => {
                             </div>
                         </div>
 
-                        <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
-                           <button onClick={() => setStatusFilter('All')} className={`px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-colors ${statusFilter === 'All' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>All</button>
-                           <button onClick={() => setStatusFilter('Paid')} className={`px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-colors ${statusFilter === 'Paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>Paid</button>
-                           <button onClick={() => setStatusFilter('Pending')} className={`px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-colors ${statusFilter === 'Pending' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>Pending</button>
-                           <button onClick={() => setStatusFilter('Overdue')} className={`px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-colors ${statusFilter === 'Overdue' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>Overdue</button>
+                        <div className="flex gap-2 p-1.5 bg-gray-50 rounded-2xl w-full sm:w-auto overflow-x-auto hide-scrollbar">
+                           {[
+                               { id: 'All', label: 'All', icon: 'fa-list' },
+                               { id: 'Paid', label: 'Paid', icon: 'fa-check-circle', color: 'text-emerald-600', bg: 'bg-emerald-500' },
+                               { id: 'Pending', label: 'Pending', icon: 'fa-clock', color: 'text-amber-600', bg: 'bg-amber-500' },
+                               { id: 'Overdue', label: 'Overdue', icon: 'fa-exclamation-triangle', color: 'text-red-600', bg: 'bg-red-500' }
+                           ].map((btn) => (
+                               <button 
+                                   key={btn.id}
+                                   onClick={() => setStatusFilter(btn.id)} 
+                                   className={`px-5 py-2.5 rounded-xl text-xs font-black whitespace-nowrap transition-all flex items-center gap-2 ${
+                                       statusFilter === btn.id 
+                                       ? 'bg-white text-gray-900 shadow-sm scale-105' 
+                                       : 'text-gray-400 hover:text-gray-600'
+                                   }`}
+                               >
+                                   {statusFilter === btn.id && <span className={`w-2 h-2 rounded-full ${btn.bg || 'bg-gray-900'}`}></span>}
+                                   {btn.label}
+                               </button>
+                           ))}
                         </div>
                     </div>
 
@@ -395,60 +431,68 @@ const Fees = () => {
                     ) : (
                         <div className="space-y-4">
                             {filteredChildren.map(child => (
-                                <div key={child._id} className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition border border-gray-50">
-                                    {/* LEFT: Profile, Name, Class/Parent */}
-                                    <div className="flex items-center gap-3 min-w-[200px]">
-                                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm flex-shrink-0 bg-gray-100">
+                                <div key={child._id} className="grid grid-cols-1 md:grid-cols-12 items-center bg-white p-5 rounded-[1.5rem] shadow-sm hover:shadow-xl hover:shadow-purple-500/5 transition-all duration-300 border border-gray-50 group">
+                                    {/* LEFT: Profile, Name, Class/Parent (Col 1-5) */}
+                                    <div className="md:col-span-5 flex items-center gap-4">
+                                        <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-gray-50 shadow-sm flex-shrink-0 bg-gray-100 group-hover:scale-105 transition-transform">
                                             {child.photo ? (
                                                 <img src={`${API_URL.replace('/api', '')}${child.photo}`} alt={child.childName} className="w-full h-full object-cover" />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-lg text-gray-400 font-bold bg-gradient-to-br from-gray-50 to-gray-200">
+                                                <div className="w-full h-full flex items-center justify-center text-xl text-gray-400 font-black bg-gradient-to-br from-gray-50 to-gray-200">
                                                     {child.childName.charAt(0)}
                                                 </div>
                                             )}
                                         </div>
-                                        <div>
-                                            <p className="font-bold text-gray-800 leading-tight">{child.childName}</p>
-                                            <p className="text-sm text-gray-500 font-medium">
-                                                {child.class} <span className="text-gray-300 mx-1">•</span> {child.parentName}
+                                        <div className="min-w-0">
+                                            <p className="font-extrabold text-gray-900 leading-tight truncate">{child.childName}</p>
+                                            <p className="text-xs text-gray-400 font-bold mt-1 uppercase tracking-wider flex items-center gap-2">
+                                                <span className="text-purple-500">{child.class}</span>
+                                                <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                                <span className="truncate">{child.parentName}</span>
                                             </p>
                                         </div>
                                     </div>
 
-                                    {/* CENTER: Due Date */}
-                                    <div className="hidden md:block text-center flex-1 text-gray-600">
-                                        <p className="text-sm font-medium whitespace-nowrap">
-                                            Due: <span className="font-bold text-gray-900 ml-1">
-                                                {child.dueDate ? new Date(child.dueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : (child.status === 'UPCOMING' ? 'Not Generated' : 'N/A')}
-                                            </span>
+                                    {/* CENTER: Due Date (Col 6-8) */}
+                                    <div className="hidden md:flex md:col-span-3 flex-col items-center justify-center border-l border-r border-gray-50 px-4">
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Due Date</p>
+                                        <p className="text-sm font-bold text-gray-800">
+                                            {child.dueDate ? (
+                                                <span className="flex items-center gap-2">
+                                                    <i className="fa-regular fa-calendar text-gray-400 text-xs"></i>
+                                                    {new Date(child.dueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                </span>
+                                            ) : (child.status === 'UPCOMING' ? 'Not Generated' : 'N/A')}
                                         </p>
                                     </div>
 
-                                    {/* RIGHT: Amount, Status, View Details */}
-                                    <div className="flex items-center gap-6">
+                                    {/* RIGHT: Amount, Status, View Details (Col 9-12) */}
+                                    <div className="md:col-span-4 flex items-center justify-end gap-5 mt-4 md:mt-0">
                                         <div className="text-right">
-                                            <p className="text-lg font-black text-gray-900 leading-none">₹{child.expectedFee.toLocaleString()}</p>
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Amount</p>
+                                            <p className="text-xl font-black text-gray-900">₹{child.expectedFee.toLocaleString()}</p>
                                         </div>
 
-                                        <span className={`px-3 py-1 text-[10px] font-black rounded-full uppercase tracking-widest border
-                                            ${child.status === 'Paid' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
-                                              child.status === 'Pending' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                              child.status === 'UPCOMING' ? 'bg-gray-50 text-gray-400 border-gray-100' :
-                                              'bg-red-50 text-red-600 border-red-100'}
-                                        `}>
-                                            {child.status}
-                                        </span>
-
-                                        <button 
-                                            disabled={child.status === 'UPCOMING'}
-                                            onClick={() => { setSelectedChild(child); setDetailsModalOpen(true); }}
-                                            className={`px-4 py-1.5 text-xs font-bold rounded-lg border whitespace-nowrap transition-colors
-                                                ${child.status === 'UPCOMING' 
-                                                    ? 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed opacity-50' 
-                                                    : 'bg-white border-purple-500 text-purple-600 hover:bg-purple-50'}`}
-                                        >
-                                            View Details
-                                        </button>
+                                        <div className="flex flex-col items-end gap-2">
+                                            <span className={`px-4 py-1.5 text-[10px] font-black rounded-xl uppercase tracking-widest border shadow-sm
+                                                ${child.status === 'Paid' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
+                                                  child.status === 'Pending' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                                  child.status === 'UPCOMING' ? 'bg-gray-50 text-gray-400 border-gray-100' :
+                                                  'bg-red-50 text-red-600 border-red-100'}
+                                            `}>
+                                                {child.status}
+                                            </span>
+                                            <button 
+                                                disabled={child.status === 'UPCOMING'}
+                                                onClick={() => { setSelectedChild(child); setDetailsModalOpen(true); }}
+                                                className={`px-5 py-2 text-[11px] font-black rounded-xl border-2 uppercase tracking-tighter transition-all
+                                                    ${child.status === 'UPCOMING' 
+                                                        ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed' 
+                                                        : 'bg-white border-purple-100 text-purple-600 hover:border-purple-600 hover:bg-purple-600 hover:text-white shadow-sm hover:shadow-purple-200'}`}
+                                            >
+                                                Details
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -464,9 +508,14 @@ const Fees = () => {
                             Recent Payments
                         </h2>
                         
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                             {recentPayments.length === 0 ? (
-                                <p className="text-sm text-gray-500 text-center py-4">No recent payments found.</p>
+                                <div className="text-center py-8">
+                                    <div className="w-12 h-12 bg-gray-50 text-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
+                                        <i className="fa-solid fa-receipt text-xl"></i>
+                                    </div>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">No recent payments</p>
+                                </div>
                             ) : (
                                 recentPayments
                                     .filter(payment => {
@@ -475,35 +524,35 @@ const Fees = () => {
                                     })
                                     .slice(0, 5)
                                     .map(payment => (
-                                        <div key={payment._id} className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors group border border-transparent hover:border-gray-100">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-                                                    <i className="fa-solid fa-indian-rupee-sign"></i>
+                                        <div key={payment._id} className="p-4 rounded-[1.25rem] bg-gray-50/50 border border-transparent hover:border-purple-100 hover:bg-white hover:shadow-lg hover:shadow-purple-500/5 transition-all duration-300 group">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-xl bg-emerald-100/50 text-emerald-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                                                        <i className="fa-solid fa-indian-rupee-sign text-sm"></i>
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-black text-gray-900 truncate">{payment.child?.childName || 'Unknown'}</p>
+                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                                                            {new Date(payment.date).toLocaleDateString(undefined, { day: '2-digit', month: 'short' })} • {payment.mode}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p className="text-sm font-bold text-gray-900">{payment.child?.childName || 'Unknown Child'}</p>
-                                                    <p className="text-xs text-gray-500">{new Date(payment.date).toLocaleDateString()} • {payment.mode}</p>
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
                                                 <p className="text-sm font-black text-emerald-600">+₹{payment.amount}</p>
-                                                <div className="flex items-center gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity mt-1">
-                                                    <button 
-                                                        onClick={() => generateReceipt(payment, 'view')}
-                                                        className="text-[10px] font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1"
-                                                        title="View Receipt"
-                                                    >
-                                                        <i className="fa-solid fa-eye"></i> View
-                                                    </button>
-                                                    <span className="text-gray-300 text-[10px]">|</span>
-                                                    <button 
-                                                        onClick={() => generateReceipt(payment, 'download')}
-                                                        className="text-[10px] font-bold text-blue-500 hover:text-blue-700 flex items-center gap-1"
-                                                        title="Download Receipt"
-                                                    >
-                                                        <i className="fa-solid fa-download"></i> Download
-                                                    </button>
-                                                </div>
+                                            </div>
+                                            
+                                            <div className="flex items-center gap-2 pt-3 border-t border-gray-100/50 opacity-0 group-hover:opacity-100 transition-all transform translate-y-1 group-hover:translate-y-0">
+                                                <button 
+                                                    onClick={() => generateReceipt(payment, 'view')}
+                                                    className="flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-600 hover:text-white transition-colors flex items-center justify-center gap-2"
+                                                >
+                                                    <i className="fa-solid fa-eye"></i> View
+                                                </button>
+                                                <button 
+                                                    onClick={() => generateReceipt(payment, 'download')}
+                                                    className="flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-600 hover:text-white transition-colors flex items-center justify-center gap-2"
+                                                >
+                                                    <i className="fa-solid fa-download"></i> Get PDF
+                                                </button>
                                             </div>
                                         </div>
                                     ))
