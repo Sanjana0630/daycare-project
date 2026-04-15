@@ -186,7 +186,7 @@ const Fees = () => {
         doc.text("Status:", 35, 187);
         doc.setTextColor(34, 197, 94);
         doc.setFont("helvetica", "bold");
-        doc.text("PAID ✅", pageWidth - 35, 187, { align: "right" });
+        doc.text("PAID", pageWidth - 35, 187, { align: "right" });
 
         // --- Footer ---
         doc.setTextColor(150, 150, 150);
@@ -196,7 +196,7 @@ const Fees = () => {
         
         doc.setTextColor(124, 58, 237);
         doc.setFontSize(14);
-        doc.text("Thank you for your payment 💜", pageWidth / 2, 275, { align: "center" });
+        doc.text("Thank you for your payment!", pageWidth / 2, 275, { align: "center" });
         
         doc.setFontSize(9);
         doc.setTextColor(180, 180, 180);
