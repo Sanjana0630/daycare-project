@@ -84,15 +84,16 @@ const getFeesDashboard = async (req, res) => {
             const childPayments = payments.filter(p => p.child.toString() === child._id.toString());
             const paidAmount = childPayments.reduce((sum, p) => sum + p.amount, 0);
 
-            // Determine if there is a payment date to prevent endless late fee accumulation for paid fees
+            // Get the latest payment for receipt generation
+            let latestPayment = null;
             let lastPaymentDate = null;
             if (childPayments.length > 0) {
-                // Get the latest payment date for this term
-                lastPaymentDate = new Date(Math.max(...childPayments.map(p => new Date(p.date))));
+                // Sort by date descending and pick the first
+                latestPayment = [...childPayments].sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+                lastPaymentDate = new Date(latestPayment.date);
             }
             
             // Only stop simulating late fees if the base block is fully paid
-            // For safety, we just cap evaluation to the last payment date IF paidAmount >= baseFee
             const evalDate = (paidAmount >= baseFee && lastPaymentDate) ? lastPaymentDate : null;
 
             const feeInfo = calculateFee(child, baseFee, numericYear, numericMonth, evalDate);
@@ -130,6 +131,19 @@ const getFeesDashboard = async (req, res) => {
                 dueDate: feeInfo.dueDate,
                 graceEnd: feeInfo.graceEnd,
                 lastPaymentDate,
+                latestPayment: latestPayment ? {
+                    _id: latestPayment._id,
+                    amount: latestPayment.amount,
+                    date: latestPayment.date,
+                    mode: latestPayment.mode,
+                    month: latestPayment.month,
+                    year: latestPayment.year,
+                    child: {
+                        childName: child.childName,
+                        parentName: child.parent ? child.parent.fullName : child.parentName,
+                        class: child.class
+                    }
+                } : null,
                 expectedFee,
                 paidAmount,
                 pendingAmount,

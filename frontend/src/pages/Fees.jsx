@@ -482,16 +482,27 @@ const Fees = () => {
                                             `}>
                                                 {child.status}
                                             </span>
-                                            <button 
-                                                disabled={child.status === 'UPCOMING'}
-                                                onClick={() => { setSelectedChild(child); setDetailsModalOpen(true); }}
-                                                className={`px-5 py-2 text-[11px] font-black rounded-xl border-2 uppercase tracking-tighter transition-all
-                                                    ${child.status === 'UPCOMING' 
-                                                        ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed' 
-                                                        : 'bg-white border-purple-100 text-purple-600 hover:border-purple-600 hover:bg-purple-600 hover:text-white shadow-sm hover:shadow-purple-200'}`}
-                                            >
-                                                Details
-                                            </button>
+                                            <div className="flex gap-2">
+                                                <button 
+                                                    disabled={child.status === 'UPCOMING'}
+                                                    onClick={() => { setSelectedChild(child); setDetailsModalOpen(true); }}
+                                                    className={`px-4 py-2 text-[11px] font-black rounded-xl border-2 uppercase tracking-tighter transition-all
+                                                        ${child.status === 'UPCOMING' 
+                                                            ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed' 
+                                                            : 'bg-white border-purple-100 text-purple-600 hover:border-purple-600 hover:bg-purple-600 hover:text-white shadow-sm hover:shadow-purple-200'}`}
+                                                >
+                                                    Details
+                                                </button>
+                                                {child.status === 'Paid' && child.latestPayment && (
+                                                    <button 
+                                                        onClick={() => generateReceipt(child.latestPayment, 'download')}
+                                                        className="px-4 py-2 text-[11px] font-black rounded-xl border-2 border-blue-100 text-blue-600 bg-white hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm hover:shadow-blue-200 uppercase tracking-tighter"
+                                                        title="Download Receipt"
+                                                    >
+                                                        <i className="fa-solid fa-download"></i>
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -540,7 +551,7 @@ const Fees = () => {
                                                 <p className="text-sm font-black text-emerald-600">+₹{payment.amount}</p>
                                             </div>
                                             
-                                            <div className="flex items-center gap-2 pt-3 border-t border-gray-100/50 opacity-0 group-hover:opacity-100 transition-all transform translate-y-1 group-hover:translate-y-0">
+                                            <div className="flex items-center gap-2 pt-3 border-t border-gray-100/50 transition-all">
                                                 <button 
                                                     onClick={() => generateReceipt(payment, 'view')}
                                                     className="flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-600 hover:text-white transition-colors flex items-center justify-center gap-2"
