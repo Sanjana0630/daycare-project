@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Download, Filter, X, Search, CalendarDays, User, BookOpen, Clock, Activity, Target, CheckCircle2, TrendingUp, Send, History } from 'lucide-react';
+import { FileText, Download, Filter, X, Search, CalendarDays, User, BookOpen, Clock, Activity, Target, CheckCircle2, TrendingUp, Send, History, Trash2 } from 'lucide-react';
 
 const Reports = () => {
     // Dropdown Data
@@ -171,6 +171,38 @@ const Reports = () => {
         } catch (err) {
             console.error('Error sending report:', err);
             alert('An error occurred while sending the report.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeleteReport = async (reportId) => {
+        if (!window.confirm("Are you sure you want to delete this report? This action cannot be undone.")) {
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${apiUrl}/api/reports/${reportId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await res.json();
+            if (result.success) {
+                // Refresh list
+                fetchReports();
+                // If the deleted report was being viewed, clear it
+                if (reportResult && reportResult.savedReportId === reportId) {
+                    setReportResult(null);
+                }
+                alert("Report deleted successfully");
+            } else {
+                alert(result.message || "Failed to delete report");
+            }
+        } catch (err) {
+            console.error('Error deleting report:', err);
+            alert("An error occurred while deleting the report");
         } finally {
             setLoading(false);
         }
@@ -366,12 +398,19 @@ const Reports = () => {
                                         <td className="px-4 py-4">
                                             <span className="inline-flex px-2 py-1 bg-gray-100 rounded-lg text-[10px] font-black uppercase tracking-tighter">{report.range}: {report.date}</span>
                                         </td>
-                                        <td className="px-4 py-4 text-right">
+                                        <td className="px-4 py-4 text-right flex items-center justify-end gap-2">
                                             <button 
                                                 onClick={() => handleViewReport(report._id)}
-                                                className="px-4 py-2 bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-black"
+                                                className="px-4 py-2 bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-black transition-colors"
                                             >
-                                                View Report
+                                                View
+                                            </button>
+                                            <button 
+                                                onClick={() => handleDeleteReport(report._id)}
+                                                className="p-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-all border border-red-100"
+                                                title="Delete Report"
+                                            >
+                                                <Trash2 size={14} />
                                             </button>
                                         </td>
                                     </tr>

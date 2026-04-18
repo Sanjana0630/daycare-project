@@ -541,6 +541,30 @@ const generateFullReport = async (req, res) => {
     }
 };
 
+// @desc    Delete a report
+// @route   DELETE /api/reports/:id
+// @access  Private/Admin
+const deleteReport = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const report = await Report.findById(id);
+
+        if (!report) {
+            return res.status(404).json({ success: false, message: "Report not found" });
+        }
+
+        await report.deleteOne();
+
+        res.status(200).json({
+            success: true,
+            message: "Report deleted successfully"
+        });
+    } catch (error) {
+        console.error('Delete Report Error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 module.exports = {
     getChildAttendanceReport,
     getStaffActivityReport,
@@ -548,5 +572,6 @@ module.exports = {
     generateDynamicReport,
     generateFullReport,
     getReportById,
-    getReports
+    getReports,
+    deleteReport
 };
