@@ -130,6 +130,52 @@ const Reports = () => {
         }
     };
 
+    const handleSendReport = async () => {
+        if (!reportResult || selectedChildId === 'all') {
+            alert('Please select a specific child to send a report.');
+            return;
+        }
+        
+        if (!reportResult.childInfo.parentId) {
+            alert('This child is not linked to any parent account.');
+            return;
+        }
+
+        if (!reportResult.reportId) {
+            alert('The report was generated but not saved to the database correctly. Please try regenerating it.');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${apiUrl}/api/notifications/send-report`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    parentId: reportResult.childInfo.parentId,
+                    childId: selectedChildId,
+                    reportId: reportResult.reportId,
+                    message: `Staff member has sent the activity report for ${reportResult.childInfo.name} (${timeRange})`
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(`Report successfully sent to parent and admin!`);
+            } else {
+                alert(data.message || 'Failed to send report');
+            }
+        } catch (err) {
+            console.error('Error sending report:', err);
+            alert('An error occurred while sending the report.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleViewReport = async (reportId) => {
         setLoading(true);
         setError(null);
@@ -361,6 +407,11 @@ const Reports = () => {
                             </div>
                         </div>
                         <div className="flex gap-3">
+                            {role === 'staff' && (
+                                <button onClick={handleSendReport} className="px-6 py-3 bg-purple-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-purple-700 transition-all active:scale-95 shadow-lg shadow-purple-200">
+                                    <Send size={14} /> Send Report
+                                </button>
+                            )}
                             <button onClick={exportToPDF} className="px-6 py-3 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-black transition-all active:scale-95 shadow-lg shadow-gray-200">
                                 <FileText size={14} /> Print
                             </button>

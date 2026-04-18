@@ -7,7 +7,8 @@ const {
     getAttendanceReport,
     generateDynamicReport,
     generateFullReport,
-    getReportById
+    getReportById,
+    getReports
 } = require("../controllers/reportController");
 
 router.get("/", protect, getReports);

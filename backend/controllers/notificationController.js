@@ -35,21 +35,33 @@ const sendReportNotification = async (req, res) => {
         const validReportId = new mongoose.Types.ObjectId(reportId);
         const validAdminId = new mongoose.Types.ObjectId(adminId);
 
-        // 2. Create the Notification record
-        const newNotification = await Notification.create({
+        // 2. Create the Notification for Parent
+        const parentNotification = await Notification.create({
             parentId: validParentId,
             childId: validChildId,
             reportId: validReportId,
             generatedBy: validAdminId,
             type: "REPORT",
-            message: message || "This is activity report of your child for selected period",
+            message: message || "A new activity report for your child has been generated.",
+            isRead: false,
+        });
+
+        // 3. Create the Notification for Admin
+        const childDoc = await Child.findById(validChildId);
+        await Notification.create({
+            childId: validChildId,
+            reportId: validReportId,
+            generatedBy: validAdminId,
+            isAdmin: true,
+            type: "REPORT",
+            message: `Staff has generated and sent an activity report for ${childDoc?.childName || "a child"}.`,
             isRead: false,
         });
 
         res.status(201).json({
             success: true,
-            data: newNotification,
-            message: "Report sent successfully."
+            data: parentNotification,
+            message: "Report sent to parent and admin successfully."
         });
     } catch (error) {
         console.error("Error sending report notification:", error);
