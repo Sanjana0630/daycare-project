@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Download, Filter, X, Search, CalendarDays, User, BookOpen, Clock, Activity, Target, CheckCircle2, TrendingUp, Send } from 'lucide-react';
+import { FileText, Download, Filter, X, Search, CalendarDays, User, BookOpen, Clock, Activity, Target, CheckCircle2, TrendingUp, Send, History } from 'lucide-react';
 
 const Reports = () => {
     // Dropdown Data
     const [childrenList, setChildrenList] = useState([]);
+    const [reportsList, setReportsList] = useState([]); // For Admin View
     const role = localStorage.getItem('role');
     
     // Filter States
@@ -40,35 +41,57 @@ const Reports = () => {
         setReportDate(getInitialDate(timeRange));
     }, [timeRange]);
 
-    // Clear report when filters change to force regeneration
+    // Clear report when filters change to force regeneration (only for Staff)
     useEffect(() => {
-        setReportResult(null);
-    }, [selectedChildId, timeRange, reportDate]);
+        if (role === 'staff') {
+            setReportResult(null);
+        }
+    }, [selectedChildId, timeRange, reportDate, role]);
 
-    useEffect(() => {
-        const fetchChildren = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                const res = await fetch(`${apiUrl}/api/children`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await res.json();
-                if (data.success || Array.isArray(data)) {
-                    const children = Array.isArray(data) ? data : data.data || [];
-                    // if (process.env.NODE_ENV === 'development') {
-                    //     console.log("Filtered Children:", children);
-                    // }
-                    setChildrenList(children);
-                }
-            } catch (err) {
-                console.error('Error fetching children:', err);
+    const fetchChildren = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${apiUrl}/api/children`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (data.success || Array.isArray(data)) {
+                const children = Array.isArray(data) ? data : data.data || [];
+                setChildrenList(children);
             }
-        };
+        } catch (err) {
+            console.error('Error fetching children:', err);
+        }
+    };
 
+    const fetchReports = async () => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${apiUrl}/api/reports`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (data.success) {
+                setReportsList(data.data);
+            }
+        } catch (err) {
+            console.error('Error fetching reports:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchChildren();
-    }, [apiUrl]);
+        if (role === 'admin' || role === 'staff') {
+            fetchReports();
+        }
+    }, [apiUrl, role]);
 
     const handleGenerateReport = async () => {
+        if (role === 'admin') return; // Admin cannot generate
+
         if (role === 'staff' && childrenList.length === 0) {
             setError('No children assigned to your class');
             return;
@@ -94,6 +117,8 @@ const Reports = () => {
             const result = await response.json();
             if (result.success) {
                 setReportResult(result.data);
+                // Refresh reports list if generated
+                fetchReports();
             } else {
                 setError(result.message || 'Failed to generate report');
             }
@@ -105,47 +130,30 @@ const Reports = () => {
         }
     };
 
-    const handleSendReport = async () => {
-        if (!reportResult || selectedChildId === 'all') {
-            alert('Please select a specific child to send a report.');
-            return;
-        }
-        
-        if (!reportResult.childInfo.parentId) {
-            alert('This child is not linked to any parent account.');
-            return;
-        }
-
-        if (!reportResult.reportId) {
-            alert('The report was generated but not saved to the database. This usually happens if your session has expired or is invalid. Please logout and login again.');
-            return;
-        }
-
+    const handleViewReport = async (reportId) => {
         setLoading(true);
+        setError(null);
+        setReportResult(null);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`${apiUrl}/api/notifications/send-report`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    parentId: reportResult.childInfo.parentId,
-                    childId: selectedChildId,
-                    reportId: reportResult.reportId, // Using the ID returned from generation
-                    message: `Activity report for ${reportResult.childInfo.name} (${timeRange})`
-                })
+            const response = await fetch(`${apiUrl}/api/reports/${reportId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
             });
-            const data = await res.json();
-            if (data.success) {
-                alert(`Report successfully sent to parent: ${reportResult.childInfo.parentName}!`);
+            const result = await response.json();
+            if (result.success) {
+                setReportResult(result.data);
+                // Match the filters to the report for consistency
+                if (result.data.childId) setSelectedChildId(result.data.childId);
+                // Scroll to results
+                setTimeout(() => {
+                    document.getElementById('report-results')?.scrollIntoView({ behavior: 'smooth' });
+                }, 100);
             } else {
-                alert(data.message || 'Failed to send report');
+                setError(result.message || 'Failed to load report');
             }
         } catch (err) {
-            console.error('Error sending report:', err);
-            alert('An error occurred while sending the report.');
+            console.error('Error loading report:', err);
+            setError('An error occurred while loading the report.');
         } finally {
             setLoading(false);
         }
@@ -170,23 +178,23 @@ const Reports = () => {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-700">
-            {/* Filter Section */}
-            <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-8 print:hidden">
-                <div className="flex items-center gap-4 mb-2">
-                    <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center">
-                        <Filter size={24} />
+            {/* Filter Section / Generator (Staff Only) */}
+            {role === 'staff' && (
+                <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-8 print:hidden">
+                    <div className="flex items-center gap-4 mb-2">
+                        <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center">
+                            <Filter size={24} />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-black text-gray-900">Report Generator</h3>
+                            <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">Generate Comprehensive Reports</p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 className="text-xl font-black text-gray-900">Report Generator</h3>
-                        <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">Generate Comprehensive Reports</p>
-                    </div>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
-                    {/* Child Selection (Searchable Dropdown) */}
-                    <div className="space-y-2 relative">
-                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Select Child</label>
-                        <div className="relative">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+                        {/* Child Selection */}
+                        <div className="space-y-2 relative">
+                            <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Select Child</label>
                             <div className="relative">
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                                 <input
@@ -204,128 +212,142 @@ const Reports = () => {
                                 {selectedChildId && !showDropdown && (
                                     <button 
                                         type="button"
-                                        onMouseDown={(e) => e.preventDefault()}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setSelectedChildId('');
-                                            setSearchQuery('');
-                                        }}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 hover:bg-red-50 p-1 rounded-full transition-colors"
+                                        onClick={() => setSelectedChildId('')}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500"
                                     >
                                         <X size={14} />
                                     </button>
                                 )}
-                            </div>
-                            
-                            {showDropdown && (
-                                <div className="absolute z-10 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl max-h-60 overflow-y-auto">
-                                    {role === 'staff' && childrenList.length === 0 ? (
-                                        <div className="px-4 py-3 text-red-500 font-bold">
-                                            No children assigned to your class
+                                
+                                {showDropdown && (
+                                    <div className="absolute z-10 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl max-h-60 overflow-y-auto">
+                                        <div 
+                                            onMouseDown={() => { setSelectedChildId('all'); setShowDropdown(false); }}
+                                            className="px-4 py-3 cursor-pointer hover:bg-purple-50 font-bold text-gray-700"
+                                        >
+                                            All Children (Summary)
                                         </div>
-                                    ) : (
-                                        <>
-                                            {role !== 'staff' && (
-                                                <div 
-                                                    onMouseDown={(e) => e.preventDefault()}
-                                                    onClick={() => { 
-                                                        setSelectedChildId('all');
-                                                        setSearchQuery('');
-                                                        setShowDropdown(false); 
-                                                    }}
-                                                    className={`px-4 py-3 cursor-pointer hover:bg-purple-50 transition-colors font-bold ${selectedChildId === 'all' ? 'text-purple-600 bg-purple-50/50' : 'text-gray-700'}`}
-                                                >
-                                                    All Children
-                                                </div>
-                                            )}
-                                            {filteredChildren.map(child => (
-                                                <div 
-                                                    key={child._id}
-                                                    onMouseDown={(e) => e.preventDefault()}
-                                                    onClick={() => { 
-                                                        setSelectedChildId(child._id);
-                                                        setSearchQuery('');
-                                                        setShowDropdown(false); 
-                                                    }}
-                                                    className={`px-4 py-3 cursor-pointer hover:bg-purple-50 transition-colors font-bold ${selectedChildId === child._id ? 'text-purple-600 bg-purple-50/50' : 'text-gray-700'}`}
-                                                >
-                                                    {child.childName}
-                                                </div>
-                                            ))}
-                                        </>
-                                    )}
-                                </div>
-                            )}
+                                        {filteredChildren.map(child => (
+                                            <div 
+                                                key={child._id}
+                                                onMouseDown={() => { setSelectedChildId(child._id); setShowDropdown(false); }}
+                                                className="px-4 py-3 cursor-pointer hover:bg-purple-50 font-bold text-gray-700"
+                                            >
+                                                {child.childName}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Time Range</label>
+                            <select
+                                value={timeRange}
+                                onChange={(e) => setTimeRange(e.target.value)}
+                                className="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-700"
+                            >
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                            </select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Select Period</label>
+                            <input
+                                type={timeRange === 'daily' ? 'date' : timeRange === 'weekly' ? 'week' : 'month'}
+                                value={reportDate}
+                                onChange={(e) => setReportDate(e.target.value)}
+                                className="w-full px-4 py-[14px] bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-700"
+                            />
                         </div>
                     </div>
 
-                    {/* Time Range */}
-                    <div className="space-y-2">
-                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Time Range</label>
-                        <select
-                            value={timeRange}
-                            onChange={(e) => setTimeRange(e.target.value)}
-                            className="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-700 focus:ring-2 focus:ring-purple-100 outline-none appearance-none cursor-pointer"
+                    <div className="flex justify-end pt-4 border-t border-gray-100">
+                        <button
+                            onClick={handleGenerateReport}
+                            disabled={loading}
+                            className="px-8 py-4 bg-gray-900 text-white font-black rounded-2xl uppercase tracking-widest hover:bg-black transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
                         >
-                            <option value="daily">Daily</option>
-                            <option value="weekly">Weekly</option>
-                            <option value="monthly">Monthly</option>
-                        </select>
-                    </div>
-
-                    {/* Date Picker */}
-                    <div className="space-y-2">
-                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Select Period</label>
-                        <input
-                            type={timeRange === 'daily' ? 'date' : timeRange === 'weekly' ? 'week' : 'month'}
-                            value={reportDate}
-                            onChange={(e) => setReportDate(e.target.value)}
-                            className="w-full px-4 py-[14px] bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-700 outline-none"
-                        />
+                            {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <FileText size={18} />}
+                            Generate Full Report
+                        </button>
                     </div>
                 </div>
+            )}
 
-                <div className="flex justify-end pt-4 border-t border-gray-100">
-                    <button
-                        onClick={handleGenerateReport}
-                        disabled={loading}
-                        className="px-8 py-4 bg-gray-900 text-white font-black rounded-2xl uppercase tracking-widest hover:bg-black transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2 shadow-xl shadow-gray-200"
-                    >
-                        {loading ? (
-                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        ) : (
-                            <FileText size={18} />
-                        )}
-                        Generate Full Report
-                    </button>
+            {/* Reports History / Monitoring (Admin View) */}
+            {role === 'admin' && (
+                <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-8 print:hidden">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center">
+                                <History size={24} />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-black text-gray-900">Report Monitoring</h3>
+                                <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">View Staff Generated Reports</p>
+                            </div>
+                        </div>
+                        <button onClick={fetchReports} className="text-xs font-black text-purple-600 uppercase tracking-widest hover:underline">
+                            Refresh List
+                        </button>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead>
+                                <tr className="border-b border-gray-50">
+                                    <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">Date Generated</th>
+                                    <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">Child</th>
+                                    <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">Staff</th>
+                                    <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">Period</th>
+                                    <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {reportsList.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="5" className="px-4 py-8 text-center text-gray-400 font-bold">No reports generated yet</td>
+                                    </tr>
+                                ) : reportsList.map(report => (
+                                    <tr key={report._id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="px-4 py-4 text-sm font-bold text-gray-600">{new Date(report.createdAt).toLocaleDateString()}</td>
+                                        <td className="px-4 py-4 text-sm font-black text-gray-900">{report.childName || report.childId?.childName || 'Deleted Child'}</td>
+                                        <td className="px-4 py-4 text-sm font-bold text-purple-600">{report.generatedBy?.fullName || report.generatedBy?.name || 'System'}</td>
+                                        <td className="px-4 py-4">
+                                            <span className="inline-flex px-2 py-1 bg-gray-100 rounded-lg text-[10px] font-black uppercase tracking-tighter">{report.range}: {report.date}</span>
+                                        </td>
+                                        <td className="px-4 py-4 text-right">
+                                            <button 
+                                                onClick={() => handleViewReport(report._id)}
+                                                className="px-4 py-2 bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-black"
+                                            >
+                                                View Report
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* ERROR DISPLAY */}
             {error && (
-                <div className="p-4 bg-red-50 text-red-600 border border-red-100 rounded-2xl flex items-center justify-center font-bold mt-4">
+                <div className="p-4 bg-red-50 text-red-600 border border-red-100 rounded-2xl flex items-center justify-center font-bold">
                     {error}
                 </div>
             )}
 
-            {/* EMPTY STATE */}
-            {reportResult && isResultEmpty && (
-                <div className="bg-white p-12 rounded-[40px] border border-gray-100 shadow-sm text-center space-y-4 animate-in fade-in">
-                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto text-gray-300">
-                        <FileText size={32} />
-                    </div>
-                    <h3 className="text-xl font-black text-gray-900">No Records Found</h3>
-                    <p className="text-gray-500 font-medium max-w-sm mx-auto">
-                        We couldn't find any attendance or activity records for the selected child during this period.
-                    </p>
-                </div>
-            )}
-
-            {/* COMBINED FULL REPORT VIEW */}
+            {/* RESULTS VIEW */}
             {reportResult && !isResultEmpty && (
-                <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden animate-in slide-in-from-bottom-8 duration-700 report-container print:border-none print:shadow-none">
+                <div id="report-results" className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden animate-in slide-in-from-bottom-8 duration-700 report-container print:border-none print:shadow-none">
                     
-                    {/* Header Controls (Hidden in Print) */}
+                    {/* Header Controls */}
                     <div className="p-8 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gray-50/50 print:hidden">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center">
@@ -333,17 +355,16 @@ const Reports = () => {
                             </div>
                             <div>
                                 <h2 className="text-xl font-black text-gray-900 tracking-tight">Report Results</h2>
-                                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">{timeRange} Summary</p>
+                                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                                    {reportResult.childInfo.name} • {timeRange}
+                                </p>
                             </div>
                         </div>
                         <div className="flex gap-3">
-                            <button onClick={handleSendReport} className="px-6 py-3 bg-purple-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-purple-700 transition-all active:scale-95 shadow-lg shadow-purple-200">
-                                <Send size={14} /> Send Report
-                            </button>
                             <button onClick={exportToPDF} className="px-6 py-3 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-black transition-all active:scale-95 shadow-lg shadow-gray-200">
                                 <FileText size={14} /> Print
                             </button>
-                            <button onClick={() => setReportResult(null)} className="p-3 bg-white border border-gray-200 text-gray-400 rounded-2xl hover:text-red-500 hover:border-red-100 transition-all active:scale-95" title="Clear Report">
+                            <button onClick={() => setReportResult(null)} className="p-3 bg-white border border-gray-200 text-gray-400 rounded-2xl hover:text-red-500 hover:border-red-100 transition-all active:scale-95">
                                 <X size={20} />
                             </button>
                         </div>
@@ -379,7 +400,7 @@ const Reports = () => {
                             </div>
                         </div>
 
-                        {/* Section 4: Summary Cards (Moved to top for visibility) */}
+                        {/* Section 2: Summary */}
                         <div className="space-y-4">
                             <h3 className="text-sm font-black text-amber-600 uppercase tracking-widest border-b border-gray-100 pb-2 flex items-center gap-2">
                                 <TrendingUp size={16} /> SECTION 2: HIGH-LEVEL SUMMARY
@@ -408,93 +429,68 @@ const Reports = () => {
                         </div>
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-4">
-                            {/* Section 2: Attendance Table */}
+                            {/* Section 3: Attendance */}
                             <div className="space-y-4">
                                 <h3 className="text-sm font-black text-emerald-600 uppercase tracking-widest border-b border-gray-100 pb-2 flex items-center gap-2">
                                     <Clock size={16} /> SECTION 3: ATTENDANCE
                                 </h3>
                                 <div className="border border-gray-100 rounded-3xl overflow-hidden bg-gray-50/20">
-                                    <div className="overflow-x-auto max-h-[400px] print:max-h-none print:overflow-visible">
-                                        <table className="w-full text-left relative">
-                                            <thead className="bg-gray-100/50 sticky top-0 backdrop-blur z-10">
-                                                <tr>
-                                                    <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Date</th>
-                                                    {selectedChildId === 'all' && <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Name</th>}
-                                                    <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Status</th>
-                                                    <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-right">Marked By</th>
+                                    <table className="w-full text-left">
+                                        <thead className="bg-gray-100/50">
+                                            <tr>
+                                                <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Date</th>
+                                                <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Status</th>
+                                                <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-right">Marked By</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {reportResult.attendance.map((row, i) => (
+                                                <tr key={`att-${i}`} className="hover:bg-white transition-colors">
+                                                    <td className="px-5 py-3 text-sm text-gray-600 font-medium">{row.date}</td>
+                                                    <td className="px-5 py-3">
+                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${row.status.toLowerCase() === 'present' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
+                                                            {row.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-5 py-3 text-sm text-gray-500 text-right">{row.markedBy}</td>
                                                 </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-gray-100">
-                                                {reportResult.attendance.length === 0 ? (
-                                                    <tr>
-                                                        <td colSpan="4" className="px-5 py-8 text-center text-gray-400 font-medium text-sm">No attendance records found.</td>
-                                                    </tr>
-                                                ) : reportResult.attendance.map((row, i) => (
-                                                    <tr key={`att-${i}`} className="hover:bg-white transition-colors">
-                                                        <td className="px-5 py-3 text-sm text-gray-600 font-medium whitespace-nowrap">{row.date}</td>
-                                                        {selectedChildId === 'all' && <td className="px-5 py-3 text-sm font-bold text-gray-900 whitespace-nowrap">{row.name}</td>}
-                                                        <td className="px-5 py-3">
-                                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${row.status.toLowerCase() === 'present' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
-                                                                {row.status}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-5 py-3 text-sm text-gray-500 text-right whitespace-nowrap">{row.markedBy}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
 
-                            {/* Section 3: Activity Table */}
+                            {/* Section 4: Activities */}
                             <div className="space-y-4">
                                 <h3 className="text-sm font-black text-indigo-600 uppercase tracking-widest border-b border-gray-100 pb-2 flex items-center gap-2">
                                     <Activity size={16} /> SECTION 4: ACTIVITY
                                 </h3>
                                 <div className="border border-gray-100 rounded-3xl overflow-hidden bg-gray-50/20">
-                                    <div className="overflow-x-auto max-h-[400px] print:max-h-none print:overflow-visible">
-                                        <table className="w-full text-left relative">
-                                            <thead className="bg-gray-100/50 sticky top-0 backdrop-blur z-10">
-                                                <tr>
-                                                    <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Date</th>
-                                                    {selectedChildId === 'all' && <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Name</th>}
-                                                    <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Activity</th>
-                                                    <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Status</th>
-                                                    <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-right">Rating</th>
+                                    <table className="w-full text-left">
+                                        <thead className="bg-gray-100/50">
+                                            <tr>
+                                                <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Activity</th>
+                                                <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Status</th>
+                                                <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-right">Rating</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {reportResult.activities.map((row, i) => (
+                                                <tr key={`act-${i}`} className="hover:bg-white transition-colors">
+                                                    <td className="px-5 py-3 text-sm text-gray-700 font-medium">
+                                                        {row.activity}
+                                                        <br />
+                                                        <span className="text-[10px] text-gray-400">{row.date}</span>
+                                                    </td>
+                                                    <td className="px-5 py-3 text-[10px] font-black uppercase">{row.status}</td>
+                                                    <td className="px-5 py-3 text-right text-amber-400">{'★'.repeat(row.rating)}</td>
                                                 </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-gray-100">
-                                                {reportResult.activities.length === 0 ? (
-                                                    <tr>
-                                                        <td colSpan="5" className="px-5 py-8 text-center text-gray-400 font-medium text-sm">No activity records found.</td>
-                                                    </tr>
-                                                ) : reportResult.activities.map((row, i) => (
-                                                    <tr key={`act-${i}`} className="hover:bg-white transition-colors">
-                                                        <td className="px-5 py-3 text-sm text-gray-600 font-medium whitespace-nowrap">{row.date}</td>
-                                                        {selectedChildId === 'all' && <td className="px-5 py-3 text-sm font-bold text-gray-900 whitespace-nowrap">{row.name}</td>}
-                                                        <td className="px-5 py-3 text-sm text-gray-700 font-medium">{row.activity}</td>
-                                                        <td className="px-5 py-3">
-                                                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${row.status.toLowerCase() === 'completed' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' : 'bg-yellow-50 text-yellow-700 border-yellow-100'}`}>
-                                                                {row.status}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-5 py-3 text-right">
-                                                            <div className="flex gap-0.5 justify-end">
-                                                                {[...Array(5)].map((_, idx) => (
-                                                                    <span key={idx} className={`text-xs ${idx < row.rating ? 'text-amber-400' : 'text-gray-200'}`}>★</span>
-                                                                ))}
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
-
                     </div>
                 </div>
             )}

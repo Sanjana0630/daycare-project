@@ -6,6 +6,12 @@ const reportSchema = new mongoose.Schema({
         ref: "Child",
         required: true,
     },
+    childName: {
+        type: String,
+    },
+    className: {
+        type: String,
+    },
     range: {
         type: String,
         enum: ["daily", "weekly", "monthly"],
@@ -19,6 +25,9 @@ const reportSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         required: true,
+    },
+    reportData: {
+        type: mongoose.Schema.Types.Mixed, // Stores the full snapshot of activities/attendance
     },
 }, { timestamps: true });
 

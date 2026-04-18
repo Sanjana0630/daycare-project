@@ -10,7 +10,8 @@ const {
     getReportById
 } = require("../controllers/reportController");
 
-router.get("/full", protect, staff, generateFullReport);
+router.get("/", protect, getReports);
+router.get("/full", protect, generateFullReport);
 router.get("/generate", protect, staff, generateDynamicReport);
 router.get("/child-attendance", protect, staff, getChildAttendanceReport);
 router.get("/staff-activity", protect, staff, getStaffActivityReport);

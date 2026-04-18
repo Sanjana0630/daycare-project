@@ -11,9 +11,6 @@ const ChildDailyActivity = require("../models/ChildDailyActivity");
 // @desc    Get report by ID (Saved Report)
 // @route   GET /api/reports/:id
 // @access  Private
-// @desc    Get report by ID (Saved Report)
-// @route   GET /api/reports/:id
-// @access  Private
 const getReportById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -23,7 +20,7 @@ const getReportById = async (req, res) => {
             return res.status(404).json({ success: false, message: "Report not found." });
         }
 
-        // --- SECURITY CHECK (PARENTS ONLY) ---
+        // --- SECURITY CHECK ---
         if (req.user.role === 'parent') {
             const childData = await Child.findById(reportConfig.childId);
             if (!childData || childData.parent?.toString() !== req.user._id.toString()) {
@@ -31,6 +28,18 @@ const getReportById = async (req, res) => {
             }
         }
 
+        // If snapshot data exists in the DB, return it immediately
+        if (reportConfig.reportData) {
+            return res.status(200).json({
+                success: true,
+                data: {
+                    reportId: reportConfig._id,
+                    ...reportConfig.reportData
+                }
+            });
+        }
+
+        // Backward compatibility: If no snapshot, generate live (for old reports)
         const reportData = await getUnifiedReportData(
             reportConfig.childId.toString(),
             reportConfig.range,
@@ -47,6 +56,35 @@ const getReportById = async (req, res) => {
         });
     } catch (error) {
         console.error("Error fetching saved report:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// @desc    Get all reports (List)
+// @route   GET /api/reports
+// @access  Private
+const getReports = async (req, res) => {
+    try {
+        let query = {};
+
+        if (req.user.role === 'staff') {
+            query.generatedBy = req.user._id;
+        } else if (req.user.role === 'parent') {
+            const children = await Child.find({ parent: req.user._id }).select('_id');
+            query.childId = { $in: children.map(c => c._id) };
+        }
+
+        const reports = await Report.find(query)
+            .populate("childId", "childName class")
+            .populate("generatedBy", "name fullName")
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            data: reports
+        });
+    } catch (error) {
+        console.error("Error fetching reports list:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -458,31 +496,35 @@ const generateDynamicReport = async (req, res) => {
     }
 };
 
-// @desc    Generate full unified report
-// @route   GET /api/reports/full
-// @access  Private/Admin
 const generateFullReport = async (req, res) => {
     const { childId, range, date } = req.query;
+
+    if (req.user.role === 'admin') {
+        return res.status(403).json({ success: false, message: "Admin cannot generate reports. Admin can only view them." });
+    }
 
     try {
         const reportData = await getUnifiedReportData(childId, range, date, req.user);
 
-        // Save the report configuration to return an ID for notifications (Only if it's a specific child)
+        // Save the full snapshot to the database
         let savedReportId = null;
         if (childId && childId !== 'all') {
             try {
-                const adminId = req.user._id;
-                if (mongoose.Types.ObjectId.isValid(childId) && mongoose.Types.ObjectId.isValid(adminId)) {
+                const staffId = req.user._id;
+                if (mongoose.Types.ObjectId.isValid(childId) && mongoose.Types.ObjectId.isValid(staffId)) {
                     const newReport = await Report.create({
                         childId: new mongoose.Types.ObjectId(childId),
+                        childName: reportData.childInfo.name,
+                        className: reportData.childInfo.className,
                         range,
                         date,
-                        generatedBy: new mongoose.Types.ObjectId(adminId)
+                        generatedBy: new mongoose.Types.ObjectId(staffId),
+                        reportData: reportData // Store the full snapshot logic
                     });
                     savedReportId = newReport._id;
                 }
             } catch (saveErr) {
-                console.error("Failed to auto-save report config:", saveErr.message);
+                console.error("Failed to snapshot report:", saveErr.message);
             }
         }
 
@@ -494,7 +536,7 @@ const generateFullReport = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Report Error:', error);
+        console.error('Report Generation Error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -505,5 +547,6 @@ module.exports = {
     getAttendanceReport,
     generateDynamicReport,
     generateFullReport,
-    getReportById
+    getReportById,
+    getReports
 };
