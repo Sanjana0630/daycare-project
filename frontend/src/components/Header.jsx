@@ -185,7 +185,7 @@ const Header = ({ onMenuClick }) => {
 
     const avatarInitial = fullName.charAt(0).toUpperCase();
 
-    const roleLabel = role === 'admin' ? 'Daycare Manager' : (role === 'staff' ? 'Daycare Staff' : 'Parent');
+    const roleLabel = role === 'admin' ? 'Care Connect Manager' : (role === 'staff' ? 'Care Connect Staff' : 'Parent');
 
     useEffect(() => {
         const handleClickOutside = (event) => {

@@ -118,7 +118,7 @@ const ParentFeedback = () => {
             {/* Header */}
             <div>
                 <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2">Give Your Feedback</h1>
-                <p className="text-gray-500 font-medium text-lg">Share your experience with daycare</p>
+                <p className="text-gray-500 font-medium text-lg">Share your experience with Care Connect</p>
             </div>
 
             {/* Main Form Card */}

@@ -16,7 +16,7 @@ const registerChild = async (req, res) => {
         // Age Validation & Class Auto-Assignment
         const assignedClass = getClassFromAge(data.dob);
         if (assignedClass === "Not Eligible") {
-            return res.status(400).json({ success: false, message: "Daycare supports children from 1 month to 10 years" });
+            return res.status(400).json({ success: false, message: "Care Connect supports children from 1 month to 10 years" });
         }
         data.class = assignedClass;
 
@@ -127,7 +127,7 @@ const updateChild = async (req, res) => {
         if (data.dob) {
             const assignedClass = getClassFromAge(data.dob);
             if (assignedClass === "Not Eligible") {
-                return res.status(400).json({ success: false, message: "Daycare supports children from 1 month to 10 years" });
+                return res.status(400).json({ success: false, message: "Care Connect supports children from 1 month to 10 years" });
             }
             data.class = assignedClass;
             targetClass = assignedClass;

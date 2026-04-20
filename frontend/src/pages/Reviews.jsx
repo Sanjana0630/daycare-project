@@ -138,7 +138,7 @@ const Reviews = () => {
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-400 to-indigo-600 italic">Trusted by Families.</span>
                     </h1>
                     <p className="text-lg md:text-xl text-gray-500 font-medium leading-relaxed max-w-2xl mx-auto">
-                        Don't just take our word for it. Hear what dozens of happy parents have to say about their experience with TinyTots.
+                        Don't just take our word for it. Hear what dozens of happy parents have to say about their experience with Care Connect.
                     </p>
                 </div>
             </section>
@@ -244,7 +244,7 @@ const Reviews = () => {
                     <div className="bg-gray-900 rounded-[4rem] p-12 md:p-20 text-center space-y-10 relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-full h-full -z-10 bg-[radial-gradient(circle_at_80%_20%,rgba(168,85,247,0.15),transparent_40%)]"></div>
                         <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-tight max-w-2xl mx-auto">
-                            Experience the TinyTots <br />
+                            Experience Care Connect <br />
                             <span className="text-purple-400 italic font-medium">Difference Today.</span>
                         </h2>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4">
@@ -269,7 +269,7 @@ const Reviews = () => {
             {/* Footer */}
             <footer className="py-12 border-t border-gray-100 text-center">
                 <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.4em]">
-                    © {new Date().getFullYear()} TinyTots Daycare • Trusted Reviews
+                    © {new Date().getFullYear()} Care Connect • Trusted Reviews
                 </p>
             </footer>
         </div>

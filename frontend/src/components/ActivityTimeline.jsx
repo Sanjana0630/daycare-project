@@ -5,7 +5,7 @@ const ActivityTimeline = () => {
     return (
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-full flex flex-col">
             <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-bold text-gray-800">Today at Daycare</h3>
+                <h3 className="text-lg font-bold text-gray-800">Today at Care Connect</h3>
                 <span className="text-xs font-medium text-purple-600 bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
                     {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' })}
                 </span>

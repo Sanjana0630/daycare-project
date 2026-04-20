@@ -150,14 +150,14 @@ const About = () => {
                 <div className="container mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[500px]">
                     <div className="space-y-6 animate-in fade-in slide-in-from-left-8 duration-1000">
                         <div className="inline-flex items-center gap-2 px-4 py-1 bg-purple-50 text-purple-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-purple-100">
-                            ✨ About TinyTots
+                            ✨ About Care Connect
                         </div>
                         <h1 className="text-6xl md:text-7xl font-black text-gray-900 tracking-tight leading-[0.95]">
                             Smart. Safe.<br />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-400 to-indigo-600 italic">Connected.</span>
                         </h1>
                         <p className="text-lg md:text-xl text-gray-500 font-medium leading-relaxed max-w-xl">
-                            We help daycare centers and parents stay connected through technology, ensuring safety, transparency, and better care for every child.
+                            We help Care Connect centers and parents stay connected through technology, ensuring safety, transparency, and better care for every child.
                         </p>
                     </div>
 
@@ -171,7 +171,7 @@ const About = () => {
                                 <div className="bg-gray-50 rounded-[3rem] overflow-hidden aspect-[4/5] relative group-hover:shadow-inner transition-all">
                                     <img 
                                         src={AboutImage1} 
-                                        alt="Daycare Interior" 
+                                        alt="Care Connect Interior" 
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-purple-900/20 to-transparent"></div>
@@ -183,7 +183,7 @@ const About = () => {
                                 <div className="bg-gray-50 rounded-[2rem] overflow-hidden w-full h-full">
                                     <img 
                                         src={AboutImage2} 
-                                        alt="Daycare Activities" 
+                                        alt="Care Connect Activities" 
                                         className="w-full h-full object-cover"
                                     />
                                 </div>
@@ -221,7 +221,7 @@ const About = () => {
                         <div className="absolute top-0 right-0 w-32 h-32 bg-purple-50 rounded-full -translate-y-16 translate-x-16 blur-2xl"></div>
                         <h2 className="text-3xl font-black text-gray-900 tracking-tight">Our Mission</h2>
                         <p className="text-xl md:text-2xl font-medium text-gray-600 leading-relaxed max-w-2xl mx-auto">
-                            "To make daycare smarter, safer, and more connected for parents and staff everywhere."
+                            "To make Care Connect smarter, safer, and more connected for parents and staff everywhere."
                         </p>
                     </div>
                 </div>
@@ -301,7 +301,7 @@ const About = () => {
             {/* Minimal Footer */}
             <footer className="py-10 border-t border-gray-100 bg-gray-50/30 text-center">
                 <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.4em]">
-                    © {new Date().getFullYear()} TinyTots • Smart. Safe. Connected.
+                    © {new Date().getFullYear()} Care Connect • Smart. Safe. Connected.
                 </p>
             </footer>
 

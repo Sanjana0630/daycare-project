@@ -1,6 +1,6 @@
-# Daycare Discovery
+# Care Connect
 
-A comprehensive MERN stack web application designed to streamline daycare center operations. It provides features for managing child attendance and progress, tracking staff records, generating reports, and facilitating parent communication.
+A comprehensive MERN stack web application designed to streamline Care Connect center operations. It provides features for managing child attendance and progress, tracking staff records, generating reports, and facilitating parent communication.
 
 ## Table of Contents
 - [Features](#features)
@@ -10,7 +10,7 @@ A comprehensive MERN stack web application designed to streamline daycare center
 - [Available Scripts](#available-scripts)
 
 ## Features
-- **Admin Dashboard**: A centralized view of daycare operations, including user management and system settings.
+- **Admin Dashboard**: A centralized view of Care Connect operations, including user management and system settings.
 - **Authentication**: Secure login system with JWT-based authentication (e.g., Admin login).
 - **Children Management**: Track child attendance, activity logs, and progress.
 - **Staff Management**: Monitor staff attendance records and view historical data.

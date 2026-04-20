@@ -46,7 +46,7 @@ const Contact = () => {
     const contactInfo = [
         {
             title: "Email Us",
-            value: "contact@tinytots.in",
+            value: "contact@careconnect.in",
             desc: "Response within 24 hours",
             icon: <Mail className="text-purple-600" size={24} />
         },
@@ -58,7 +58,7 @@ const Contact = () => {
         },
         {
             title: "Visit Us",
-            value: "TinyTots Daycare Center",
+            value: "Care Connect Center",
             desc: "Baner Road, Pune, Maharashtra – 411045",
             icon: <MapPin className="text-indigo-600" size={24} />
         }
@@ -178,7 +178,7 @@ const Contact = () => {
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-400 to-indigo-600">Touch.</span>
                         </h1>
                         <p className="text-lg md:text-xl text-gray-500 font-medium leading-relaxed max-w-lg">
-                            Have questions about our daycare programs? We're here to help and answer any questions you might have.
+                            Have questions about our Care Connect programs? We're here to help and answer any questions you might have.
                         </p>
 
                         <div className="flex items-center gap-6 pt-4">
@@ -384,7 +384,7 @@ const Contact = () => {
                         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full translate-x-32 -translate-y-32 blur-3xl"></div>
                         <div className="space-y-4 relative z-10">
                             <h2 className="text-3xl md:text-4xl font-black tracking-tight">Ready to join our family?</h2>
-                            <p className="text-purple-100 font-medium">Start your child's journey with TinyTots today.</p>
+                            <p className="text-purple-100 font-medium">Start your child's journey with Care Connect today.</p>
                         </div>
                         <Link
                             to="/register"
@@ -400,7 +400,7 @@ const Contact = () => {
             {/* Footer */}
             <footer className="py-12 border-t border-gray-100 text-center">
                 <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.4em]">
-                    © {new Date().getFullYear()} TinyTots Daycare • Built with Care
+                    © {new Date().getFullYear()} Care Connect • Built with Care
                 </p>
             </footer>
 

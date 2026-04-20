@@ -207,7 +207,7 @@ const ParentDashboard = () => {
                                 <h3 className="text-xl font-bold">Action Required</h3>
                             </div>
                             <p className="text-amber-800/80 font-medium leading-relaxed">
-                                Please contact the daycare administration to link your child to your account. You will need to provide your registered email address.
+                                Please contact the Care Connect administration to link your child to your account. You will need to provide your registered email address.
                             </p>
                         </div>
 
@@ -235,7 +235,7 @@ const ParentDashboard = () => {
                             </div>
                             <div>
                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Email Us</p>
-                                <p className="text-sm font-bold text-gray-700">admin@daycare.com</p>
+                                <p className="text-sm font-bold text-gray-700">admin@careconnect.com</p>
                             </div>
                         </div>
                         <div className="bg-white p-6 rounded-2xl border border-gray-50 shadow-sm flex items-center gap-4">

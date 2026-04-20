@@ -159,10 +159,10 @@ const Features = () => {
                         </div>
                         <h1 className="text-6xl md:text-7xl font-black text-gray-900 tracking-tight leading-[0.95]">
                             Powerful Features for<br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-400 to-indigo-600">Smart Daycare.</span>
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-400 to-indigo-600">Smart Care Connect.</span>
                         </h1>
                         <p className="text-lg md:text-xl text-gray-500 font-medium leading-relaxed max-w-xl">
-                            Everything you need to manage daycare efficiently and keep parents connected in one seamless platform.
+                            Everything you need to manage Care Connect efficiently and keep parents connected in one seamless platform.
                         </p>
                     </div>
 
@@ -210,7 +210,7 @@ const Features = () => {
                         <div className="absolute top-0 right-0 w-full h-full -z-10 bg-[radial-gradient(circle_at_80%_20%,rgba(168,85,247,0.15),transparent_40%)]"></div>
                         <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-tight max-w-3xl mx-auto">
                             Ready to simplify your <br />
-                            <span className="text-purple-400 italic">daycare?</span>
+                            <span className="text-purple-400 italic">Care Connect?</span>
                         </h2>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4">
                             <Link
@@ -234,7 +234,7 @@ const Features = () => {
             {/* Footer */}
             <footer className="py-12 border-t border-gray-100 text-center">
                 <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.4em]">
-                    © {new Date().getFullYear()} TinyTots Daycare • Efficient Management
+                    © {new Date().getFullYear()} Care Connect • Efficient Management
                 </p>
             </footer>
         </div>

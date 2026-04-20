@@ -13,7 +13,7 @@ const AuthLayout = ({ children, title, subtitle }) => {
                 <div className="relative z-10 text-center p-12 max-w-lg">
                     <h1 className="text-4xl font-bold text-white mb-6 drop-shadow-md">Nurturing Tomorrow's Future</h1>
                     <p className="text-white/90 text-lg leading-relaxed drop-shadow-sm">
-                        Manage your daycare efficiently. Safe, secure, and made with love for parents, staff, and admins.
+                        Manage your center efficiently. Safe, secure, and made with love for parents, staff, and admins.
                     </p>
                 </div>
             </div>

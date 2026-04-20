@@ -30,7 +30,7 @@ const Home = () => {
                     <div className="space-y-10 max-w-2xl animate-in fade-in slide-in-from-left-8 duration-1000">
                         <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-purple-50 text-purple-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-purple-100">
                             <span className="flex h-2 w-2 rounded-full bg-purple-500"></span>
-                            Welcome to TinyTots
+                            Welcome to Care Connect
                         </div>
 
                         <div className="space-y-4">
@@ -39,7 +39,7 @@ const Home = () => {
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500">Caring.</span>
                             </h1>
                             <p className="text-xl md:text-2xl text-gray-400 font-medium tracking-tight">
-                                All-in-one daycare management system.
+                                All-in-one Care Connect management system.
                             </p>
                         </div>
 
@@ -86,7 +86,7 @@ const Home = () => {
                             <div className="relative bg-white p-3 rounded-[3rem] shadow-2xl shadow-purple-900/5 rotate-2 group-hover:rotate-0 transition-transform duration-700 active:scale-[0.98]">
                                 <img
                                     src={HeroImage}
-                                    alt="Daycare children"
+                                    alt="Care Connect children"
                                     className="w-full max-w-[500px] h-auto rounded-[2.5rem] object-cover"
                                 />
                             </div>
@@ -102,7 +102,7 @@ const Home = () => {
                 {/* Single-line Minimal Footer */}
                 <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-full text-center">
                     <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.4em]">
-                        © {new Date().getFullYear()} TinyTots Daycare • Modern Management System
+                        © {new Date().getFullYear()} Care Connect • Modern Management System
                     </p>
                 </div>
             </main>

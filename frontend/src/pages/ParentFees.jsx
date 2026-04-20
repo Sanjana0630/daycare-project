@@ -107,7 +107,7 @@ const ParentFees = () => {
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(24);
         doc.setFont("helvetica", "bold");
-        doc.text("TinyTots Daycare", pageWidth / 2, 20, { align: "center" });
+        doc.text("Care Connect", pageWidth / 2, 20, { align: "center" });
         
         doc.setFontSize(12);
         doc.setFont("helvetica", "normal");

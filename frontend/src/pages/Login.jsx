@@ -63,7 +63,7 @@ const LoginPage = () => {
     };
 
     return (
-        <AuthLayout title="Welcome Back" subtitle="Login to manage daycare activities">
+        <AuthLayout title="Welcome Back" subtitle="Login to manage Care Connect activities">
             <form className="space-y-6" onSubmit={handleSubmit}>
                 {error && (
                     <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl animate-in fade-in slide-in-from-top-2">

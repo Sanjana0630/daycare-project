@@ -92,7 +92,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                         <Baby size={18} />
                     </div>
                     <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-indigo-700">
-                        Daycare
+                        Care Connect
                     </span>
                 </div>
                 <button

@@ -31,7 +31,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static("uploads"));
 
 app.get("/", (req, res) => {
-  res.send("Daycare server is running 🚀 - VERIFICATION_123");
+  res.send("Care Connect server is running 🚀 - VERIFICATION_123");
 });
 
 app.get("/api/test", (req, res) => {

@@ -101,7 +101,7 @@ const Register = () => {
     return (
         <AuthLayout
             title="Create Account"
-            subtitle="Join our daycare community"
+            subtitle="Join our Care Connect community"
         >
             <form className="space-y-5" onSubmit={handleSubmit}>
                 {error && (

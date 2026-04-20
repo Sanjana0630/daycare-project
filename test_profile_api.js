@@ -23,7 +23,7 @@ async function testParentProfile() {
         const updateRes = await axios.put(`${BASE_URL}/api/parent/update`, {
             fullName: 'Manas Rege',
             phoneNumber: '9876543210',
-            address: '123 Daycare Street, Mumbai',
+            address: '123 Care Connect Street, Mumbai',
             profileImage: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
         }, {
             headers: { 'Authorization': `Bearer ${token}` }

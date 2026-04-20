@@ -758,7 +758,7 @@ const ChildProgress = () => {
                         </p>
                     </div>
                     <div className="text-right">
-                        <p className="text-slate-900 font-black text-xl">Daycare Discovery</p>
+                        <p className="text-slate-900 font-black text-xl">Care Connect</p>
                         <p className="text-slate-500 font-bold text-xs uppercase">Generated on: {new Date().toLocaleDateString()}</p>
                     </div>
                 </div>
@@ -898,7 +898,7 @@ const ChildProgress = () => {
                 {/* Footer Branding */}
                 <div className="mt-12 pt-8 border-t border-slate-100 text-center">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                        End of Report • Daycare Discovery System
+                        End of Report • Care Connect System
                     </p>
                 </div>
             </div>

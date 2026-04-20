@@ -19,7 +19,7 @@ const HeroSection = () => {
                 <span className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] sm:text-xs font-medium mb-3 sm:mb-4 border border-white/30 tracking-tight">
                     Admin Dashboard
                 </span>
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4 leading-tight">Welcome to Daycare<br />Admin Dashboard</h2>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4 leading-tight">Welcome to Care Connect<br />Admin Dashboard</h2>
                 <p className="text-purple-100 text-sm sm:text-base md:text-lg max-w-xl leading-relaxed">
                     Manage your children, staff, and daily operations efficiently. All activities will appear here once data is added.
                 </p>
