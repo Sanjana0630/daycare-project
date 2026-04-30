@@ -90,9 +90,9 @@ const Features = () => {
                 <div className="container mx-auto px-6 md:px-12 flex items-center justify-between">
                     <Link to="/" className="flex items-center space-x-3 group">
                         <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20 group-hover:rotate-12 transition-transform duration-500">
-                            <span className="text-white font-black text-xl leading-none">T</span>
+                            <span className="text-white font-black text-xl leading-none">C</span>
                         </div>
-                        <span className="text-xl font-black tracking-tighter text-gray-900">Tiny<span className="text-purple-600">Tots</span></span>
+                        <span className="text-xl font-black tracking-tighter text-gray-900">Care<span className="text-purple-600">Connect</span></span>
                     </Link>
 
                     <div className="hidden md:flex items-center space-x-12">
