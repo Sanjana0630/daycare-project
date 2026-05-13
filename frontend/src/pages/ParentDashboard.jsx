@@ -502,7 +502,7 @@ const ParentDashboard = () => {
                                     </div>
                                 ))}
                                 <div className="mt-8 pt-6 border-t border-gray-100">
-                                    <button 
+                                    <button
                                         onClick={() => navigate('/parent/activities')}
                                         className="w-full py-4 bg-purple-50 text-purple-700 font-black rounded-2xl hover:bg-purple-100 transition-all flex items-center justify-center gap-2"
                                     >
