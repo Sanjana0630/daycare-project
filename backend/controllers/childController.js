@@ -31,8 +31,9 @@ const registerChild = async (req, res) => {
             return res.status(400).json({ success: false, message: "Enter valid parent name" });
         }
         if (!parentEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parentEmail)) {
-            return res.status(400).json({ success: false, message: "Enter valid email address" });
+            return res.status(400).json({ success: false, message: "Please enter a valid email address" });
         }
+        data.parentEmail = parentEmail.toLowerCase().trim();
         if (!parentPhone || !/^\d{10}$/.test(parentPhone)) {
             return res.status(400).json({ success: false, message: "Enter valid 10-digit mobile number" });
         }

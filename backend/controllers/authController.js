@@ -58,10 +58,16 @@ const registerUser = async (req, res) => {
     const { fullName, email, password, role } = req.body;
 
     try {
+        // Email Format Validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email || !emailRegex.test(email)) {
+            return res.status(400).json({ message: "Please enter a valid email address" });
+        }
+
         const userExists = await User.findOne({ email });
 
         if (userExists) {
-            return res.status(400).json({ message: "Email already exists" });
+            return res.status(400).json({ message: "Account already exists with this email" });
         }
 
         const user = await User.create({
@@ -146,7 +152,8 @@ const googleAuth = async (req, res) => {
     const { name, email, picture, role } = req.body;
 
     try {
-        let user = await User.findOne({ email });
+        const normalizedEmail = email ? email.toLowerCase().trim() : email;
+        let user = await User.findOne({ email: normalizedEmail });
 
         if (!user) {
             // Create user if they don't exist

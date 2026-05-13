@@ -26,8 +26,26 @@ const getNormalizedDate = (dateParam) => {
 // @route   POST /api/staff
 // @access  Public
 const registerStaff = async (req, res) => {
+    const { email } = req.body;
     try {
-        const staff = await Staff.create(req.body);
+        // Email Format Validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email || !emailRegex.test(email)) {
+            return res.status(400).json({ success: false, message: "Please enter a valid email address" });
+        }
+
+        // Normalize email
+        const normalizedEmail = email.toLowerCase().trim();
+
+        // Check uniqueness in both User and Staff models
+        const userExists = await User.findOne({ email: normalizedEmail });
+        const staffExists = await Staff.findOne({ email: normalizedEmail });
+
+        if (userExists || staffExists) {
+            return res.status(400).json({ success: false, message: "Account already exists with this email" });
+        }
+
+        const staff = await Staff.create({ ...req.body, email: normalizedEmail });
         res.status(201).json({
             success: true,
             data: staff,
@@ -83,6 +101,16 @@ const updateStaff = async (req, res) => {
 
         if (!staff) {
             return res.status(404).json({ success: false, message: "Staff member not found" });
+        }
+
+        if (req.body.email && req.body.email.toLowerCase().trim() !== staff.email) {
+            const normalizedEmail = req.body.email.toLowerCase().trim();
+            const emailExists = await Staff.findOne({ email: normalizedEmail, _id: { $ne: staff._id } });
+            const userExists = await User.findOne({ email: normalizedEmail });
+            if (emailExists || userExists) {
+                return res.status(400).json({ success: false, message: "Account already exists with this email" });
+            }
+            req.body.email = normalizedEmail;
         }
 
         if (req.body.assignedClass && req.body.assignedClass !== staff.assignedClass) {

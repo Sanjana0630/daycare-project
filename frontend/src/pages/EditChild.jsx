@@ -211,7 +211,7 @@ const EditChild = () => {
                     break;
                 case 'parentEmail':
                     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-                        error = "Enter valid email address";
+                        error = "Please enter a valid email address";
                     }
                     break;
                 case 'parentPhone':

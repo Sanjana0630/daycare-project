@@ -26,9 +26,11 @@ const Register = () => {
         hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(formData.password),
     };
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isEmailValid = emailRegex.test(formData.email);
     const isPasswordValid = Object.values(passwordRequirements).every(Boolean);
     const passwordsMatch = formData.password && formData.password === formData.confirmPassword;
-    const canSubmit = isPasswordValid && passwordsMatch && formData.fullName && formData.email;
+    const canSubmit = isPasswordValid && passwordsMatch && formData.fullName && isEmailValid;
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -173,12 +175,22 @@ const Register = () => {
                             type="email"
                             name="email"
                             required
-                            className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-100 focus:border-purple-400 transition-all outline-none"
+                            className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 transition-all outline-none ${formData.email === ''
+                                ? 'border-gray-200 focus:ring-purple-100 focus:border-purple-400'
+                                : isEmailValid
+                                    ? 'border-green-200 bg-green-50 focus:ring-green-100 focus:border-green-400'
+                                    : 'border-red-200 bg-red-50 focus:ring-red-100 focus:border-red-400'
+                                }`}
                             placeholder="name@example.com"
                             value={formData.email}
                             onChange={handleChange}
                         />
                     </div>
+                    {formData.email && !isEmailValid && (
+                        <p className="mt-1.5 text-xs font-medium text-red-600 animate-in fade-in slide-in-from-top-1">
+                            Please enter a valid email address
+                        </p>
+                    )}
                 </div>
 
                 <div>

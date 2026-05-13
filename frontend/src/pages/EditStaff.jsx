@@ -86,6 +86,7 @@ const EditStaff = () => {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     const [formData, setFormData] = useState({
         name: '',
@@ -136,6 +137,13 @@ const EditStaff = () => {
 
     const handleSubmit = async (e) => {
         if (e) e.preventDefault();
+        
+        // Frontend Validation
+        if (!formData.email || !emailRegex.test(formData.email)) {
+            setError("Please enter a valid email address");
+            return;
+        }
+
         setSaving(true);
         setError('');
         setSuccess('');
