@@ -8,6 +8,38 @@ const getClassFromAge = require("../utils/getClassFromAge");
 const registerChild = async (req, res) => {
     try {
         const data = { ...req.body };
+        const { 
+            childName, dob, gender, bloodGroup, 
+            parentName, parentEmail, parentPhone, 
+            emergencyContactNumber 
+        } = data;
+
+        // Validation logic
+        if (!childName || !/^[A-Za-z\s]{2,}$/.test(childName)) {
+            return res.status(400).json({ success: false, message: "Enter valid child name" });
+        }
+        if (!dob || new Date(dob) > new Date()) {
+            return res.status(400).json({ success: false, message: "Select valid date of birth" });
+        }
+        if (!gender) {
+            return res.status(400).json({ success: false, message: "Please select gender" });
+        }
+        if (!bloodGroup) {
+            return res.status(400).json({ success: false, message: "Please select blood group" });
+        }
+        if (!parentName || !/^[A-Za-z\s]+$/.test(parentName)) {
+            return res.status(400).json({ success: false, message: "Enter valid parent name" });
+        }
+        if (!parentEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parentEmail)) {
+            return res.status(400).json({ success: false, message: "Enter valid email address" });
+        }
+        if (!parentPhone || !/^\d{10}$/.test(parentPhone)) {
+            return res.status(400).json({ success: false, message: "Enter valid 10-digit mobile number" });
+        }
+        if (!emergencyContactNumber || !/^\d{10}$/.test(emergencyContactNumber)) {
+            return res.status(400).json({ success: false, message: "Enter valid 10-digit mobile number" });
+        }
+
         // Sanitize optional relationship fields
         if (data.assignedTeacher === "") data.assignedTeacher = null;
         if (data.assignedCaretaker === "") data.assignedCaretaker = null;

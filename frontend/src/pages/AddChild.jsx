@@ -27,7 +27,7 @@ const SectionTitle = ({ icon: Icon, title }) => (
     </div>
 );
 
-const InputField = ({ label, name, type = "text", icon: Icon, placeholder, required = false, options = [], value, onChange, onBlur, max, readOnly }) => (
+const InputField = ({ label, name, type = "text", icon: Icon, placeholder, required = false, options = [], value, onChange, onBlur, max, readOnly, error }) => (
     <div className="space-y-1.5 flex-1">
         <label className="text-sm font-medium text-gray-700 block">{label} {required && <span className="text-red-500">*</span>}</label>
         <div className="relative">
@@ -44,7 +44,7 @@ const InputField = ({ label, name, type = "text", icon: Icon, placeholder, requi
                         value={value}
                         onChange={onChange}
                         onBlur={onBlur}
-                        className={`w-full ${Icon ? 'pl-10' : 'pl-4'} pr-10 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-100 focus:border-purple-400 transition-all outline-none appearance-none`}
+                        className={`w-full ${Icon ? 'pl-10' : 'pl-4'} pr-10 py-2.5 bg-white border ${error ? 'border-red-500 ring-1 ring-red-100' : 'border-gray-200'} rounded-xl focus:ring-2 ${error ? 'focus:ring-red-100 focus:border-red-500' : 'focus:ring-purple-100 focus:border-purple-400'} transition-all outline-none appearance-none`}
                     >
                         <option value="">Select {label}</option>
                         {options.map((opt) => (
@@ -66,14 +66,15 @@ const InputField = ({ label, name, type = "text", icon: Icon, placeholder, requi
                     onBlur={onBlur}
                     max={max}
                     readOnly={readOnly}
-                    className={`w-full ${Icon ? 'pl-10' : 'pl-4'} pr-4 py-2.5 ${readOnly ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'} border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-100 focus:border-purple-400 transition-all outline-none`}
+                    className={`w-full ${Icon ? 'pl-10' : 'pl-4'} pr-4 py-2.5 ${readOnly ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'} border ${error ? 'border-red-500 ring-1 ring-red-100' : 'border-gray-200'} rounded-xl focus:ring-2 ${error ? 'focus:ring-red-100 focus:border-red-500' : 'focus:ring-purple-100 focus:border-purple-400'} transition-all outline-none`}
                 />
             )}
         </div>
+        {error && <p className="text-xs text-red-500 font-medium ml-1 mt-1">{error}</p>}
     </div>
 );
 
-const TextAreaField = ({ label, name, icon: Icon, placeholder, value, onChange }) => (
+const TextAreaField = ({ label, name, icon: Icon, placeholder, value, onChange, error }) => (
     <div className="space-y-1.5 flex-1">
         <label className="text-sm font-medium text-gray-700 block">{label}</label>
         <div className="relative">
@@ -86,9 +87,10 @@ const TextAreaField = ({ label, name, icon: Icon, placeholder, value, onChange }
                 value={value}
                 onChange={onChange}
                 rows="2"
-                className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-100 focus:border-purple-400 transition-all outline-none resize-none"
+                className={`w-full pl-10 pr-4 py-2.5 bg-white border ${error ? 'border-red-500 ring-1 ring-red-100' : 'border-gray-200'} rounded-xl focus:ring-2 ${error ? 'focus:ring-red-100 focus:border-red-500' : 'focus:ring-purple-100 focus:border-purple-400'} transition-all outline-none resize-none`}
             />
         </div>
+        {error && <p className="text-xs text-red-500 font-medium ml-1 mt-1">{error}</p>}
     </div>
 );
 
@@ -102,6 +104,7 @@ const AddChild = () => {
     const [age, setAge] = useState('');
     const [assignedClass, setAssignedClass] = useState('');
     const [alertModal, setAlertModal] = useState({ isOpen: false, message: '' });
+    const [errors, setErrors] = useState({});
 
     const [formData, setFormData] = useState({
         childName: '',
@@ -155,13 +158,72 @@ const AddChild = () => {
         fetchStaffAndParents();
     }, []);
 
+    const validateField = (name, value) => {
+        let error = "";
+        
+        // Required field validation
+        const requiredFields = [
+            'childName', 'dob', 'gender', 'bloodGroup', 
+            'parentName', 'parentEmail', 'parentPhone', 
+            'emergencyContactName', 'emergencyContactNumber'
+        ];
+
+        if (requiredFields.includes(name) && !value) {
+            if (name === 'bloodGroup') error = "Please select blood group";
+            else if (name === 'gender') error = "Please select gender";
+            else error = "This field is required";
+        } else if (value) {
+            // Specific validations
+            switch (name) {
+                case 'childName':
+                    if (!/^[A-Za-z\s]{2,}$/.test(value)) {
+                        error = "Enter valid child name";
+                    }
+                    break;
+                case 'parentName':
+                case 'emergencyContactName':
+                    if (!/^[A-Za-z\s]+$/.test(value)) {
+                        error = `Enter valid ${name === 'parentName' ? 'parent' : 'contact'} name`;
+                    }
+                    break;
+                case 'parentEmail':
+                    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                        error = "Enter valid email address";
+                    }
+                    break;
+                case 'parentPhone':
+                case 'emergencyContactNumber':
+                    if (!/^\d{10}$/.test(value)) {
+                        error = "Enter valid 10-digit mobile number";
+                    }
+                    break;
+                case 'dob':
+                    const selectedDate = new Date(value);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    if (selectedDate > today) {
+                        error = "Select valid date of birth";
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        setErrors(prev => ({ ...prev, [name]: error }));
+        return error;
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
+        
+        // Trigger real-time validation
+        validateField(name, value);
 
         if (name === 'dob') {
             calculateAge(value);
-            // Trigger validation automatically when full date (YYYY-MM-DD) is selected or typed
+            // Age range validation (separate from format validation)
             if (value && value.length === 10 && new Date(value).getFullYear() >= 1900) {
                 checkAgeValidation(value);
             }
@@ -171,6 +233,14 @@ const AddChild = () => {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
+            // Photo validation
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+            if (!allowedTypes.includes(file.type)) {
+                setErrors(prev => ({ ...prev, photo: "Only image files are allowed" }));
+                return;
+            }
+            setErrors(prev => ({ ...prev, photo: "" }));
+
             const reader = new FileReader();
             reader.onload = () => {
                 setImageToCrop(reader.result);
@@ -261,18 +331,28 @@ const AddChild = () => {
     const handleSubmit = async (e) => {
         if (e) e.preventDefault();
 
-        // Custom field validation for popup alerts
-        const requiredFields = [
-            { key: 'childName', label: 'Child Name' },
-            { key: 'dob', label: 'Date of Birth' },
-            { key: 'gender', label: 'Gender' }
-        ];
+        // Validate all fields
+        const newErrors = {};
+        let isValid = true;
 
-        for (const field of requiredFields) {
-            if (!formData[field.key]) {
-                setAlertModal({ isOpen: true, message: `${field.label} is required` });
-                return;
+        Object.keys(formData).forEach(key => {
+            const error = validateField(key, formData[key]);
+            if (error) {
+                newErrors[key] = error;
+                isValid = false;
             }
+        });
+
+        if (!isValid) {
+            setErrors(newErrors);
+            // Scroll to the first error
+            const firstErrorField = Object.keys(newErrors)[0];
+            const element = document.getElementsByName(firstErrorField)[0];
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                element.focus();
+            }
+            return;
         }
 
         // Final Age validation check
@@ -391,6 +471,7 @@ const AddChild = () => {
                             required
                             value={formData.childName}
                             onChange={handleChange}
+                            error={errors.childName}
                         />
                         <div className="grid grid-cols-2 gap-4">
                             <InputField
@@ -402,6 +483,7 @@ const AddChild = () => {
                                 value={formData.dob}
                                 onChange={handleChange}
                                 max={new Date().toISOString().split('T')[0]}
+                                error={errors.dob}
                             />
                             <div className="space-y-1.5 flex-1">
                                 <label className="text-sm font-medium text-gray-700 block">Age & Class</label>
@@ -446,8 +528,9 @@ const AddChild = () => {
                                         name="photo"
                                         accept="image/png, image/jpeg, image/jpg"
                                         onChange={handleFileChange}
-                                        className="w-full pl-4 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-100 focus:border-purple-400 transition-all outline-none"
+                                        className={`w-full pl-4 pr-4 py-2.5 bg-white border ${errors.photo ? 'border-red-500 ring-1 ring-red-100' : 'border-gray-200'} rounded-xl focus:ring-2 ${errors.photo ? 'focus:ring-red-100 focus:border-red-500' : 'focus:ring-purple-100 focus:border-purple-400'} transition-all outline-none`}
                                     />
+                                    {errors.photo && <p className="text-xs text-red-500 font-medium ml-1 mt-1">{errors.photo}</p>}
                                 </div>
                                 {formData.photo && (
                                     <p className="text-[10px] font-bold text-purple-600 uppercase tracking-widest bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
@@ -469,6 +552,7 @@ const AddChild = () => {
                             ]}
                             value={formData.gender}
                             onChange={handleChange}
+                            error={errors.gender}
                         />
                         <InputField
                             label="Blood Group"
@@ -488,6 +572,7 @@ const AddChild = () => {
                             ]}
                             value={formData.bloodGroup}
                             onChange={handleChange}
+                            error={errors.bloodGroup}
                         />
                         <InputField
                             label="Admission Date"
@@ -514,6 +599,7 @@ const AddChild = () => {
                             required
                             value={formData.parentName}
                             onChange={handleChange}
+                            error={errors.parentName}
                         />
                         <InputField
                             label="Parent Email"
@@ -524,6 +610,7 @@ const AddChild = () => {
                             required
                             value={formData.parentEmail}
                             onChange={handleChange}
+                            error={errors.parentEmail}
                         />
                         <InputField
                             label="Parent Phone"
@@ -533,6 +620,7 @@ const AddChild = () => {
                             required
                             value={formData.parentPhone}
                             onChange={handleChange}
+                            error={errors.parentPhone}
                         />
                         <InputField
                             label="Link to Parent Account"
@@ -552,6 +640,7 @@ const AddChild = () => {
                                 required
                                 value={formData.emergencyContactName}
                                 onChange={handleChange}
+                                error={errors.emergencyContactName}
                             />
                             <InputField
                                 label="Emergency Contact Number"
@@ -561,6 +650,7 @@ const AddChild = () => {
                                 required
                                 value={formData.emergencyContactNumber}
                                 onChange={handleChange}
+                                error={errors.emergencyContactNumber}
                             />
                         </div>
                     </div>
