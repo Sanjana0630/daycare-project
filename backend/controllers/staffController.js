@@ -566,7 +566,7 @@ const getMyProfile = async (req, res) => {
     try {
         const staff = await Staff.findOne({ email: req.user.email });
         if (!staff) {
-            return res.status(404).json({ success: false, message: "Staff record not found" });
+            return res.status(200).json({ success: true, data: null });
         }
         res.status(200).json({ success: true, data: staff });
     } catch (error) {
@@ -582,11 +582,8 @@ const updateMyProfile = async (req, res) => {
         }
 
         const staff = await Staff.findOne({ email: req.user.email });
-        if (!staff) {
-            return res.status(404).json({ success: false, message: "Staff record not found" });
-        }
 
-        let profileImage = staff.profileImage;
+        let profileImage = staff ? staff.profileImage : "";
         if (req.file) {
             profileImage = `/uploads/${req.file.filename}`;
         } else if (req.body.profileImage) {
