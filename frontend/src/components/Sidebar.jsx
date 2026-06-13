@@ -54,7 +54,6 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         },
         { name: 'Fees', icon: CreditCard, path: '/fees' },
         { name: 'Reports', icon: BarChart3, path: '/reports' },
-        { name: 'Settings', icon: Settings, path: '/settings' },
     ];
 
     const staffNavItems = [
